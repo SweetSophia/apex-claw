@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mojomast/uberclawcontrol/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
 type TaskRunner struct {

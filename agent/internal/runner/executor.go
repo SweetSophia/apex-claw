@@ -3,7 +3,7 @@ package runner
 import (
 	"context"
 
-	"github.com/mojomast/uberclawcontrol/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
 type Executor interface {
@@ -23,4 +23,8 @@ func (s *StubExecutor) Execute(ctx context.Context, task *clawdeck.Task) Executi
 		Completed: true,
 		Output:    "stub execution completed",
 	}
+}
+
+func NewStubExecutor() *StubExecutor {
+	return &StubExecutor{}
 }

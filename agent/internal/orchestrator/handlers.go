@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/mojomast/uberclawcontrol/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
 func HandleDrain(ctx context.Context, cmd *clawdeck.Command) map[string]any {

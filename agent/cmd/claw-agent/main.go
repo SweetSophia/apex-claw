@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mojomast/uberclawcontrol/agent/internal/clawdeck"
-	"github.com/mojomast/uberclawcontrol/agent/internal/config"
-	"github.com/mojomast/uberclawcontrol/agent/internal/orchestrator"
-	"github.com/mojomast/uberclawcontrol/agent/internal/runner"
+	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/config"
+	"github.com/SweetSophia/clawdeck/agent/internal/orchestrator"
+	"github.com/SweetSophia/clawdeck/agent/internal/runner"
 )
 
 var (

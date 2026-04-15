@@ -1,4 +1,4 @@
-module github.com/mojomast/uberclawcontrol/agent
+module github.com/SweetSophia/clawdeck/agent
 
 go 1.22
 
