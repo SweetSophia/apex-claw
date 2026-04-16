@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y curl && \
 
 # Install PostgreSQL client and other dependencies
 RUN apt-get update && apt-get install -y \
+    libyaml-dev \
     postgresql-client \
     libpq-dev \
     build-essential \
