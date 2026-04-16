@@ -1,7 +1,10 @@
 <% content_for :title, "Agents - clawdeck" %>
 <% @board_page = false %>
 
-<div class="py-8">
+<%# Subscribe to real-time agent status updates %>
+<%= turbo_stream_from "agents:#{current_user.id}" %>
+
+<div class="py-8" data-controller="agent-presence" data-agent-presence-user-id-value="<%= current_user.id %>">
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-xl font-extrabold text-[#e0e0e0] tracking-tight">Agents</h1>
@@ -18,44 +21,8 @@
   <% if @agents.any? %>
     <div class="space-y-2">
       <% @agents.each do |agent| %>
-        <%= link_to agent_path(agent), class: "block p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all" do %>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-lg">
-                <%= agent.status == "online" ? "🟢" : agent.status == "draining" ? "🟡" : agent.status == "disabled" ? "🔴" : "⚫" %>
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-bold text-[#e0e0e0]"><%= agent.name %></span>
-                  <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= agent.status == "online" ? "bg-emerald-500/20 text-emerald-400" : agent.status == "draining" ? "bg-yellow-500/20 text-yellow-400" : agent.status == "disabled" ? "bg-red-500/20 text-red-400" : "bg-white/[0.06] text-[#666]" %>"><%= agent.status.humanize %></span>
-                </div>
-                <div class="text-xs text-[#555] mt-0.5 flex items-center gap-2">
-                  <% if agent.hostname.present? %>
-                    <span><%= agent.hostname %></span>
-                  <% end %>
-                  <% if agent.version.present? %>
-                    <span class="text-[#444]">v<%= agent.version %></span>
-                  <% end %>
-                </div>
-              </div>
-            </div>
-            <div class="text-right">
-              <% if agent.last_heartbeat_at %>
-                <div class="text-xs text-[#555]">
-                  <%= time_ago_in_words(agent.last_heartbeat_at) %> ago
-                </div>
-              <% else %>
-                <div class="text-xs text-[#444]">Never connected</div>
-              <% end %>
-              <% if agent.tags.any? %>
-                <div class="flex gap-1 mt-1 justify-end">
-                  <% agent.tags.first(3).each do |tag| %>
-                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] text-[#666]"><%= tag %></span>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
-          </div>
+        <%= link_to agent_path(agent), data: { turbo_frame: "_top" } do %>
+          <%= render "agents/agent_card", agent: agent %>
         <% end %>
       <% end %>
     </div>

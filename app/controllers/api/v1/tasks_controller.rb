@@ -1,8 +1,10 @@
 module Api
   module V1
     class TasksController < BaseController
+      include Broadcastable
       before_action :set_task, only: [ :show, :update, :destroy, :complete, :claim, :unclaim, :assign, :unassign ]
       before_action :require_current_agent!, only: [ :next, :claim, :unclaim ]
+      after_action :broadcast_task_change, only: [ :create, :update, :complete, :claim, :assign ]
 
       # GET /api/v1/tasks/next - get next task for agent to work on
       # Returns highest priority unclaimed task in "up_next" status
@@ -211,6 +213,17 @@ module Api
         task.activity_note = params[:activity_note] || params.dig(:task, :activity_note)
       end
 
+      def broadcast_task_sse(task, event_type)
+        ActionCable.server.broadcast(
+          "api:events:#{task.user_id}",
+          {
+            type: event_type,
+            data: task_json(task),
+            timestamp: Time.current.utc.iso8601
+          }.to_json
+        )
+      end
+
       def require_current_agent!
         return if current_agent
 
@@ -219,6 +232,22 @@ module Api
 
       def task_params
         params.require(:task).permit(:name, :description, :priority, :due_date, :status, :blocked, :board_id, :output, tags: [])
+      end
+
+      def broadcast_task_change
+        return unless @task && response.successful?
+
+        action_name_map = {
+          "create" => "task.created",
+          "update" => "task.updated",
+          "complete" => "task.completed",
+          "claim" => "task.claimed",
+          "assign" => "task.assigned"
+        }
+        event_type = action_name_map[action_name]
+        return unless event_type
+
+        broadcast_task_sse(@task, event_type)
       end
 
       def task_json(task)

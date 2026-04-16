@@ -4,7 +4,7 @@
 <%# Subscribe to real-time updates for this board %>
 <%= turbo_stream_from "board_#{@board.id}" %>
 
-<div class="h-full flex flex-col" data-controller="board">
+<div class="h-full flex flex-col" data-controller="board task-board">
   <%# Unified Navbar %>
   <%= render "shared/navbar" %>
 
