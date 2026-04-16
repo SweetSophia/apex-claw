@@ -38,7 +38,7 @@ module Authentication
     end
 
     def redirect_if_authenticated
-      redirect_to boards_path if authenticated?
+      redirect_to boards_url if authenticated?
     end
 
     def resume_session
