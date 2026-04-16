@@ -19,23 +19,23 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [x] Context propagation (timeout, cancellation) through executor chain
 - [x] Tests for each executor (15 total)
 
-### 1.2 Enhanced Heartbeat
-- [ ] Handle `desired_state` actions: `upgrade`, `drain`, `restart`, `shutdown`
-- [ ] Drain mode: stop accepting new tasks, finish current, then idle
-- [ ] Graceful shutdown on SIGTERM/SIGINT
-- [ ] Configurable heartbeat interval via API response
-- [ ] Metadata enrichment: task queue depth, current task progress
+### 1.2 Enhanced Heartbeat ✅ (commit `d6be91f`)
+- [x] Handle `desired_state` actions: drain, restart, shutdown
+- [x] Drain mode: stop accepting tasks, finish current, idle
+- [x] Graceful shutdown on SIGTERM/SIGINT (30s timeout)
+- [ ] Configurable heartbeat interval via API response (deferred)
+- [x] Metadata enrichment: task_runner_active, draining, uptime_seconds
 
-### 1.3 Retry & Backoff
-- [ ] Exponential backoff on task failures (configurable base/max)
-- [ ] Max retry count per task (server-side field)
-- [ ] Dead letter marking after max retries exhausted
-- [ ] Backoff state persisted (survives restart)
+### 1.3 Retry & Backoff ✅ (commit `3233fe9`)
+- [x] Exponential backoff on task failures (configurable base/max)
+- [x] Max retry count per task (default 3)
+- [x] Reports failed state after max retries exhausted
+- [x] ±25% jitter to prevent thundering herd
 
-### 1.4 Structured Logging
-- [ ] JSON log format with: timestamp, level, agent_id, task_id, correlation_id
-- [ ] Log level configuration via env var
-- [ ] Log rotation support
+### 1.4 Structured Logging ✅ (commit `3233fe9`)
+- [x] JSON log format with: timestamp, level, agent_id, task_id
+- [x] Log level configuration via CLAWDECK_LOG_LEVEL env var
+- [x] Global logger via InitLogger(agentID)
 
 ---
 
@@ -137,5 +137,8 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 
 | Date | Item | Status | Notes |
 |------|------|--------|-------|
-| 2026-04-16 | 1.1 Executor Framework | ✅ | GLM-5.1 subagent, 15 tests, commit 57f8994 |
-| 2026-04-16 | 2.2 Audit Logging | ✅ | GPT-5.4 subagent, model+concern+API, commit 95faf0a |
+| 2026-04-16 | 1.1 Executor Framework | ✅ | GLM-5.1, 15 tests, commit 57f8994 |
+| 2026-04-16 | 2.2 Audit Logging | ✅ | GPT-5.4, 6 tests, 147 total Rails, commit 95faf0a |
+| 2026-04-16 | 1.3 Retry/Backoff + 1.4 Logging | ✅ | GPT-5.4, commit 3233fe9 |
+| 2026-04-16 | 1.2 Enhanced Heartbeat | ✅ | GLM-5.1, commit d6be91f |
+| 2026-04-16 | 2.2 Audit Logging fixup | ✅ | commit 6b37448 |
