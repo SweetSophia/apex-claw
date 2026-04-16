@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 	"github.com/SweetSophia/clawdeck/agent/internal/config"
@@ -73,17 +74,12 @@ func main() {
 		}
 	}
 
+	// Graceful shutdown context: cancels on SIGINT/SIGTERM.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		sig := <-sigChan
-		log.Printf("received signal %v, shutting down", sig)
-		cancel()
-	}()
+	sigCtx, sigCancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	defer sigCancel()
 
 	registry := runner.NewExecutorRegistry()
 	executorName := runner.DefaultExecutorName()
@@ -97,33 +93,63 @@ func main() {
 	taskRunner := runner.NewTaskRunner(client, cfg.TaskPollDelay, executor)
 	commandRunner := orchestrator.NewCommandRunner(client, cfg.CommandPollDelay)
 
+	// Wire task-active callback so heartbeat metadata includes runner state.
+	heartbeatRunner.SetTaskActiveFunc(taskRunner.Active)
+
 	errChan := make(chan error, 3)
 
 	go func() {
-		if err := heartbeatRunner.Run(ctx); err != nil && err != context.Canceled {
+		if err := heartbeatRunner.Run(sigCtx); err != nil && err != context.Canceled {
 			errChan <- fmt.Errorf("heartbeat: %w", err)
 		}
 	}()
 
 	go func() {
-		if err := taskRunner.Run(ctx); err != nil && err != context.Canceled {
+		if err := taskRunner.Run(sigCtx); err != nil && err != context.Canceled {
 			errChan <- fmt.Errorf("task: %w", err)
 		}
 	}()
 
 	go func() {
-		if err := commandRunner.Run(ctx); err != nil && err != context.Canceled {
+		if err := commandRunner.Run(sigCtx); err != nil && err != context.Canceled {
 			errChan <- fmt.Errorf("command: %w", err)
 		}
 	}()
 
+	// Wait for signal, server-initiated shutdown, or runner error.
 	select {
-	case <-ctx.Done():
-		log.Printf("shutting down")
+	case <-sigCtx.Done():
+		log.Printf("received shutdown signal")
+	case req := <-heartbeatRunner.ShutdownCh:
+		log.Printf("server requested %s", req.Action)
 	case err := <-errChan:
 		log.Printf("runner error: %v", err)
-		cancel()
 	}
 
-	log.Printf("claw-agent stopped")
+	// Enter drain mode so task runner stops polling.
+	taskRunner.SetDraining(true)
+	heartbeatRunner.SetDraining(true)
+
+	// Wait for the current task to finish (with timeout).
+	shutdownTimeout := 30 * time.Second
+	if taskRunner.Active() {
+		log.Printf("waiting up to %s for active task to complete", shutdownTimeout)
+		done := make(chan struct{})
+		go func() {
+			for taskRunner.Active() {
+				time.Sleep(100 * time.Millisecond)
+			}
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			log.Printf("active task completed")
+		case <-time.After(shutdownTimeout):
+			log.Printf("shutdown timeout reached, forcing exit")
+		}
+	}
+
+	cancel()
+	log.Printf("graceful shutdown complete")
 }
