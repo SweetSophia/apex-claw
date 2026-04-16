@@ -25,7 +25,8 @@ class AgentTest < ActiveSupport::TestCase
 
   test "has many agent tokens" do
     agent = Agent.create!(user: @user, name: "Token Agent")
-    AgentToken.issue!(agent: agent, name: "T1")
+    first_token, = AgentToken.issue!(agent: agent, name: "T1")
+    first_token.update!(revoked_at: Time.current)
     AgentToken.issue!(agent: agent, name: "T2")
 
     assert_equal 2, agent.agent_tokens.count
@@ -49,7 +50,8 @@ class AgentTest < ActiveSupport::TestCase
 
   test "destroys agent tokens on destroy" do
     agent = Agent.create!(user: @user, name: "Destroy Agent")
-    AgentToken.issue!(agent: agent, name: "T1")
+    first_token, = AgentToken.issue!(agent: agent, name: "T1")
+    first_token.update!(revoked_at: Time.current)
     AgentToken.issue!(agent: agent, name: "T2")
 
     assert_equal 2, agent.agent_tokens.count

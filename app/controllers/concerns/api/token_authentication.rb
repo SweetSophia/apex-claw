@@ -5,7 +5,7 @@ module Api
     included do
       before_action :authenticate_api_token
       after_action :track_api_usage
-      attr_reader :current_user, :current_agent
+      attr_reader :current_user, :current_agent, :current_agent_token
     end
 
     private
@@ -14,17 +14,19 @@ module Api
       token = extract_token_from_header
       @current_agent = request.env["clawdeck.current_agent"]
       @current_user = request.env["clawdeck.current_user"]
+      @current_agent_token = nil
 
-      unless @current_agent
-        agent_token = AgentToken.authenticate(token)
+      agent_token = AgentToken.authenticate(token)
 
-        if agent_token
-          @current_agent = agent_token.agent
-          @current_user = @current_agent.user
-        else
-          @current_agent = nil
-          @current_user = ApiToken.authenticate(token)
-        end
+      if @current_agent
+        @current_agent_token = agent_token if agent_token&.agent_id == @current_agent.id
+      elsif agent_token
+        @current_agent_token = agent_token
+        @current_agent = agent_token.agent
+        @current_user = @current_agent.user
+      else
+        @current_agent = nil
+        @current_user = ApiToken.authenticate(token)
       end
 
       unless @current_user
@@ -39,7 +41,6 @@ module Api
       auth_header = request.headers["Authorization"]
       return nil unless auth_header
 
-      # Expected format: "Bearer <token>"
       match = auth_header.match(/\ABearer\s+(.+)\z/i)
       match&.[](1)
     end

@@ -103,7 +103,7 @@ func TestClient_Heartbeat(t *testing.T) {
 		receivedStatus = req.Status
 
 		resp := HeartbeatResponse{
-			Agent:       Agent{ID: 5, Status: req.Status},
+			Agent:        Agent{ID: 5, Status: req.Status},
 			DesiredState: DesiredState{Action: "none"},
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -436,5 +436,40 @@ func TestNoContentDetection(t *testing.T) {
 	}
 	if isNoContent(nil) {
 		t.Error("expected isNoContent to return false for nil")
+	}
+}
+
+func TestClient_RotateToken(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "old-token")
+		if r.Method != "POST" {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		if r.URL.Path != "/api/v1/agents/5/rotate_token" {
+			t.Errorf("expected /api/v1/agents/5/rotate_token, got %s", r.URL.Path)
+		}
+
+		resp := RotateTokenResponse{
+			Agent:      Agent{ID: 5, Status: "online"},
+			AgentToken: "new-rotated-token",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	client.SetToken("old-token")
+	client.SetAgentID(5)
+
+	newToken, err := client.RotateToken(nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if newToken != "new-rotated-token" {
+		t.Fatalf("expected new token to be updated, got %q", newToken)
+	}
+	if client.token != "new-rotated-token" {
+		t.Fatalf("expected client token to rotate, got %q", client.token)
 	}
 }

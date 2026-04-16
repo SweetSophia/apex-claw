@@ -11,6 +11,8 @@ Rails.application.routes.draw do
 
         member do
           post :heartbeat
+          post :rotate_token
+          post :revoke_token
           post :commands, to: "agent_commands#enqueue"
         end
 
@@ -30,6 +32,8 @@ Rails.application.routes.draw do
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
       resources :audit_logs, only: [ :index ]
+
+      get "events", to: "events#index"
 
       resources :tasks, only: [ :index, :show, :create, :update, :destroy ] do
         collection do

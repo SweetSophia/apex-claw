@@ -3,19 +3,19 @@ package clawdeck
 import "time"
 
 type Agent struct {
-	ID              int64             `json:"id"`
-	UserID          int64             `json:"user_id"`
-	Name            string            `json:"name"`
-	Status          string            `json:"status"`
-	Hostname        string            `json:"hostname"`
-	HostUID         string            `json:"host_uid"`
-	Platform        string            `json:"platform"`
-	Version         string            `json:"version"`
-	Tags            []string          `json:"tags"`
-	Metadata        map[string]any    `json:"metadata"`
-	LastHeartbeatAt *time.Time        `json:"last_heartbeat_at"`
-	CreatedAt       time.Time         `json:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at"`
+	ID              int64          `json:"id"`
+	UserID          int64          `json:"user_id"`
+	Name            string         `json:"name"`
+	Status          string         `json:"status"`
+	Hostname        string         `json:"hostname"`
+	HostUID         string         `json:"host_uid"`
+	Platform        string         `json:"platform"`
+	Version         string         `json:"version"`
+	Tags            []string       `json:"tags"`
+	Metadata        map[string]any `json:"metadata"`
+	LastHeartbeatAt *time.Time     `json:"last_heartbeat_at"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type Task struct {
@@ -84,8 +84,14 @@ type HeartbeatRequest struct {
 }
 
 type HeartbeatResponse struct {
-	Agent       Agent      `json:"agent"`
-	DesiredState DesiredState `json:"desired_state"`
+	Agent                 Agent        `json:"agent"`
+	DesiredState          DesiredState `json:"desired_state"`
+	TokenRotationRequired bool         `json:"token_rotation_required"`
+}
+
+type RotateTokenResponse struct {
+	Agent      Agent  `json:"agent"`
+	AgentToken string `json:"agent_token"`
 }
 
 type DesiredState struct {
@@ -93,11 +99,11 @@ type DesiredState struct {
 }
 
 type TaskUpdateRequest struct {
-	Status        *string    `json:"status,omitempty"`
-	Description   *string    `json:"description,omitempty"`
-	Priority      *string    `json:"priority,omitempty"`
-	Blocked       *bool      `json:"blocked,omitempty"`
-	ActivityNote  *string    `json:"activity_note,omitempty"`
+	Status       *string `json:"status,omitempty"`
+	Description  *string `json:"description,omitempty"`
+	Priority     *string `json:"priority,omitempty"`
+	Blocked      *bool   `json:"blocked,omitempty"`
+	ActivityNote *string `json:"activity_note,omitempty"`
 }
 
 type CommandAckRequest struct{}

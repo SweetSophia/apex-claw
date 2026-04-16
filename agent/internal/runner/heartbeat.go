@@ -103,6 +103,9 @@ func (h *HeartbeatRunner) sendHeartbeat(ctx context.Context) {
 
 	log.Printf("heartbeat ok: agent status=%s desired_state=%s",
 		resp.Agent.Status, resp.DesiredState.Action)
+	if resp.TokenRotationRequired {
+		log.Printf("heartbeat warning: token rotation required for agent %d", h.agentID)
+	}
 
 	h.handleDesiredState(resp.DesiredState.Action)
 }
@@ -147,14 +150,14 @@ func (h *HeartbeatRunner) collectMetadata() map[string]any {
 	}
 
 	return map[string]any{
-		"goroutines":        runtime.NumGoroutine(),
-		"go_version":        runtime.Version(),
-		"alloc_mb":          memStats.Alloc / 1024 / 1024,
-		"sys_mb":            memStats.Sys / 1024 / 1024,
-		"num_cpu":           runtime.NumCPU(),
+		"goroutines":         runtime.NumGoroutine(),
+		"go_version":         runtime.Version(),
+		"alloc_mb":           memStats.Alloc / 1024 / 1024,
+		"sys_mb":             memStats.Sys / 1024 / 1024,
+		"num_cpu":            runtime.NumCPU(),
 		"task_runner_active": taskActive,
 		"draining":           isDraining,
-		"uptime_seconds":    time.Since(h.startTime).Truncate(time.Second).Seconds(),
+		"uptime_seconds":     time.Since(h.startTime).Truncate(time.Second).Seconds(),
 	}
 }
 

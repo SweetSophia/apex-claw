@@ -40,7 +40,7 @@ func TestHeartbeatRunner_DrainingDefault(t *testing.T) {
 func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := clawdeck.HeartbeatResponse{
-			Agent: clawdeck.Agent{ID: 1, Status: "online"},
+			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
 			DesiredState: clawdeck.DesiredState{Action: "drain"},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -70,7 +70,7 @@ func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 func TestHeartbeatRunner_DesiredStateShutdown(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := clawdeck.HeartbeatResponse{
-			Agent: clawdeck.Agent{ID: 1, Status: "online"},
+			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
 			DesiredState: clawdeck.DesiredState{Action: "shutdown"},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -97,7 +97,7 @@ func TestHeartbeatRunner_DesiredStateShutdown(t *testing.T) {
 func TestHeartbeatRunner_DesiredStateRestart(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := clawdeck.HeartbeatResponse{
-			Agent: clawdeck.Agent{ID: 1, Status: "online"},
+			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
 			DesiredState: clawdeck.DesiredState{Action: "restart"},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -160,5 +160,30 @@ func TestHeartbeatRunner_DesiredStateNone(t *testing.T) {
 	hr.handleDesiredState("")
 	if hr.Draining() {
 		t.Fatal("expected no state change for none/empty")
+	}
+}
+
+func TestHeartbeatRunner_LogsTokenRotationRequirement(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := clawdeck.HeartbeatResponse{
+			Agent:                 clawdeck.Agent{ID: 1, Status: "online"},
+			DesiredState:          clawdeck.DesiredState{Action: "none"},
+			TokenRotationRequired: true,
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	client := clawdeck.NewClient(srv.URL)
+	client.SetToken("test-token")
+	client.SetAgentID(1)
+	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
+
+	hr.sendHeartbeat(context.Background())
+
+	select {
+	case <-hr.ShutdownCh:
+		t.Fatal("did not expect shutdown request")
+	default:
 	}
 }

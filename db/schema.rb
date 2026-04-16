@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_221400) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,10 +70,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_221400) do
   create_table "agent_tokens", force: :cascade do |t|
     t.bigint "agent_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.datetime "last_rotated_at"
     t.datetime "last_used_at"
     t.string "name"
+    t.datetime "revoked_at"
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
+    t.index ["agent_id", "revoked_at"], name: "index_agent_tokens_on_agent_id_and_revoked_at"
     t.index ["agent_id"], name: "index_agent_tokens_on_agent_id"
     t.index ["token_digest"], name: "index_agent_tokens_on_token_digest", unique: true
   end

@@ -2,6 +2,7 @@ package clawdeck
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -67,6 +68,18 @@ func (c *Client) Heartbeat(agentID int64, status string, metadata map[string]any
 	}
 
 	return &resp, nil
+}
+
+func (c *Client) RotateToken(ctx context.Context) (string, error) {
+	_ = ctx
+	var resp RotateTokenResponse
+	path := fmt.Sprintf("/api/v1/agents/%d/rotate_token", c.agentID)
+	if err := c.doRequest("POST", path, nil, &resp, true); err != nil {
+		return "", fmt.Errorf("rotate token: %w", err)
+	}
+
+	c.token = resp.AgentToken
+	return resp.AgentToken, nil
 }
 
 func (c *Client) GetNextTask() (*Task, error) {

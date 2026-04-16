@@ -16,7 +16,7 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
       platform: "linux",
       version: "1.0.0"
     )
-    _agent_token, @agent_plaintext_token = AgentToken.issue!(agent: @agent, name: "Primary")
+    @agent_token, @agent_plaintext_token = AgentToken.issue!(agent: @agent, name: "Primary")
 
     @other_agent = Agent.create!(
       user: @other_user,
@@ -91,6 +91,16 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "load" => 0.5 }, @agent.metadata)
     assert @agent.last_heartbeat_at.present?
     assert_equal "none", response.parsed_body.dig("desired_state", "action")
+    assert_equal false, response.parsed_body["token_rotation_required"]
+  end
+
+  test "heartbeat flags token rotation when token expires soon" do
+    @agent_token.update!(expires_at: 12.hours.from_now)
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal true, response.parsed_body["token_rotation_required"]
   end
 
   test "heartbeat defaults status to online" do
@@ -105,6 +115,46 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
   test "heartbeat forbids cross-agent updates" do
     post "/api/v1/agents/#{@other_agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
     assert_response :forbidden
+  end
+
+  test "rotate token revokes old token and returns a new plaintext token" do
+    old_digest = @agent_token.token_digest
+
+    assert_difference "AgentToken.count", 1 do
+      post "/api/v1/agents/#{@agent.id}/rotate_token", headers: auth_header(@user_token)
+    end
+
+    assert_response :created
+    body = response.parsed_body
+    assert body["agent_token"].present?
+
+    @agent_token.reload
+    assert @agent_token.revoked?
+    refute_equal old_digest, AgentToken.digest_token(body["agent_token"])
+
+    new_token = @agent.agent_tokens.active.order(created_at: :desc).first
+    assert_equal AgentToken.digest_token(body["agent_token"]), new_token.token_digest
+    assert_nil AgentToken.authenticate(@agent_plaintext_token)
+    assert_equal new_token, AgentToken.authenticate(body["agent_token"])
+  end
+
+  test "rotate token is restricted to owner scope" do
+    post "/api/v1/agents/#{@other_agent.id}/rotate_token", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "revoke token revokes active token" do
+    post "/api/v1/agents/#{@agent.id}/revoke_token", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["revoked_tokens"]
+    assert @agent_token.reload.revoked?
+    assert_nil AgentToken.authenticate(@agent_plaintext_token)
+  end
+
+  test "revoke token is restricted to owner scope" do
+    post "/api/v1/agents/#{@other_agent.id}/revoke_token", headers: auth_header(@user_token)
+    assert_response :not_found
   end
 
   test "index returns only current user agents" do

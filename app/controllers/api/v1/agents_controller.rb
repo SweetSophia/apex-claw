@@ -2,7 +2,7 @@ module Api
   module V1
     class AgentsController < BaseController
       skip_before_action :authenticate_api_token, only: :register
-      before_action :set_agent, only: [ :show, :update ]
+      before_action :set_agent, only: [ :show, :update, :rotate_token, :revoke_token ]
       before_action :set_agent_for_heartbeat, only: [ :heartbeat ]
       before_action :require_current_agent!, only: :heartbeat
       before_action :require_agent_self!, only: :heartbeat
@@ -35,7 +35,38 @@ module Api
         @agent.update!(updates)
         render json: {
           agent: agent_json(@agent),
-          desired_state: { action: "none" }
+          desired_state: { action: "none" },
+          token_rotation_required: current_agent_token&.expires_soon? || false
+        }
+      end
+
+      def rotate_token
+        new_plaintext_token = nil
+        current_token = @agent.agent_tokens.active.order(created_at: :desc).first
+        expires_at = current_token&.expires_at
+
+        AgentToken.transaction do
+          current_token&.update!(revoked_at: Time.current)
+          _rotated_token, new_plaintext_token = AgentToken.issue!(
+            agent: @agent,
+            name: "Rotated",
+            expires_at: expires_at
+          )
+        end
+
+        render json: {
+          agent: agent_json(@agent),
+          agent_token: new_plaintext_token
+        }, status: :created
+      end
+
+      def revoke_token
+        revoked_at = Time.current
+        revoked_count = @agent.agent_tokens.active.update_all(revoked_at: revoked_at, updated_at: revoked_at)
+
+        render json: {
+          agent: agent_json(@agent),
+          revoked_tokens: revoked_count
         }
       end
 
