@@ -130,26 +130,30 @@ func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 }
 
 func (c *Client) UploadArtifact(ctx context.Context, taskID int64, filename string, data io.Reader) (*TaskArtifact, error) {
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	fileWriter, err := writer.CreateFormFile("file", filename)
-	if err != nil {
-		return nil, fmt.Errorf("create multipart file: %w", err)
-	}
-
-	if _, err := io.Copy(fileWriter, data); err != nil {
-		return nil, fmt.Errorf("copy multipart file: %w", err)
-	}
-
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("close multipart writer: %w", err)
-	}
-
 	path := fmt.Sprintf("/api/v1/tasks/%d/artifacts", taskID)
 	url := c.baseURL + path
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &body)
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+
+	go func() {
+		defer pw.Close()
+		fileWriter, err := writer.CreateFormFile("file", filename)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("create multipart file: %w", err))
+			return
+		}
+		if _, err := io.Copy(fileWriter, data); err != nil {
+			pw.CloseWithError(fmt.Errorf("copy multipart file: %w", err))
+			return
+		}
+		if err := writer.Close(); err != nil {
+			pw.CloseWithError(fmt.Errorf("close multipart writer: %w", err))
+			return
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, pr)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -217,43 +221,39 @@ func (c *Client) CompleteCommand(commandID int64, result map[string]any) (*Comma
 }
 
 func (c *Client) HandoffTask(ctx context.Context, taskID int64, targetAgentID int64, handoffContext string) (*TaskHandoff, error) {
-	_ = ctx
 	body := map[string]any{
 		"to_agent_id": targetAgentID,
 		"context":     handoffContext,
 	}
 	var resp TaskHandoff
 	path := fmt.Sprintf("/api/v1/tasks/%d/handoff", taskID)
-	if err := c.doRequest("POST", path, body, &resp, true); err != nil {
+	if err := c.doRequestWithContext(ctx, "POST", path, body, &resp, true); err != nil {
 		return nil, fmt.Errorf("handoff task: %w", err)
 	}
 	return &resp, nil
 }
 
 func (c *Client) GetPendingHandoffs(ctx context.Context) ([]TaskHandoff, error) {
-	_ = ctx
 	var resp []TaskHandoff
-	if err := c.doRequest("GET", "/api/v1/task_handoffs?status=pending", nil, &resp, true); err != nil {
+	if err := c.doRequestWithContext(ctx, "GET", "/api/v1/task_handoffs?status=pending", nil, &resp, true); err != nil {
 		return nil, fmt.Errorf("get pending handoffs: %w", err)
 	}
 	return resp, nil
 }
 
 func (c *Client) AcceptHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
-	_ = ctx
 	var resp TaskHandoff
 	path := fmt.Sprintf("/api/v1/task_handoffs/%d/accept", handoffID)
-	if err := c.doRequest("PATCH", path, nil, &resp, true); err != nil {
+	if err := c.doRequestWithContext(ctx, "PATCH", path, nil, &resp, true); err != nil {
 		return nil, fmt.Errorf("accept handoff: %w", err)
 	}
 	return &resp, nil
 }
 
 func (c *Client) RejectHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
-	_ = ctx
 	var resp TaskHandoff
 	path := fmt.Sprintf("/api/v1/task_handoffs/%d/reject", handoffID)
-	if err := c.doRequest("PATCH", path, nil, &resp, true); err != nil {
+	if err := c.doRequestWithContext(ctx, "PATCH", path, nil, &resp, true); err != nil {
 		return nil, fmt.Errorf("reject handoff: %w", err)
 	}
 	return &resp, nil
@@ -271,6 +271,10 @@ func isNoContent(err error) bool {
 }
 
 func (c *Client) doRequest(method, path string, body any, out any, requireAuth bool) error {
+	return c.doRequestWithContext(context.Background(), method, path, body, out, requireAuth)
+}
+
+func (c *Client) doRequestWithContext(ctx context.Context, method, path string, body any, out any, requireAuth bool) error {
 	var reqBody io.Reader
 	if body != nil {
 		data, err := json.Marshal(body)
@@ -281,7 +285,7 @@ func (c *Client) doRequest(method, path string, body any, out any, requireAuth b
 	}
 
 	url := c.baseURL + path
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}

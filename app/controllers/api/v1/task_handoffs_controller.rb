@@ -2,8 +2,8 @@ module Api
   module V1
     class TaskHandoffsController < BaseController
       include Broadcastable
-      before_action :set_handoff, only: [ :accept, :reject ]
       before_action :require_current_agent!
+      before_action :set_handoff, only: [ :accept, :reject ]
 
       # GET /api/v1/task_handoffs
       def index

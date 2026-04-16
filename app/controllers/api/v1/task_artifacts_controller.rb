@@ -25,7 +25,7 @@ module Api
         artifact.file.attach(uploaded_file)
 
         if artifact.save
-          artifact.update_column(:storage_path, artifact.file.blob.key)
+          artifact.update(storage_path: artifact.file.blob.key)
           render json: artifact_json(artifact), status: :created
         else
           render json: { error: artifact.errors.full_messages.join(", ") }, status: :unprocessable_entity
@@ -33,10 +33,16 @@ module Api
       end
 
       def show
-        send_data @artifact.file.download,
-                  filename: @artifact.filename,
-                  type: @artifact.content_type,
-                  disposition: "attachment"
+        blob = @artifact.file.blob
+        response.headers["Content-Type"] = blob.content_type || @artifact.content_type
+        response.headers["Content-Disposition"] = %(attachment; filename="#{@artifact.filename}")
+        response.headers["Content-Length"] = blob.byte_size.to_s
+
+        @artifact.file.download do |chunk|
+          response.stream.write(chunk)
+        end
+      ensure
+        response.stream.close
       end
 
       private
@@ -81,7 +87,6 @@ module Api
           filename: artifact.filename,
           content_type: artifact.content_type,
           size: artifact.size,
-          storage_path: artifact.storage_path,
           metadata: artifact.metadata || {},
           created_at: artifact.created_at.iso8601,
           updated_at: artifact.updated_at.iso8601

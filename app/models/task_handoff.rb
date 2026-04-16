@@ -12,7 +12,6 @@ class TaskHandoff < ApplicationRecord
   validates :from_agent_id, comparison: { other_than: :to_agent_id, message: "must differ from target agent" }
   validates :context, presence: true
 
-  scope :pending, -> { where(status: :pending) }
   scope :for_agent, ->(agent_id) { where(from_agent_id: agent_id).or(where(to_agent_id: agent_id)) }
   scope :for_task, ->(task_id) { where(task_id: task_id) }
 
