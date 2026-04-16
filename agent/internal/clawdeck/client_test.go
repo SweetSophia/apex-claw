@@ -181,7 +181,9 @@ func TestClient_CompleteTask(t *testing.T) {
 			t.Errorf("expected /api/v1/tasks/99/complete, got %s", r.URL.Path)
 		}
 
-		json.NewDecoder(r.Body).Decode(&receivedBody)
+		if err := json.NewDecoder(r.Body).Decode(&receivedBody); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
 
 		task := Task{ID: 99, Name: "Done task", Status: "done", Output: "Build ok"}
 		w.Header().Set("Content-Type", "application/json")
@@ -204,6 +206,8 @@ func TestClient_CompleteTask(t *testing.T) {
 		if taskMap["output"] != "Build ok" {
 			t.Errorf("expected output 'Build ok' in request, got %v", taskMap["output"])
 		}
+	} else {
+		t.Errorf("expected request body to contain task map, got: %v", receivedBody)
 	}
 }
 

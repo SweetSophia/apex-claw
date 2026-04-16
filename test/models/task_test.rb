@@ -111,7 +111,6 @@ class TaskTest < ActiveSupport::TestCase
 
   test "position is auto-set on create" do
     task = Task.create!(user: @user, board: @board, name: "Positioned Task")
-    assert task.position.present?
     assert task.position > 0
   end
 

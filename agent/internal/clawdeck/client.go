@@ -102,16 +102,14 @@ func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 	var resp Task
 	path := fmt.Sprintf("/api/v1/tasks/%d/complete", taskID)
 
-	var body io.Reader
+	var reqBody any
 	if output != "" {
-		reqBody := map[string]any{
+		reqBody = map[string]any{
 			"task": map[string]string{"output": output},
 		}
-		data, _ := json.Marshal(reqBody)
-		body = bytes.NewReader(data)
 	}
 
-	if err := c.doRequest("PATCH", path, body, &resp, true); err != nil {
+	if err := c.doRequest("PATCH", path, reqBody, &resp, true); err != nil {
 		return nil, fmt.Errorf("complete task: %w", err)
 	}
 	return &resp, nil
