@@ -135,18 +135,20 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @agent.id, response.parsed_body["id"]
   end
 
-  test "patch updates only safe fields" do
-    patch "/api/v1/agents/#{@agent.id}",
-          headers: auth_header(@user_token),
-          params: {
-            agent: {
-              name: "Renamed Worker",
-              tags: [ "nightly" ],
-              status: "disabled",
-              metadata: { role: "worker" },
-              host_uid: "hijack-attempt"
+  test "patch updates only safe fields and writes an audit log" do
+    assert_difference "AuditLog.count", 1 do
+      patch "/api/v1/agents/#{@agent.id}",
+            headers: auth_header(@user_token),
+            params: {
+              agent: {
+                name: "Renamed Worker",
+                tags: [ "nightly" ],
+                status: "disabled",
+                metadata: { role: "worker" },
+                host_uid: "hijack-attempt"
+              }
             }
-          }
+    end
 
     assert_response :success
     @agent.reload
@@ -155,6 +157,11 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "disabled", @agent.status
     assert_equal({ "role" => "worker" }, @agent.metadata)
     assert_equal "uid-worker-one", @agent.host_uid
+
+    audit_log = AuditLog.order(:created_at).last
+    assert_equal "update", audit_log.action
+    assert_equal "Agent", audit_log.resource_type
+    assert_equal @user.id, audit_log.actor_id
   end
 
   test "patch is restricted to owner scope" do

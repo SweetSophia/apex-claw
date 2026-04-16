@@ -1,4 +1,8 @@
 class AgentCommand < ApplicationRecord
+  include Auditable
+
+  audit_events :create
+
   belongs_to :agent
   belongs_to :requested_by_user, class_name: "User", optional: true
 

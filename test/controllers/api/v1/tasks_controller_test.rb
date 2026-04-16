@@ -171,8 +171,8 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   # Create tests
-  test "create creates new task" do
-    assert_difference "Task.count", 1 do
+  test "create creates new task and audit log" do
+    assert_difference [ "Task.count", "AuditLog.count" ], 1 do
       post api_v1_tasks_url,
            params: { task: { name: "New Task", priority: "high", status: "inbox" } },
            headers: @auth_header
@@ -184,6 +184,7 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "New Task", task["name"]
     assert_equal "high", task["priority"]
     assert_equal "inbox", task["status"]
+    assert_equal "create", AuditLog.order(:created_at).last.action
   end
 
   test "create returns errors for invalid task" do
@@ -217,15 +218,18 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   # Update tests
-  test "update updates task" do
-    patch api_v1_task_url(@task),
-          params: { task: { name: "Updated Task", priority: "medium" } },
-          headers: @auth_header
+  test "update updates task and audit log" do
+    assert_difference "AuditLog.count", 1 do
+      patch api_v1_task_url(@task),
+            params: { task: { name: "Updated Task", priority: "medium" } },
+            headers: @auth_header
+    end
     assert_response :success
 
     task = response.parsed_body
     assert_equal "Updated Task", task["name"]
     assert_equal "medium", task["priority"]
+    assert_equal "update", AuditLog.order(:created_at).last.action
   end
 
   test "update returns errors for invalid update" do
@@ -251,15 +255,18 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   # Complete tests
-  test "complete toggles task completion status" do
+  test "complete toggles task completion status and audit log" do
     assert_not @task.completed
 
-    patch complete_api_v1_task_url(@task), headers: @auth_header
+    assert_difference "AuditLog.count", 1 do
+      patch complete_api_v1_task_url(@task), headers: @auth_header
+    end
     assert_response :success
 
     task = response.parsed_body
     assert task["completed"]
     assert task["completed_at"].present?
+    assert_equal "complete", AuditLog.order(:created_at).last.action
   end
 
   test "complete toggles completed task back to incomplete" do

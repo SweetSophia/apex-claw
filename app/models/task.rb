@@ -1,4 +1,8 @@
 class Task < ApplicationRecord
+  include Auditable
+
+  audit_events :create, :update, :destroy
+
   belongs_to :user
   belongs_to :board
   belongs_to :assigned_agent, class_name: "Agent", optional: true

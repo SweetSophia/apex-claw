@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_22_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_204100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -107,6 +107,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_140000) do
     t.bigint "user_id", null: false
     t.index ["user_id", "month"], name: "index_api_usage_records_on_user_id_and_month", unique: true
     t.index ["user_id"], name: "index_api_usage_records_on_user_id"
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id"
+    t.string "actor_type"
+    t.jsonb "audited_changes", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "resource_id", null: false
+    t.string "resource_type", null: false
+    t.string "user_agent"
+    t.index ["actor_type", "actor_id"], name: "index_audit_logs_on_actor_type_and_actor_id"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_audit_logs_on_resource_type_and_resource_id"
   end
 
   create_table "boards", force: :cascade do |t|
@@ -380,12 +396,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_140000) do
     t.integer "confidence", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
-    t.text "output"
     t.date "due_date"
     t.integer "effort", default: 0, null: false
     t.integer "impact", default: 0, null: false
     t.string "name"
     t.integer "original_position"
+    t.text "output"
     t.integer "position"
     t.integer "priority", default: 0, null: false
     t.integer "project_id"

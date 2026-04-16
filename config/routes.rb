@@ -27,6 +27,7 @@ Rails.application.routes.draw do
       end
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
+      resources :audit_logs, only: [ :index ]
 
       resources :tasks, only: [ :index, :show, :create, :update, :destroy ] do
         collection do

@@ -29,8 +29,8 @@ class Api::V1::AgentCommandsControllerTest < ActionDispatch::IntegrationTest
     _other_agent_token, @other_agent_plaintext_token = AgentToken.issue!(agent: @other_agent, name: "Secondary")
   end
 
-  test "admin can enqueue command" do
-    assert_difference "AgentCommand.count", 1 do
+  test "admin can enqueue command and audit log" do
+    assert_difference [ "AgentCommand.count", "AuditLog.count" ], 1 do
       post "/api/v1/agents/#{@agent.id}/commands",
            headers: auth_header(@admin_token),
            params: { kind: "drain", payload: { reason: "maintenance" } }
@@ -41,6 +41,7 @@ class Api::V1::AgentCommandsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "drain", body["kind"]
     assert_equal "pending", body["state"]
     assert_equal @admin.id, body["requested_by_user_id"]
+    assert_equal "create", AuditLog.order(:created_at).last.action
   end
 
   test "owner can enqueue command" do

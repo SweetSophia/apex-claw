@@ -1,4 +1,8 @@
 class Agent < ApplicationRecord
+  include Auditable
+
+  audit_events :update
+
   belongs_to :user
 
   has_many :assigned_tasks,
