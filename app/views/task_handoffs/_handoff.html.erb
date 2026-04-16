@@ -1,0 +1,6 @@
+<tr id="handoff_<%= handoff.id %>">
+  <td><%= handoff.task_id %></td>
+  <td><%= handoff.from_agent.name %> → <%= handoff.to_agent.name %></td>
+  <td><%= handoff.status %></td>
+  <td><%= handoff.context&.truncate(80) %></td>
+</tr>

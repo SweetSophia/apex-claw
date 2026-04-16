@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -128,6 +129,63 @@ func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 	return &resp, nil
 }
 
+func (c *Client) UploadArtifact(ctx context.Context, taskID int64, filename string, data io.Reader) (*TaskArtifact, error) {
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	fileWriter, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return nil, fmt.Errorf("create multipart file: %w", err)
+	}
+
+	if _, err := io.Copy(fileWriter, data); err != nil {
+		return nil, fmt.Errorf("copy multipart file: %w", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("close multipart writer: %w", err)
+	}
+
+	path := fmt.Sprintf("/api/v1/tasks/%d/artifacts", taskID)
+	url := c.baseURL + path
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &body)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		var errResp ErrorResponse
+		if json.Unmarshal(respBody, &errResp) == nil && errResp.Error != "" {
+			return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, errResp.Error)
+		}
+		return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, string(respBody))
+	}
+
+	var artifact TaskArtifact
+	if err := json.Unmarshal(respBody, &artifact); err != nil {
+		return nil, fmt.Errorf("unmarshaling response: %w", err)
+	}
+
+	return &artifact, nil
+}
+
 func (c *Client) GetNextCommand() (*Command, error) {
 	var resp Command
 	if err := c.doRequest("GET", "/api/v1/agent_commands/next", nil, &resp, true); err != nil {
@@ -154,6 +212,49 @@ func (c *Client) CompleteCommand(commandID int64, result map[string]any) (*Comma
 	path := fmt.Sprintf("/api/v1/agent_commands/%d/complete", commandID)
 	if err := c.doRequest("PATCH", path, req, &resp, true); err != nil {
 		return nil, fmt.Errorf("complete command: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) HandoffTask(ctx context.Context, taskID int64, targetAgentID int64, handoffContext string) (*TaskHandoff, error) {
+	_ = ctx
+	body := map[string]any{
+		"to_agent_id": targetAgentID,
+		"context":     handoffContext,
+	}
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/tasks/%d/handoff", taskID)
+	if err := c.doRequest("POST", path, body, &resp, true); err != nil {
+		return nil, fmt.Errorf("handoff task: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) GetPendingHandoffs(ctx context.Context) ([]TaskHandoff, error) {
+	_ = ctx
+	var resp []TaskHandoff
+	if err := c.doRequest("GET", "/api/v1/task_handoffs?status=pending", nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("get pending handoffs: %w", err)
+	}
+	return resp, nil
+}
+
+func (c *Client) AcceptHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
+	_ = ctx
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/task_handoffs/%d/accept", handoffID)
+	if err := c.doRequest("PATCH", path, nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("accept handoff: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) RejectHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
+	_ = ctx
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/task_handoffs/%d/reject", handoffID)
+	if err := c.doRequest("PATCH", path, nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("reject handoff: %w", err)
 	}
 	return &resp, nil
 }

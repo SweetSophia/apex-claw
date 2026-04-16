@@ -23,6 +23,8 @@ class Agent < ApplicationRecord
            foreign_key: :actor_agent_id,
            inverse_of: :actor_agent,
            dependent: :nullify
+  has_many :sent_handoffs, class_name: "TaskHandoff", foreign_key: :from_agent_id, dependent: :destroy
+  has_many :received_handoffs, class_name: "TaskHandoff", foreign_key: :to_agent_id, dependent: :destroy
 
   enum :status, {
     offline: 0,

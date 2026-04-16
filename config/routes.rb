@@ -35,6 +35,13 @@ Rails.application.routes.draw do
 
       get "events", to: "events#index"
 
+      resources :task_handoffs, only: [ :index ] do
+        member do
+          patch :accept
+          patch :reject
+        end
+      end
+
       resources :tasks, only: [ :index, :show, :create, :update, :destroy ] do
         collection do
           get :next
@@ -46,7 +53,10 @@ Rails.application.routes.draw do
           patch :unclaim
           patch :assign
           patch :unassign
+          post :handoff, to: "task_handoffs#create"
         end
+
+        resources :artifacts, only: [ :index, :create, :show ], controller: "task_artifacts", param: :artifact_id
       end
     end
   end

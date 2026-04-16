@@ -56,6 +56,15 @@ type Command struct {
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
+type TaskArtifact struct {
+	ID          int64          `json:"id"`
+	Filename    string         `json:"filename"`
+	ContentType string         `json:"content_type"`
+	Size        int64          `json:"size"`
+	Metadata    map[string]any `json:"metadata"`
+	CreatedAt   time.Time      `json:"created_at"`
+}
+
 type RegisterRequest struct {
 	JoinToken string    `json:"join_token"`
 	Agent     AgentInfo `json:"agent"`
@@ -114,4 +123,16 @@ type CommandCompleteRequest struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type TaskHandoff struct {
+	ID          int64      `json:"id"`
+	TaskID      int64      `json:"task_id"`
+	FromAgentID int64      `json:"from_agent_id"`
+	ToAgentID   int64      `json:"to_agent_id"`
+	Context     string     `json:"context"`
+	Status      string     `json:"status"`
+	RespondedAt *time.Time `json:"responded_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
