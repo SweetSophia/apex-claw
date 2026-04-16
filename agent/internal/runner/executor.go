@@ -6,25 +6,17 @@ import (
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
-type Executor interface {
-	Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult
-}
-
+// ExecutionResult holds the outcome of a task execution.
 type ExecutionResult struct {
 	Completed bool
 	Error     error
 	Output    string
 }
 
-type StubExecutor struct{}
-
-func (s *StubExecutor) Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult {
-	return ExecutionResult{
-		Completed: true,
-		Output:    "stub execution completed",
-	}
-}
-
-func NewStubExecutor() *StubExecutor {
-	return &StubExecutor{}
+// Executor is the interface for task execution backends.
+type Executor interface {
+	// Name returns the executor identifier (e.g. "shell", "script").
+	Name() string
+	// Execute runs the given task and returns the result.
+	Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult
 }

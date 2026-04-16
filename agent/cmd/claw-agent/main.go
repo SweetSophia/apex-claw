@@ -85,8 +85,16 @@ func main() {
 		cancel()
 	}()
 
+	registry := runner.NewExecutorRegistry()
+	executorName := runner.DefaultExecutorName()
+	executor, err := registry.Get(executorName)
+	if err != nil {
+		log.Fatalf("failed to create executor %q: %v", executorName, err)
+	}
+	log.Printf("using executor: %s", executor.Name())
+
 	heartbeatRunner := runner.NewHeartbeatRunner(client, agentID, cfg.HeartbeatDelay)
-	taskRunner := runner.NewTaskRunner(client, cfg.TaskPollDelay, runner.NewStubExecutor())
+	taskRunner := runner.NewTaskRunner(client, cfg.TaskPollDelay, executor)
 	commandRunner := orchestrator.NewCommandRunner(client, cfg.CommandPollDelay)
 
 	errChan := make(chan error, 3)

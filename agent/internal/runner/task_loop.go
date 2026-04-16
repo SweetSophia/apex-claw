@@ -18,9 +18,7 @@ func NewTaskRunner(client *clawdeck.Client, interval time.Duration, executor Exe
 	if interval == 0 {
 		interval = 5 * time.Second
 	}
-	if executor == nil {
-		executor = &StubExecutor{}
-	}
+
 	return &TaskRunner{
 		client:   client,
 		interval: interval,
