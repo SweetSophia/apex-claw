@@ -188,7 +188,11 @@ module Api
       def complete
         set_task_activity_info(@task)
         new_status = @task.status == "done" ? "inbox" : "done"
-        @task.update!(status: new_status)
+        update_params = { status: new_status }
+        if new_status == "done" && params.dig(:task, :output).present?
+          update_params[:output] = params.dig(:task, :output)
+        end
+        @task.update!(update_params)
         render json: task_json(@task)
       end
 
@@ -214,7 +218,7 @@ module Api
       end
 
       def task_params
-        params.require(:task).permit(:name, :description, :priority, :due_date, :status, :blocked, :board_id, tags: [])
+        params.require(:task).permit(:name, :description, :priority, :due_date, :status, :blocked, :board_id, :output, tags: [])
       end
 
       def task_json(task)
@@ -222,6 +226,7 @@ module Api
           id: task.id,
           name: task.name,
           description: task.description,
+          output: task.output,
           priority: task.priority,
           status: task.status,
           blocked: task.blocked,

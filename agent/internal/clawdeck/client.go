@@ -98,10 +98,20 @@ func (c *Client) UpdateTask(taskID int64, updates TaskUpdateRequest) (*Task, err
 	return &resp, nil
 }
 
-func (c *Client) CompleteTask(taskID int64) (*Task, error) {
+func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 	var resp Task
 	path := fmt.Sprintf("/api/v1/tasks/%d/complete", taskID)
-	if err := c.doRequest("PATCH", path, nil, &resp, true); err != nil {
+
+	var body io.Reader
+	if output != "" {
+		reqBody := map[string]any{
+			"task": map[string]string{"output": output},
+		}
+		data, _ := json.Marshal(reqBody)
+		body = bytes.NewReader(data)
+	}
+
+	if err := c.doRequest("PATCH", path, body, &resp, true); err != nil {
 		return nil, fmt.Errorf("complete task: %w", err)
 	}
 	return &resp, nil

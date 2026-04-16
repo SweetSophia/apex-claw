@@ -186,6 +186,18 @@
         </div>
       <% end %>
 
+
+      <%# Agent Response / Output %>
+      <% if task.output.present? %>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#e0e0e0;margin-bottom:14px">Agent Response</div>
+          <div style="padding:12px 14px;border-radius:10px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.10);display:flex;align-items:flex-start;gap:9px">
+            <span style="font-size:16px">🤖</span>
+            <div style="font-size:12px;font-weight:500;color:#bbb;line-height:1.6;white-space:pre-wrap;flex:1"><%= task.output %></div>
+          </div>
+        </div>
+      <% end %>
+
       <!-- Subtasks -->
       <% subtasks = task.subtasks %>
       <% if subtasks.any? %>

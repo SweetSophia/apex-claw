@@ -74,7 +74,7 @@ func (t *TaskRunner) pollAndExecute(ctx context.Context) {
 	}
 
 	if result.Completed {
-		_, err = t.client.CompleteTask(task.ID)
+		_, err = t.client.CompleteTask(task.ID, result.Output)
 		if err != nil {
 			log.Printf("failed to complete task %d: %v", task.ID, err)
 			return

@@ -380,6 +380,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_140000) do
     t.integer "confidence", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.text "output"
     t.date "due_date"
     t.integer "effort", default: 0, null: false
     t.integer "impact", default: 0, null: false
