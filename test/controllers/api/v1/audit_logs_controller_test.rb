@@ -1,7 +1,10 @@
 require "test_helper"
 
-class Api::V1::AuditLogsControllerTest < ActionDispatch::IntegrationTest
+class Api::V1::AuditLogsControllerTest < ActionController::TestCase
+  tests Api::V1::AuditLogsController
+
   setup do
+    @routes = Rails.application.routes
     @admin = users(:admin)
     @user = users(:one)
     @admin_token = api_tokens(:admin).token
@@ -12,10 +15,13 @@ class Api::V1::AuditLogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can list audit logs" do
-    get "/api/v1/audit_logs", headers: auth_header(@admin_token)
+    assert_equal 1, AuditLog.where(action: "create", resource_type: "Task", resource_id: @task.id).count
+
+    @request.headers["Authorization"] = "Bearer #{@admin_token}"
+    get :index, format: :json
 
     assert_response :success
-    body = response.parsed_body
+    body = JSON.parse(response.body)
     assert_kind_of Array, body
     assert_equal "create", body.first["action"]
     assert_equal "User", body.first.dig("actor", "type")
@@ -23,23 +29,23 @@ class Api::V1::AuditLogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "non admin cannot list audit logs" do
-    get "/api/v1/audit_logs", headers: auth_header(@user_token)
+    @request.headers["Authorization"] = "Bearer #{@user_token}"
+    get :index, format: :json
 
     assert_response :forbidden
   end
 
   test "index filters audit logs" do
-    get "/api/v1/audit_logs",
-        headers: auth_header(@admin_token),
-        params: { actor_type: "User", actor_id: @user.id, resource_type: "Task", resource_id: @task.id, action: "create" }
+    @request.headers["Authorization"] = "Bearer #{@admin_token}"
+    get :index, params: {
+      actor_type: "User",
+      actor_id: @user.id,
+      resource_type: "Task",
+      resource_id: @task.id,
+      action: "create"
+    }, format: :json
 
     assert_response :success
-    assert_equal 1, response.parsed_body.length
-  end
-
-  private
-
-  def auth_header(token)
-    { "Authorization" => "Bearer #{token}" }
+    assert_equal 1, JSON.parse(response.body).length
   end
 end

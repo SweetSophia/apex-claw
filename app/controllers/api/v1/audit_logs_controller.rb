@@ -4,10 +4,12 @@ module Api
       before_action :require_admin!
 
       def index
+        filter_action = request.query_parameters["action"] || params[:audit_action]
+
         audit_logs = AuditLog.all.order(created_at: :desc)
         audit_logs = audit_logs.by_actor(params[:actor_type], params[:actor_id]) if params[:actor_type].present? && params[:actor_id].present?
         audit_logs = audit_logs.by_resource(params[:resource_type], params[:resource_id]) if params[:resource_type].present? && params[:resource_id].present?
-        audit_logs = audit_logs.where(action: params[:action]) if params[:action].present?
+        audit_logs = audit_logs.where(action: filter_action) if filter_action.present?
 
         page = params.fetch(:page, 1).to_i
         per_page = [ params.fetch(:per_page, 25).to_i, 100 ].min
