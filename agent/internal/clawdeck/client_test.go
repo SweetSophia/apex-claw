@@ -7,6 +7,14 @@ import (
 	"testing"
 )
 
+// checkAuth verifies the Authorization header is set correctly.
+func checkAuth(t *testing.T, r *http.Request, expected string) {
+	t.Helper()
+	if auth := r.Header.Get("Authorization"); auth != "Bearer "+expected {
+		t.Errorf("expected Authorization 'Bearer %s', got %q", expected, auth)
+	}
+}
+
 func TestNewClient(t *testing.T) {
 	client := NewClient("http://localhost:3000")
 	if client.baseURL != "http://localhost:3000" {
@@ -82,6 +90,7 @@ func TestClient_Register(t *testing.T) {
 func TestClient_Heartbeat(t *testing.T) {
 	var receivedStatus string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "agent-token")
 		if r.Method != "POST" {
 			t.Errorf("expected POST, got %s", r.Method)
 		}
@@ -119,14 +128,12 @@ func TestClient_Heartbeat(t *testing.T) {
 
 func TestClient_GetNextTask_WithTask(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "GET" {
 			t.Errorf("expected GET, got %s", r.Method)
 		}
 		if r.URL.Path != "/api/v1/tasks/next" {
 			t.Errorf("expected /api/v1/tasks/next, got %s", r.URL.Path)
-		}
-		if auth := r.Header.Get("Authorization"); auth != "Bearer test-token" {
-			t.Errorf("expected Bearer auth, got %s", auth)
 		}
 
 		task := Task{ID: 42, Name: "Build feature", Status: "in_progress"}
@@ -174,6 +181,7 @@ func TestClient_GetNextTask_NoContent(t *testing.T) {
 func TestClient_CompleteTask(t *testing.T) {
 	var receivedBody map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "PATCH" {
 			t.Errorf("expected PATCH, got %s", r.Method)
 		}
@@ -201,7 +209,6 @@ func TestClient_CompleteTask(t *testing.T) {
 	if task.Status != "done" {
 		t.Errorf("expected status done, got %s", task.Status)
 	}
-	// Verify output was sent in request body
 	if taskMap, ok := receivedBody["task"].(map[string]any); ok {
 		if taskMap["output"] != "Build ok" {
 			t.Errorf("expected output 'Build ok' in request, got %v", taskMap["output"])
@@ -233,6 +240,7 @@ func TestClient_CompleteTask_EmptyOutput(t *testing.T) {
 
 func TestClient_GetNextCommand_WithCommand(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "GET" {
 			t.Errorf("expected GET, got %s", r.Method)
 		}
@@ -281,6 +289,7 @@ func TestClient_GetNextCommand_NoContent(t *testing.T) {
 
 func TestClient_AckCommand(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "PATCH" {
 			t.Errorf("expected PATCH, got %s", r.Method)
 		}
@@ -308,6 +317,7 @@ func TestClient_AckCommand(t *testing.T) {
 
 func TestClient_CompleteCommand(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "PATCH" {
 			t.Errorf("expected PATCH, got %s", r.Method)
 		}
@@ -355,6 +365,7 @@ func TestClient_APIError(t *testing.T) {
 
 func TestClient_ClaimTask(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "PATCH" {
 			t.Errorf("expected PATCH, got %s", r.Method)
 		}
@@ -382,11 +393,21 @@ func TestClient_ClaimTask(t *testing.T) {
 
 func TestClient_UpdateTask(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		checkAuth(t, r, "test-token")
 		if r.Method != "PATCH" {
 			t.Errorf("expected PATCH, got %s", r.Method)
 		}
 		if r.URL.Path != "/api/v1/tasks/10" {
 			t.Errorf("expected /api/v1/tasks/10, got %s", r.URL.Path)
+		}
+
+		// Verify request payload (UpdateTask sends flat struct, no "task" wrapper)
+		var reqBody map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		if reqBody["status"] != "in_progress" {
+			t.Errorf("expected status 'in_progress' in request, got %v", reqBody["status"])
 		}
 
 		task := Task{ID: 10, Name: "Updated", Status: "in_progress"}

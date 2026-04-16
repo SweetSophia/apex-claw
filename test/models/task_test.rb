@@ -148,7 +148,7 @@ class TaskTest < ActiveSupport::TestCase
 
     results = Task.completed
     assert_includes results, done
-    assert_not_includes results, Task.where(name: "Open").first
+    assert_not_includes results, _incomplete
   end
 
   test "assigned_to_agent scope returns assigned tasks" do
@@ -157,6 +157,7 @@ class TaskTest < ActiveSupport::TestCase
 
     results = Task.assigned_to_agent
     assert_includes results, assigned
+    assert_not_includes results, _unassigned
   end
 
   # Agent assignment methods
