@@ -12,14 +12,19 @@ module Api
 
     def authenticate_api_token
       token = extract_token_from_header
-      agent_token = AgentToken.authenticate(token)
+      @current_agent = request.env["clawdeck.current_agent"]
+      @current_user = request.env["clawdeck.current_user"]
 
-      if agent_token
-        @current_agent = agent_token.agent
-        @current_user = @current_agent.user
-      else
-        @current_agent = nil
-        @current_user = ApiToken.authenticate(token)
+      unless @current_agent
+        agent_token = AgentToken.authenticate(token)
+
+        if agent_token
+          @current_agent = agent_token.agent
+          @current_user = @current_agent.user
+        else
+          @current_agent = nil
+          @current_user = ApiToken.authenticate(token)
+        end
       end
 
       unless @current_user

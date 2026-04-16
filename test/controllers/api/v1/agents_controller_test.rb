@@ -2,6 +2,8 @@ require "test_helper"
 
 class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Rails.cache.clear
+
     @user = users(:one)
     @other_user = users(:two)
     @user_token = api_tokens(:one).token
@@ -171,6 +173,56 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
     assert_not_equal "Should Not Update", @other_agent.reload.name
+  end
+
+  test "show returns default rate limit config for owned agent" do
+    get "/api/v1/agents/#{@agent.id}/rate_limit", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert_equal @agent.id, response.parsed_body["agent_id"]
+    assert_equal 60, response.parsed_body["window_seconds"]
+    assert_equal 120, response.parsed_body["max_requests"]
+  end
+
+  test "update persists custom agent rate limit for owner" do
+    put "/api/v1/agents/#{@agent.id}/rate_limit",
+        headers: auth_header(@user_token),
+        params: { agent_rate_limit: { window_seconds: 30, max_requests: 10 } }
+
+    assert_response :success
+    @agent.reload
+    assert_equal 30, @agent.agent_rate_limit.window_seconds
+    assert_equal 10, @agent.agent_rate_limit.max_requests
+  end
+
+  test "rate limit config is restricted to owner scope" do
+    get "/api/v1/agents/#{@other_agent.id}/rate_limit", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "rate limit config rejects agent token access" do
+    get "/api/v1/agents/#{@agent.id}/rate_limit", headers: auth_header(@agent_plaintext_token)
+    assert_response :forbidden
+  end
+
+  test "agent token requests receive rate limit headers and enforce configured limit" do
+    @agent.create_agent_rate_limit!(window_seconds: 60, max_requests: 2)
+
+    2.times do |index|
+      get "/api/v1/agents", headers: auth_header(@agent_plaintext_token)
+      assert_response :success
+      assert_equal "2", response.headers["X-RateLimit-Limit"]
+      assert_equal (1 - index).to_s, response.headers["X-RateLimit-Remaining"]
+      assert response.headers["X-RateLimit-Reset"].present?
+    end
+
+    get "/api/v1/agents", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :too_many_requests
+    assert_equal "2", response.headers["X-RateLimit-Limit"]
+    assert_equal "0", response.headers["X-RateLimit-Remaining"]
+    assert response.headers["Retry-After"].present?
+    assert_equal "Rate limit exceeded", response.parsed_body["error"]
   end
 
   private

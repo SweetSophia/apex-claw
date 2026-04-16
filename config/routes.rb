@@ -13,6 +13,8 @@ Rails.application.routes.draw do
           post :heartbeat
           post :commands, to: "agent_commands#enqueue"
         end
+
+        resource :rate_limit, only: [ :show, :update ], controller: "agent_rate_limits"
       end
 
       resources :agent_commands, only: [] do

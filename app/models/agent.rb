@@ -15,6 +15,7 @@ class Agent < ApplicationRecord
            foreign_key: :claimed_by_agent_id,
            inverse_of: :claimed_by_agent,
            dependent: :nullify
+  has_one :agent_rate_limit, dependent: :destroy
   has_many :agent_tokens, dependent: :destroy
   has_many :agent_commands, dependent: :destroy
   has_many :task_activities,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_204100) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_16_221400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_204100) do
     t.index ["agent_id", "state"], name: "index_agent_commands_on_agent_id_and_state"
     t.index ["agent_id"], name: "index_agent_commands_on_agent_id"
     t.index ["requested_by_user_id"], name: "index_agent_commands_on_requested_by_user_id"
+  end
+
+  create_table "agent_rate_limits", force: :cascade do |t|
+    t.bigint "agent_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "max_requests", default: 120, null: false
+    t.datetime "updated_at", null: false
+    t.integer "window_seconds", default: 60, null: false
+    t.index ["agent_id"], name: "index_agent_rate_limits_on_agent_id", unique: true
   end
 
   create_table "agent_tokens", force: :cascade do |t|
@@ -453,6 +462,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_204100) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agent_commands", "agents"
   add_foreign_key "agent_commands", "users", column: "requested_by_user_id"
+  add_foreign_key "agent_rate_limits", "agents"
   add_foreign_key "agent_tokens", "agents"
   add_foreign_key "agents", "users"
   add_foreign_key "api_tokens", "users"

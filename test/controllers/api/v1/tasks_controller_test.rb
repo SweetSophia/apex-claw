@@ -2,6 +2,8 @@ require "test_helper"
 
 class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Rails.cache.clear
+
     @user = users(:one)
     @api_token = api_tokens(:one)
     @task = tasks(:one)
