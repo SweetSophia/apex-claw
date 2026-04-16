@@ -42,11 +42,11 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 ## Phase 2: Rails API Hardening 🔐
 **Branch**: `feat/phase2-api-hardening`
 
-### 2.1 Token Rotation & Revocation
-- [ ] `POST /api/v1/agents/:id/rotate_token` — issue new token, invalidate old
-- [ ] `POST /api/v1/agents/:id/revoke_token` — immediate invalidation
-- [ ] Token expiry support (TTL field on agent_tokens)
-- [ ] Automatic rotation prompt on heartbeat if token near expiry
+### 2.1 Token Rotation & Revocation ✅ (commit `9be78d0`)
+- [x] `POST /api/v1/agents/:id/rotate_token` — issue new token, invalidate old
+- [x] `POST /api/v1/agents/:id/revoke_token` — immediate invalidation
+- [x] Token expiry support (TTL field on agent_tokens)
+- [x] Automatic rotation prompt on heartbeat if token near expiry
 
 ### 2.2 Audit Logging ✅ (commit `95faf0a`)
 - [x] `AuditLog` model: actor_type, actor_id, action, resource, changes, ip
@@ -54,16 +54,16 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [x] API endpoint: `GET /api/v1/audit_logs` (admin only)
 - [ ] UI: Admin audit log viewer (deferred to Phase 4)
 
-### 2.3 Per-Agent Rate Limiting
-- [ ] `RateLimit` model: agent_id, window_seconds, max_requests
-- [ ] Rack middleware: token-bucket per agent
-- [ ] `429 Too Many Requests` with `Retry-After` header
-- [ ] Configurable defaults per agent tier
+### 2.3 Per-Agent Rate Limiting ✅ (commit `86f94ca`)
+- [x] `RateLimit` model: agent_id, window_seconds, max_requests
+- [x] Rack middleware: token-bucket per agent
+- [x] `429 Too Many Requests` with `Retry-After` header
+- [x] Configurable defaults per agent tier
 
-### 2.4 Real-Time Updates
-- [ ] Turbo Streams broadcast on: task create/update/complete, agent status change
-- [ ] SSE endpoint for API consumers
-- [ ] Agent presence indicators on dashboard
+### 2.4 Real-Time Updates ✅ (commit `fcecd61`)
+- [x] Turbo Streams broadcast on: task create/update/complete, agent status change
+- [x] SSE endpoint for API consumers
+- [x] Agent presence indicators on dashboard
 
 ---
 
@@ -142,3 +142,6 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 | 2026-04-16 | 1.3 Retry/Backoff + 1.4 Logging | ✅ | GPT-5.4, commit 3233fe9 |
 | 2026-04-16 | 1.2 Enhanced Heartbeat | ✅ | GLM-5.1, commit d6be91f |
 | 2026-04-16 | 2.2 Audit Logging fixup | ✅ | commit 6b37448 |
+| 2026-04-16 | 2.1 Token Rotation | ✅ | GPT-5.4, expiry+revoke+rotate endpoints, Go client, commit 9be78d0 |
+| 2026-04-16 | 2.3 Rate Limiting | ✅ | GPT-5.4, token-bucket middleware, 429s, rate headers, commit 86f94ca |
+| 2026-04-16 | 2.4 Real-Time Updates | ✅ | GLM-5.1, Turbo Streams + SSE + Stimulus controllers, commit fcecd61 |
