@@ -22,6 +22,7 @@ type Task struct {
 	ID               int64      `json:"id"`
 	Name             string     `json:"name"`
 	Description      string     `json:"description"`
+	Output           string     `json:"output"`
 	Priority         string     `json:"priority"`
 	Status           string     `json:"status"`
 	Blocked          bool       `json:"blocked"`
