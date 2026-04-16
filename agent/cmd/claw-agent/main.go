@@ -12,8 +12,8 @@ import (
 
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 	"github.com/SweetSophia/clawdeck/agent/internal/config"
-	"github.com/SweetSophia/clawdeck/agent/internal/orchestrator"
 	"github.com/SweetSophia/clawdeck/agent/internal/runner"
+	"github.com/SweetSophia/clawdeck/agent/internal/runner/handlers"
 )
 
 var (
@@ -91,7 +91,13 @@ func main() {
 
 	heartbeatRunner := runner.NewHeartbeatRunner(client, agentID, cfg.HeartbeatDelay)
 	taskRunner := runner.NewTaskRunner(client, cfg.TaskPollDelay, executor)
-	commandRunner := orchestrator.NewCommandRunner(client, cfg.CommandPollDelay)
+	commandDispatcher := runner.NewCommandDispatcher()
+	commandDispatcher.Register("drain", &handlers.DrainHandler{SetDraining: taskRunner.SetDraining})
+	commandDispatcher.Register("health_check", &handlers.HealthCheckHandler{StartTime: time.Now(), TaskActiveFunc: taskRunner.Active})
+	commandDispatcher.Register("shell", &handlers.ShellHandler{})
+	commandDispatcher.Register("config_reload", &handlers.ConfigReloadHandler{})
+	commandDispatcher.Register("upgrade", &handlers.UpgradeHandler{})
+	commandRunner := runner.NewCommandRunner(client, cfg.CommandPollDelay, commandDispatcher)
 
 	// Wire task-active callback so heartbeat metadata includes runner state.
 	heartbeatRunner.SetTaskActiveFunc(taskRunner.Active)

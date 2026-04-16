@@ -1,0 +1,65 @@
+package runner
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+)
+
+func TestCommandRunnerPollDispatchAckCompleteFlow(t *testing.T) {
+	var acked atomic.Bool
+	var completed atomic.Bool
+	var result map[string]any
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/agent_commands/next":
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, Kind: "health_check", State: "pending", Payload: map[string]any{}})
+		case "/api/v1/agent_commands/7/ack":
+			acked.Store(true)
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, State: "acknowledged"})
+		case "/api/v1/agent_commands/7/complete":
+			completed.Store(true)
+			defer r.Body.Close()
+			var req clawdeck.CommandCompleteRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("decode complete request: %v", err)
+			}
+			result = req.Result
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, State: "completed", Result: req.Result})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	client := clawdeck.NewClient(srv.URL)
+	client.SetToken("test-token")
+	client.SetAgentID(42)
+
+	dispatcher := NewCommandDispatcher()
+	dispatcher.Register("health_check", &testCommandHandler{result: map[string]any{"ok": true}})
+
+	runner := NewCommandRunner(client, 10*time.Millisecond, dispatcher)
+	ctx, cancel := context.WithTimeout(context.Background(), 80*time.Millisecond)
+	defer cancel()
+
+	go runner.Run(ctx)
+	<-ctx.Done()
+
+	if !acked.Load() {
+		t.Fatal("expected command to be acked")
+	}
+	if !completed.Load() {
+		t.Fatal("expected command to be completed")
+	}
+	if !result["ok"].(bool) {
+		t.Fatalf("expected handler result in completion payload, got %#v", result)
+	}
+}
