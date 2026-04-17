@@ -45,7 +45,7 @@ module Api
       private
 
       def subscribe_to_channel(channel)
-        callback = -> (message) do
+        callback = ->(message) do
           data = message.is_a?(String) ? message : message.to_json
           sse_write(data)
         end
