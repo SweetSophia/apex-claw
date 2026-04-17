@@ -59,7 +59,7 @@ func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	logger := logging.Global()
 	logger.Info("received command", map[string]any{"command_id": cmd.ID, "kind": cmd.Kind, "state": cmd.State})
 
-	if _, err := c.client.AckCommand(cmd.ID); err != nil {
+	if _, err := c.ackWithRetry(ctx, cmd.ID); err != nil {
 		logger.Error("failed to ack command", map[string]any{"command_id": cmd.ID, "error": err.Error()})
 		return
 	}
@@ -87,6 +87,32 @@ func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	}
 
 	logger.Info("completed command", map[string]any{"command_id": cmd.ID, "kind": cmd.Kind, "success": result["success"]})
+}
+
+func (c *CommandRunner) ackWithRetry(ctx context.Context, commandID int64) (*clawdeck.Command, error) {
+	var lastErr error
+	backoff := 200 * time.Millisecond
+
+	for attempt := 0; attempt < 3; attempt++ {
+		resp, err := c.client.AckCommand(commandID)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+
+		if attempt == 2 {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(backoff):
+		}
+		backoff *= 2
+	}
+
+	return nil, fmt.Errorf("ack command after retries: %w", lastErr)
 }
 
 func commandResultError(message string, err error) map[string]any {

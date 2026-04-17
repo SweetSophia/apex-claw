@@ -1,6 +1,8 @@
 module Api
   module V1
     class TaskArtifactsController < BaseController
+      MAX_ARTIFACT_SIZE = 25.megabytes
+
       before_action :set_task
       before_action :set_artifact, only: :show
       before_action :authorize_task_artifact_access!
@@ -12,6 +14,7 @@ module Api
       def create
         uploaded_file = params[:file]
         return render_missing_file unless uploaded_file
+        return render_file_too_large(uploaded_file) if uploaded_file.size.to_i > MAX_ARTIFACT_SIZE
 
         metadata = parse_metadata(params[:metadata])
         return if performed?
@@ -79,6 +82,10 @@ module Api
 
       def render_missing_file
         render json: { error: "File is required" }, status: :unprocessable_entity
+      end
+
+      def render_file_too_large(uploaded_file)
+        render json: { error: "File exceeds max size of #{MAX_ARTIFACT_SIZE} bytes", size: uploaded_file.size.to_i }, status: :unprocessable_entity
       end
 
       def artifact_json(artifact)

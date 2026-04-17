@@ -39,6 +39,17 @@ class TaskHandoffTest < ActiveSupport::TestCase
     assert_not handoff.valid?
   end
 
+
+  test "disallows multiple pending handoffs for the same task" do
+    TaskHandoff.create!(task: @task, from_agent: @from_agent, to_agent: @to_agent, context: "A")
+    other_agent = Agent.create!(user: @user, name: "Other Target")
+
+    handoff = TaskHandoff.new(task: @task, from_agent: @from_agent, to_agent: other_agent, context: "B")
+
+    assert_not handoff.valid?
+    assert_includes handoff.errors[:task_id], "already has a pending handoff"
+  end
+
   test "status defaults to pending" do
     handoff = TaskHandoff.create!(
       task: @task,
@@ -58,8 +69,9 @@ class TaskHandoffTest < ActiveSupport::TestCase
 
   test "for_agent scope" do
     other_agent = Agent.create!(user: @user, name: "Other")
+    other_task = Task.create!(user: @user, board: @task.board, name: "Another Task")
     TaskHandoff.create!(task: @task, from_agent: @from_agent, to_agent: @to_agent, context: "A")
-    TaskHandoff.create!(task: @task, from_agent: other_agent, to_agent: @from_agent, context: "B")
+    TaskHandoff.create!(task: other_task, from_agent: other_agent, to_agent: @from_agent, context: "B")
 
     results = TaskHandoff.for_agent(@from_agent.id)
     assert_equal 2, results.count

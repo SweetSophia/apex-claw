@@ -48,6 +48,19 @@ class Api::V1::TaskHandoffsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+
+  test "cannot create second pending handoff for same task" do
+    TaskHandoff.create!(task: @task, from_agent: @from_agent, to_agent: @to_agent, context: "First")
+    other_agent = Agent.create!(user: @user, name: "Third Agent")
+
+    post handoff_api_v1_task_url(@task),
+      params: { to_agent_id: other_agent.id, context: "Second" },
+      headers: @from_auth
+
+    assert_response :unprocessable_entity
+    assert_equal "Task already has a pending handoff", response.parsed_body["error"]
+  end
+
   test "auto_accept handoff" do
     post handoff_api_v1_task_url(@task),
       params: { to_agent_id: @to_agent.id, context: "Auto", auto_accept: true },
@@ -111,8 +124,9 @@ class Api::V1::TaskHandoffsControllerTest < ActionDispatch::IntegrationTest
   # --- Index ---
 
   test "list handoffs for agent" do
+    other_task = Task.create!(user: @user, board: @task.board, name: "Another Handoff Task")
     TaskHandoff.create!(task: @task, from_agent: @from_agent, to_agent: @to_agent, context: "A")
-    TaskHandoff.create!(task: @task, from_agent: @to_agent, to_agent: @from_agent, context: "B")
+    TaskHandoff.create!(task: other_task, from_agent: @to_agent, to_agent: @from_agent, context: "B")
 
     get api_v1_task_handoffs_url, headers: @from_auth
     assert_response :success

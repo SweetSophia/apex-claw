@@ -84,6 +84,21 @@ class Api::V1::TaskArtifactsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Metadata must be valid JSON", response.parsed_body["error"]
   end
 
+
+  test "upload rejects oversized artifact" do
+    oversized = "a" * (Api::V1::TaskArtifactsController::MAX_ARTIFACT_SIZE + 1)
+
+    post api_v1_task_artifacts_url(@task),
+         params: {
+           file: uploaded_file("huge.txt", oversized)
+         },
+         headers: @auth_header,
+         as: :multipart
+
+    assert_response :unprocessable_entity
+    assert_match(/File exceeds max size/, response.parsed_body["error"])
+  end
+
   test "list returns artifacts for owner" do
     artifact = create_artifact(filename: "list.txt", content: "list data")
 

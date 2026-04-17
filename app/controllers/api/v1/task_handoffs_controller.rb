@@ -48,12 +48,19 @@ module Api
           handoff.responded_at = Time.current
         end
 
-        ApplicationRecord.transaction do
-          handoff.save!
+        @task.with_lock do
+          if @task.handoffs.pending.exists?
+            render json: { error: "Task already has a pending handoff" }, status: :unprocessable_entity
+            return
+          end
 
-          if handoff.accepted?
-            reassign_task_to_agent(@task, target_agent)
-            record_handoff_activity(@task, handoff, "accepted")
+          ApplicationRecord.transaction do
+            handoff.save!
+
+            if handoff.accepted?
+              reassign_task_to_agent(@task, target_agent)
+              record_handoff_activity(@task, handoff, "accepted")
+            end
           end
         end
 
@@ -72,10 +79,17 @@ module Api
           return
         end
 
-        ApplicationRecord.transaction do
-          @handoff.accept!
-          reassign_task_to_agent(@handoff.task, @handoff.to_agent)
-          record_handoff_activity(@handoff.task, @handoff, "accepted")
+        @handoff.with_lock do
+          unless @handoff.pending?
+            render json: { error: "Handoff is no longer pending" }, status: :unprocessable_entity
+            return
+          end
+
+          ApplicationRecord.transaction do
+            @handoff.accept!
+            reassign_task_to_agent(@handoff.task, @handoff.to_agent)
+            record_handoff_activity(@handoff.task, @handoff, "accepted")
+          end
         end
 
         # Broadcast task update to board
@@ -96,8 +110,17 @@ module Api
           return
         end
 
-        @handoff.reject!
-        record_handoff_activity(@handoff.task, @handoff, "rejected")
+        @handoff.with_lock do
+          unless @handoff.pending?
+            render json: { error: "Handoff is no longer pending" }, status: :unprocessable_entity
+            return
+          end
+
+          ApplicationRecord.transaction do
+            @handoff.reject!
+            record_handoff_activity(@handoff.task, @handoff, "rejected")
+          end
+        end
 
         render json: handoff_json(@handoff)
       end

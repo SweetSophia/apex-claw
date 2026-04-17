@@ -11,6 +11,7 @@ class TaskHandoff < ApplicationRecord
 
   validates :from_agent_id, comparison: { other_than: :to_agent_id, message: "must differ from target agent" }
   validates :context, presence: true
+  validate :only_one_pending_handoff_per_task, on: :create, if: :pending?
 
   scope :for_agent, ->(agent_id) { where(from_agent_id: agent_id).or(where(to_agent_id: agent_id)) }
   scope :for_task, ->(task_id) { where(task_id: task_id) }
@@ -38,6 +39,14 @@ class TaskHandoff < ApplicationRecord
   end
 
   private
+
+  def only_one_pending_handoff_per_task
+    return unless task_id
+    return unless self.class.pending.where(task_id: task_id).where.not(id: id).exists?
+
+    errors.add(:task_id, "already has a pending handoff")
+  end
+
 
   def broadcast_handoff_created
     return unless task&.user_id

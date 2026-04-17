@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
-const defaultShellAllowlist = "ls,cat,pwd,echo,whoami,date,df,free,uptime,top,ps"
+const defaultShellAllowlist = "pwd,echo,whoami,date,df,free,uptime"
 
 type ShellHandler struct{}
 
@@ -31,6 +32,9 @@ func (h *ShellHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[s
 	}
 
 	binary := parts[0]
+	if err := validateShellCommand(binary, parts[1:]); err != nil {
+		return nil, err
+	}
 	if !isShellCommandAllowed(binary) {
 		return nil, fmt.Errorf("shell command %q not allowed", binary)
 	}
@@ -69,6 +73,33 @@ func isShellCommandAllowed(binary string) bool {
 		}
 	}
 	return false
+}
+
+func validateShellCommand(binary string, args []string) error {
+	if strings.ContainsAny(binary, `/\`) || filepath.Base(binary) != binary {
+		return fmt.Errorf("shell command %q not allowed", binary)
+	}
+
+	switch binary {
+	case "pwd", "whoami", "date", "uptime":
+		if len(args) > 0 {
+			return fmt.Errorf("shell command %q does not accept arguments", binary)
+		}
+	case "df", "free":
+		for _, arg := range args {
+			if arg != "-h" {
+				return fmt.Errorf("shell command %q only allows the -h flag", binary)
+			}
+		}
+	case "echo":
+		for _, arg := range args {
+			if strings.ContainsAny(arg, "\x00\n\r") {
+				return fmt.Errorf("shell command %q contains unsupported characters", binary)
+			}
+		}
+	}
+
+	return nil
 }
 
 func shellAllowedCommands() []string {
@@ -121,18 +152,24 @@ func shellTimeoutFromPayload(payload map[string]any) time.Duration {
 	return time.Duration(seconds * float64(time.Second))
 }
 
-// parseShellCommand splits a command string respecting double-quoted segments.
+// parseShellCommand splits a command string respecting single and double quoted segments.
 func parseShellCommand(input string) ([]string, error) {
 	var parts []string
 	var current strings.Builder
-	inQuotes := false
+	quoteChar := byte(0)
 
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
 		switch {
-		case ch == '"':
-			inQuotes = !inQuotes
-		case ch == ' ' && !inQuotes:
+		case ch == '"' || ch == '\'':
+			if quoteChar == 0 {
+				quoteChar = ch
+			} else if quoteChar == ch {
+				quoteChar = 0
+			} else {
+				current.WriteByte(ch)
+			}
+		case ch == ' ' && quoteChar == 0:
 			if current.Len() > 0 {
 				parts = append(parts, current.String())
 				current.Reset()
@@ -146,7 +183,7 @@ func parseShellCommand(input string) ([]string, error) {
 		parts = append(parts, current.String())
 	}
 
-	if inQuotes {
+	if quoteChar != 0 {
 		return nil, fmt.Errorf("unclosed quote in command")
 	}
 

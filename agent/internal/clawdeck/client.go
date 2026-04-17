@@ -8,8 +8,12 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 )
+
+const MaxArtifactUploadSize int64 = 25 << 20
 
 type Client struct {
 	baseURL    string
@@ -130,11 +134,17 @@ func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 }
 
 func (c *Client) UploadArtifact(ctx context.Context, taskID int64, filename string, data io.Reader) (*TaskArtifact, error) {
+	filename = sanitizeArtifactFilename(filename)
+	if filename == "" {
+		return nil, fmt.Errorf("artifact filename is required")
+	}
+
 	path := fmt.Sprintf("/api/v1/tasks/%d/artifacts", taskID)
 	url := c.baseURL + path
 
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
+	limitedReader := &io.LimitedReader{R: &contextReader{ctx: ctx, reader: data}, N: MaxArtifactUploadSize + 1}
 
 	go func() {
 		defer pw.Close()
@@ -143,8 +153,13 @@ func (c *Client) UploadArtifact(ctx context.Context, taskID int64, filename stri
 			pw.CloseWithError(fmt.Errorf("create multipart file: %w", err))
 			return
 		}
-		if _, err := io.Copy(fileWriter, data); err != nil {
+		written, err := io.Copy(fileWriter, limitedReader)
+		if err != nil {
 			pw.CloseWithError(fmt.Errorf("copy multipart file: %w", err))
+			return
+		}
+		if written > MaxArtifactUploadSize {
+			pw.CloseWithError(fmt.Errorf("artifact exceeds max upload size of %d bytes", MaxArtifactUploadSize))
 			return
 		}
 		if err := writer.Close(); err != nil {
@@ -325,4 +340,26 @@ func (c *Client) doRequestWithContext(ctx context.Context, method, path string, 
 	}
 
 	return nil
+}
+
+type contextReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (r *contextReader) Read(p []byte) (int, error) {
+	select {
+	case <-r.ctx.Done():
+		return 0, r.ctx.Err()
+	default:
+		return r.reader.Read(p)
+	}
+}
+
+func sanitizeArtifactFilename(filename string) string {
+	filename = strings.TrimSpace(filepath.Base(filename))
+	if filename == "." || filename == string(filepath.Separator) {
+		return ""
+	}
+	return filename
 }

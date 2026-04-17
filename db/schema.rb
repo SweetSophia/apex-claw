@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_234000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -397,6 +397,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_234000) do
     t.index ["from_agent_id"], name: "index_task_handoffs_on_from_agent_id"
     t.index ["status"], name: "index_task_handoffs_on_status"
     t.index ["task_id"], name: "index_task_handoffs_on_task_id"
+    t.index ["task_id"], name: "index_task_handoffs_on_task_id_pending_unique", unique: true, where: "(status = 0)"
     t.index ["to_agent_id"], name: "index_task_handoffs_on_to_agent_id"
   end
 

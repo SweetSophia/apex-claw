@@ -63,3 +63,50 @@ func TestCommandRunnerPollDispatchAckCompleteFlow(t *testing.T) {
 		t.Fatalf("expected handler result in completion payload, got %#v", result)
 	}
 }
+
+func TestCommandRunnerRetriesAck(t *testing.T) {
+	var ackAttempts atomic.Int32
+	var completed atomic.Bool
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/agent_commands/next":
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, Kind: "health_check", State: "pending", Payload: map[string]any{}})
+		case "/api/v1/agent_commands/8/ack":
+			attempt := ackAttempts.Add(1)
+			if attempt < 3 {
+				w.WriteHeader(http.StatusBadGateway)
+				json.NewEncoder(w).Encode(map[string]any{"error": "try again"})
+				return
+			}
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, State: "acknowledged"})
+		case "/api/v1/agent_commands/8/complete":
+			completed.Store(true)
+			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, State: "completed"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	client := clawdeck.NewClient(srv.URL)
+	client.SetToken("test-token")
+	client.SetAgentID(42)
+
+	dispatcher := NewCommandDispatcher()
+	dispatcher.Register("health_check", &testCommandHandler{result: map[string]any{"ok": true}})
+
+	runner := NewCommandRunner(client, 10*time.Millisecond, dispatcher)
+	ctx, cancel := context.WithTimeout(context.Background(), 900*time.Millisecond)
+	defer cancel()
+
+	go runner.Run(ctx)
+	<-ctx.Done()
+
+	if ackAttempts.Load() < 3 {
+		t.Fatalf("expected retries, got %d attempts", ackAttempts.Load())
+	}
+	if !completed.Load() {
+		t.Fatal("expected command completion after ack retry")
+	}
+}
