@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_16_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -373,6 +373,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_230000) do
     t.index ["user_id"], name: "index_task_activities_on_user_id"
   end
 
+  create_table "task_artifacts", force: :cascade do |t|
+    t.string "content_type", null: false
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "size", null: false
+    t.string "storage_path"
+    t.bigint "task_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_id"], name: "index_task_artifacts_on_task_id"
+  end
+
+  create_table "task_handoffs", force: :cascade do |t|
+    t.text "context", null: false
+    t.datetime "created_at", null: false
+    t.bigint "from_agent_id", null: false
+    t.datetime "responded_at"
+    t.integer "status", default: 0, null: false
+    t.bigint "task_id", null: false
+    t.bigint "to_agent_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_agent_id"], name: "index_task_handoffs_on_from_agent_id"
+    t.index ["status"], name: "index_task_handoffs_on_status"
+    t.index ["task_id"], name: "index_task_handoffs_on_task_id"
+    t.index ["task_id"], name: "index_task_handoffs_on_task_id_pending_unique", unique: true, where: "(status = 0)"
+    t.index ["to_agent_id"], name: "index_task_handoffs_on_to_agent_id"
+  end
+
   create_table "task_lists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "position"
@@ -488,6 +516,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_16_230000) do
   add_foreign_key "task_activities", "agents", column: "actor_agent_id"
   add_foreign_key "task_activities", "tasks"
   add_foreign_key "task_activities", "users"
+  add_foreign_key "task_artifacts", "tasks"
+  add_foreign_key "task_handoffs", "agents", column: "from_agent_id"
+  add_foreign_key "task_handoffs", "agents", column: "to_agent_id"
+  add_foreign_key "task_handoffs", "tasks"
   add_foreign_key "task_lists", "projects"
   add_foreign_key "task_lists", "users"
   add_foreign_key "task_tags", "tags"

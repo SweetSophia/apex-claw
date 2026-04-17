@@ -6,9 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 )
+
+const MaxArtifactUploadSize int64 = 25 << 20
 
 type Client struct {
 	baseURL    string
@@ -128,6 +133,78 @@ func (c *Client) CompleteTask(taskID int64, output string) (*Task, error) {
 	return &resp, nil
 }
 
+func (c *Client) UploadArtifact(ctx context.Context, taskID int64, filename string, data io.Reader) (*TaskArtifact, error) {
+	filename = sanitizeArtifactFilename(filename)
+	if filename == "" {
+		return nil, fmt.Errorf("artifact filename is required")
+	}
+
+	path := fmt.Sprintf("/api/v1/tasks/%d/artifacts", taskID)
+	url := c.baseURL + path
+
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+	limitedReader := &io.LimitedReader{R: &contextReader{ctx: ctx, reader: data}, N: MaxArtifactUploadSize + 1}
+
+	go func() {
+		defer pw.Close()
+		fileWriter, err := writer.CreateFormFile("file", filename)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("create multipart file: %w", err))
+			return
+		}
+		written, err := io.Copy(fileWriter, limitedReader)
+		if err != nil {
+			pw.CloseWithError(fmt.Errorf("copy multipart file: %w", err))
+			return
+		}
+		if written > MaxArtifactUploadSize {
+			pw.CloseWithError(fmt.Errorf("artifact exceeds max upload size of %d bytes", MaxArtifactUploadSize))
+			return
+		}
+		if err := writer.Close(); err != nil {
+			pw.CloseWithError(fmt.Errorf("close multipart writer: %w", err))
+			return
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, pr)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		var errResp ErrorResponse
+		if json.Unmarshal(respBody, &errResp) == nil && errResp.Error != "" {
+			return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, errResp.Error)
+		}
+		return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, string(respBody))
+	}
+
+	var artifact TaskArtifact
+	if err := json.Unmarshal(respBody, &artifact); err != nil {
+		return nil, fmt.Errorf("unmarshaling response: %w", err)
+	}
+
+	return &artifact, nil
+}
+
 func (c *Client) GetNextCommand() (*Command, error) {
 	var resp Command
 	if err := c.doRequest("GET", "/api/v1/agent_commands/next", nil, &resp, true); err != nil {
@@ -158,6 +235,45 @@ func (c *Client) CompleteCommand(commandID int64, result map[string]any) (*Comma
 	return &resp, nil
 }
 
+func (c *Client) HandoffTask(ctx context.Context, taskID int64, targetAgentID int64, handoffContext string) (*TaskHandoff, error) {
+	body := map[string]any{
+		"to_agent_id": targetAgentID,
+		"context":     handoffContext,
+	}
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/tasks/%d/handoff", taskID)
+	if err := c.doRequestWithContext(ctx, "POST", path, body, &resp, true); err != nil {
+		return nil, fmt.Errorf("handoff task: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) GetPendingHandoffs(ctx context.Context) ([]TaskHandoff, error) {
+	var resp []TaskHandoff
+	if err := c.doRequestWithContext(ctx, "GET", "/api/v1/task_handoffs?status=pending", nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("get pending handoffs: %w", err)
+	}
+	return resp, nil
+}
+
+func (c *Client) AcceptHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/task_handoffs/%d/accept", handoffID)
+	if err := c.doRequestWithContext(ctx, "PATCH", path, nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("accept handoff: %w", err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) RejectHandoff(ctx context.Context, handoffID int64) (*TaskHandoff, error) {
+	var resp TaskHandoff
+	path := fmt.Sprintf("/api/v1/task_handoffs/%d/reject", handoffID)
+	if err := c.doRequestWithContext(ctx, "PATCH", path, nil, &resp, true); err != nil {
+		return nil, fmt.Errorf("reject handoff: %w", err)
+	}
+	return &resp, nil
+}
+
 type noContentError struct{}
 
 func (e *noContentError) Error() string {
@@ -170,6 +286,10 @@ func isNoContent(err error) bool {
 }
 
 func (c *Client) doRequest(method, path string, body any, out any, requireAuth bool) error {
+	return c.doRequestWithContext(context.Background(), method, path, body, out, requireAuth)
+}
+
+func (c *Client) doRequestWithContext(ctx context.Context, method, path string, body any, out any, requireAuth bool) error {
 	var reqBody io.Reader
 	if body != nil {
 		data, err := json.Marshal(body)
@@ -180,7 +300,7 @@ func (c *Client) doRequest(method, path string, body any, out any, requireAuth b
 	}
 
 	url := c.baseURL + path
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
@@ -220,4 +340,26 @@ func (c *Client) doRequest(method, path string, body any, out any, requireAuth b
 	}
 
 	return nil
+}
+
+type contextReader struct {
+	ctx    context.Context
+	reader io.Reader
+}
+
+func (r *contextReader) Read(p []byte) (int, error) {
+	select {
+	case <-r.ctx.Done():
+		return 0, r.ctx.Err()
+	default:
+		return r.reader.Read(p)
+	}
+}
+
+func sanitizeArtifactFilename(filename string) string {
+	filename = strings.TrimSpace(filepath.Base(filename))
+	if filename == "." || filename == string(filepath.Separator) {
+		return ""
+	}
+	return filename
 }

@@ -70,24 +70,24 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 ## Phase 3: Agent Intelligence 🧠
 **Branch**: `feat/phase3-intelligence`
 
-### 3.1 Command Handlers
-- [ ] `upgrade` — graceful self-update (download new binary, restart)
-- [ ] `drain` — stop accepting tasks
-- [ ] `config_reload` — hot-reload agent config
-- [ ] `shell` — execute shell command with allowlist enforcement
-- [ ] `health_check` — return detailed health diagnostics
+### 3.1 Command Handlers ✅ (commit `93d2592`)
+- [x] `upgrade` — graceful self-update (download new binary, restart)
+- [x] `drain` — stop accepting tasks
+- [x] `config_reload` — hot-reload agent config
+- [x] `shell` — execute shell command with allowlist enforcement
+- [x] `health_check` — return detailed health diagnostics
 
-### 3.2 Task Artifacts
-- [ ] `TaskArtifact` model: task_id, filename, content_type, size, storage_path
-- [ ] Upload endpoint: `POST /api/v1/tasks/:id/artifacts`
-- [ ] Download endpoint: `GET /api/v1/tasks/:id/artifacts/:artifact_id`
-- [ ] Active Storage integration for file storage
+### 3.2 Task Artifacts ✅ (commit `63faa86`)
+- [x] `TaskArtifact` model: task_id, filename, content_type, size, storage_path
+- [x] Upload endpoint: `POST /api/v1/tasks/:id/artifacts`
+- [x] Download endpoint: `GET /api/v1/tasks/:id/artifacts/:artifact_id`
+- [x] Active Storage integration for file storage
 
-### 3.3 Agent-to-Agent Handoff
-- [ ] `TaskHandoff` model: from_agent_id, to_agent_id, task_id, context, status
-- [ ] API: `POST /api/v1/tasks/:id/handoff` with target agent + context
-- [ ] Go client: `HandoffTask(ctx, taskID, targetAgentID, context)` method
-- [ ] Handoff approval flow (optional: target must accept)
+### 3.3 Agent-to-Agent Handoff ✅ (commit `63faa86`)
+- [x] `TaskHandoff` model: from_agent_id, to_agent_id, task_id, context, status
+- [x] API: `POST /api/v1/tasks/:id/handoff` with target agent + context
+- [x] Go client: `HandoffTask(ctx, taskID, targetAgentID, context)` method
+- [x] Handoff approval flow (optional: target must accept)
 
 ---
 
@@ -145,3 +145,6 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 | 2026-04-16 | 2.1 Token Rotation | ✅ | GPT-5.4, expiry+revoke+rotate endpoints, Go client, commit 9be78d0 |
 | 2026-04-16 | 2.3 Rate Limiting | ✅ | GPT-5.4, token-bucket middleware, 429s, rate headers, commit 86f94ca |
 | 2026-04-16 | 2.4 Real-Time Updates | ✅ | GLM-5.1, Turbo Streams + SSE + Stimulus controllers, commit fcecd61 |
+| 2026-04-16 | 3.1 Command Handlers | ✅ | GPT-5.4, drain/health/shell/config/upgrade handlers, commit 93d2592 |
+| 2026-04-16 | 3.2 Task Artifacts | ✅ | GPT-5.4, upload/download/list, Active Storage, Go client, commit 63faa86 |
+| 2026-04-16 | 3.3 Agent Handoff | ✅ | GLM-5.1, handoff with context, accept/reject/expiry, Go client, commit 63faa86 |
