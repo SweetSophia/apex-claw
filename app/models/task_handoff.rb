@@ -16,7 +16,7 @@ class TaskHandoff < ApplicationRecord
   scope :for_agent, ->(agent_id) { where(from_agent_id: agent_id).or(where(to_agent_id: agent_id)) }
   scope :for_task, ->(task_id) { where(task_id: task_id) }
 
-  after_create :broadcast_handoff_created
+  after_create_commit :broadcast_handoff_created
 
   def accept!
     return false unless pending?
