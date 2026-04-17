@@ -134,7 +134,10 @@ module Api
       end
 
       def set_handoff
-        @handoff = TaskHandoff.find(params[:id])
+        @handoff = TaskHandoff
+          .joins(:task)
+          .where(tasks: { user_id: current_user.id })
+          .find(params[:id])
       end
 
       def reassign_task_to_agent(task, agent)
