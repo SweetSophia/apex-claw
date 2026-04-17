@@ -48,11 +48,13 @@ module Api
           handoff.responded_at = Time.current
         end
 
-        handoff.save!
+        ApplicationRecord.transaction do
+          handoff.save!
 
-        if handoff.accepted?
-          reassign_task_to_agent(@task, target_agent)
-          record_handoff_activity(@task, handoff, "accepted")
+          if handoff.accepted?
+            reassign_task_to_agent(@task, target_agent)
+            record_handoff_activity(@task, handoff, "accepted")
+          end
         end
 
         render json: handoff_json(handoff), status: :created
@@ -70,9 +72,11 @@ module Api
           return
         end
 
-        @handoff.accept!
-        reassign_task_to_agent(@handoff.task, @handoff.to_agent)
-        record_handoff_activity(@handoff.task, @handoff, "accepted")
+        ApplicationRecord.transaction do
+          @handoff.accept!
+          reassign_task_to_agent(@handoff.task, @handoff.to_agent)
+          record_handoff_activity(@handoff.task, @handoff, "accepted")
+        end
 
         # Broadcast task update to board
         broadcast_task_event(@handoff.task, type: "task.updated")

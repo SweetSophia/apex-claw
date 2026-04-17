@@ -73,6 +73,10 @@ func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 		}
 	}
 
+	if result == nil {
+		result = map[string]any{}
+	}
+
 	if _, ok := result["success"]; !ok {
 		result["success"] = err == nil
 	}
