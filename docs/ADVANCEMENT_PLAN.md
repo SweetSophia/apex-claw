@@ -1,7 +1,7 @@
 # ClawDeck Advancement Plan
 
 **Created**: 2026-04-16 | **Status**: In Progress
-**Repo**: SweetSophia/clawdeck (fork of abandoned clawdeckio/clawdeck)
+**Repo**: SweetSophia/clawdeck (independently maintained)
 
 ## Overview
 Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent orchestration platform.
@@ -95,21 +95,21 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 **Branch**: `feat/phase4-polish`
 
 ### 4.1 Dashboard Enhancements
-- [ ] Agent health cards (uptime, task throughput, error rate)
+- [x] Agent health cards (uptime, task throughput, error rate)
 - [ ] Task timeline/Gantt view
 - [ ] Real-time metrics via Turbo Streams
 - [ ] Command bar improvements (natural language task creation)
 
 ### 4.2 Documentation
-- [ ] Fork README — architecture, setup, screenshots
+- [x] README — architecture, setup, screenshots
 - [ ] API reference (OpenAPI/Swagger)
-- [ ] Deployment guide (Docker, bare metal)
+- [x] Deployment guide (Docker, bare metal)
 - [ ] Agent SDK docs (Go client library)
 
 ### 4.3 Integration Tests
-- [ ] Full E2E cycle: register → heartbeat → get task → execute → complete
-- [ ] Command flow: issue command → ack → complete
-- [ ] Failure scenarios: task failure + retry, agent disconnect, token expiry
+- [x] Full E2E cycle: register → heartbeat → get task → execute → complete
+- [x] Command flow: issue command → ack → complete
+- [x] Failure scenarios: token revocation/rejection, handoff rejection, artifact validation failures
 - [ ] Load test: concurrent agents with rate limiting
 
 ---
@@ -148,3 +148,6 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 | 2026-04-16 | 3.1 Command Handlers | ✅ | GPT-5.4, drain/health/shell/config/upgrade handlers, commit 93d2592 |
 | 2026-04-16 | 3.2 Task Artifacts | ✅ | GPT-5.4, upload/download/list, Active Storage, Go client, commit 63faa86 |
 | 2026-04-16 | 3.3 Agent Handoff | ✅ | GLM-5.1, handoff with context, accept/reject/expiry, Go client, commit 63faa86 |
+| 2026-04-18 | 4.1 Agent Health Cards | ✅ | dashboard health badges/stats, tests green, commit 2edbe44 |
+| 2026-04-18 | 4.2 Docs refresh | ✅ | standalone positioning, honest quickstart/deploy docs, commits 54f7ebd/2bab8d5/550e647/948c7ca/c8ce2df |
+| 2026-04-18 | 4.3 Integration tests | ✅ | lifecycle, commands, token rotation/revocation, handoffs, artifacts, SSE payload assertion, commits 2ef45e4/e9d8b30/1b05696/5a486ee |

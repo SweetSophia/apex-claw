@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AgentTest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::TimeHelpers
+
   setup do
     @user = users(:one)
   end
@@ -117,5 +119,163 @@ class AgentTest < ActiveSupport::TestCase
   test "metadata defaults to empty hash" do
     agent = Agent.create!(user: @user, name: "No Meta")
     assert_equal({}, agent.metadata)
+  end
+
+  test "heartbeat_stale? is true when never connected" do
+    agent = Agent.create!(user: @user, name: "No Heartbeat")
+
+    assert agent.heartbeat_stale?
+  end
+
+  test "health_status is healthy when online with active runner and fresh heartbeat" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Healthy Agent",
+        status: :online,
+        last_heartbeat_at: 2.minutes.ago,
+        metadata: { "task_runner_active" => true, "uptime_seconds" => 3600 }
+      )
+
+      assert_equal :healthy, agent.health_status
+      assert_equal "Healthy", agent.health_badge_label
+    end
+  end
+
+  test "health_status is degraded when online but runner inactive" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Idle Agent",
+        status: :online,
+        last_heartbeat_at: 1.minute.ago,
+        metadata: { "task_runner_active" => false }
+      )
+
+      assert_equal :degraded, agent.health_status
+    end
+  end
+
+  test "health_status is offline when heartbeat is stale" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Stale Agent",
+        status: :online,
+        last_heartbeat_at: 10.minutes.ago,
+        metadata: { "task_runner_active" => true }
+      )
+
+      assert_equal :offline, agent.health_status
+    end
+  end
+
+  test "uptime_label is human friendly" do
+    agent = Agent.create!(user: @user, name: "Timed Agent", metadata: { "uptime_seconds" => 3660 })
+
+    assert_equal "1h 1m", agent.uptime_label
+  end
+
+  test "recent completed task and command metrics are calculated over 24 hours" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Metrics Agent",
+        status: :online,
+        last_heartbeat_at: Time.current,
+        metadata: { "task_runner_active" => true }
+      )
+      board = @user.boards.first || @user.boards.create!(name: "Board", icon: "📋", color: "gray")
+
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Recent Done",
+        claimed_by_agent: agent,
+        status: :done,
+        completed: true,
+        completed_at: 2.hours.ago
+      )
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Old Done",
+        claimed_by_agent: agent,
+        status: :done,
+        completed: true,
+        completed_at: 3.days.ago
+      )
+
+      agent.agent_commands.create!(kind: "restart", payload: {}, state: :completed, created_at: 4.hours.ago)
+      agent.agent_commands.create!(kind: "drain", payload: {}, state: :failed, created_at: 3.hours.ago)
+      agent.agent_commands.create!(kind: "resume", payload: {}, state: :pending, created_at: 2.days.ago)
+
+      assert_equal 1, agent.recent_completed_tasks_count
+      assert_equal 2, agent.recent_commands_count
+      assert_equal 1, agent.recent_failed_commands_count
+      assert_equal 50, agent.recent_command_error_rate
+      assert_equal 1, agent.pending_commands_count
+    end
+  end
+
+  test "health_stats_for aggregates counts for multiple agents" do
+    travel_to Time.current do
+      first_agent = Agent.create!(
+        user: @user,
+        name: "First Metrics Agent",
+        status: :online,
+        last_heartbeat_at: Time.current,
+        metadata: { "task_runner_active" => true }
+      )
+      second_agent = Agent.create!(
+        user: @user,
+        name: "Second Metrics Agent",
+        status: :online,
+        last_heartbeat_at: Time.current,
+        metadata: { "task_runner_active" => false }
+      )
+      board = @user.boards.first || @user.boards.create!(name: "Board", icon: "📋", color: "gray")
+
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "First Recent Done",
+        claimed_by_agent: first_agent,
+        status: :done,
+        completed: true,
+        completed_at: 1.hour.ago
+      )
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Second Recent Done",
+        claimed_by_agent: second_agent,
+        status: :done,
+        completed: true,
+        completed_at: 2.hours.ago
+      )
+
+      first_agent.agent_commands.create!(kind: "restart", payload: {}, state: :completed, created_at: 4.hours.ago)
+      first_agent.agent_commands.create!(kind: "drain", payload: {}, state: :failed, created_at: 3.hours.ago)
+      first_agent.agent_commands.create!(kind: "resume", payload: {}, state: :pending, created_at: 2.days.ago)
+      second_agent.agent_commands.create!(kind: "restart", payload: {}, state: :pending, created_at: 30.minutes.ago)
+
+      stats = Agent.health_stats_for([ first_agent, second_agent ])
+
+      assert_equal({
+        completed: 1,
+        commands: 2,
+        failed: 1,
+        pending: 1,
+        error_rate: 50
+      }, stats.fetch(first_agent.id))
+      assert_equal({
+        completed: 1,
+        commands: 1,
+        failed: 0,
+        pending: 1,
+        error_rate: 0
+      }, stats.fetch(second_agent.id))
+    end
   end
 end

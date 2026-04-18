@@ -69,8 +69,7 @@
   </div>
 
   <%# Info grid %>
-  <div class="grid grid-cols-2 gap-4 mb-8">
-    <%# Last heartbeat %>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
       <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Last Heartbeat</div>
       <div class="text-lg font-bold text-[#e0e0e0]">
@@ -78,17 +77,46 @@
       </div>
     </div>
 
-    <%# Tasks %>
     <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
       <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Active Tasks</div>
       <div class="text-lg font-bold text-[#e0e0e0]">
-        <%= @tasks_claimed.count %> claimed
-        <span class="text-[#555] font-normal">/ <%= @tasks_assigned.count %> assigned</span>
+        <%= @total_claimed_count %> claimed
+        <span class="text-[#555] font-normal">/ <%= @total_assigned_count %> assigned</span>
       </div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Uptime</div>
+      <div class="text-lg font-bold text-[#e0e0e0]"><%= @agent.uptime_label %></div>
+      <div class="text-xs text-[#555] mt-1">task runner <%= @agent.task_runner_active? ? 'active' : 'idle' %></div>
+    </div>
+
+    <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Health Window (24h)</div>
+      <div class="text-lg font-bold text-[#e0e0e0]"><%= @agent.recent_completed_tasks_count %> done</div>
+      <div class="text-xs text-[#555] mt-1"><%= @agent.recent_command_error_rate %>% command error rate · <%= @agent.pending_commands_count %> pending</div>
     </div>
   </div>
 
-  <%# Tags %>
+  <% if @recent_completed_tasks.any? %>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Recent Completed Work</div>
+      <div class="space-y-2">
+        <% @recent_completed_tasks.each do |task| %>
+          <%= link_to board_path(task.board), class: "block p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors" do %>
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-semibold text-[#e0e0e0]"><%= task.name %></div>
+                <div class="text-xs text-[#555] mt-0.5"><%= task.board.name %> · completed <%= time_ago_in_words(task.completed_at) %> ago</div>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">Done</span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <% if @agent.tags.any? %>
     <div class="mb-8">
       <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Tags</div>
@@ -100,7 +128,6 @@
     </div>
   <% end %>
 
-  <%# Metadata %>
   <% if @agent.metadata.present? && @agent.metadata.any? %>
     <div class="mb-8">
       <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Metadata</div>
@@ -110,7 +137,6 @@
     </div>
   <% end %>
 
-  <%# Recent Commands %>
   <div class="mb-8">
     <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Recent Commands</div>
     <% if @commands.any? %>
@@ -130,7 +156,6 @@
     <% end %>
   </div>
 
-  <%# Tasks %>
   <% if @tasks_claimed.any? || @tasks_assigned.any? %>
     <div>
       <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Tasks</div>

@@ -22,7 +22,7 @@
     <div class="space-y-2">
       <% @agents.each do |agent| %>
         <%= link_to agent_path(agent), data: { turbo_frame: "_top" } do %>
-          <%= render "agents/agent_card", agent: agent %>
+          <%= render "agents/agent_card", agent: agent, health_stats: @agent_health_stats.fetch(agent.id, {}) %>
         <% end %>
       <% end %>
     </div>

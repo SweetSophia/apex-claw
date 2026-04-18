@@ -1,6 +1,9 @@
 class Agent < ApplicationRecord
   include Auditable
 
+  HEARTBEAT_STALE_AFTER = 5.minutes
+  HEALTH_WINDOW = 24.hours
+
   audit_events :update
 
   belongs_to :user
@@ -34,4 +37,115 @@ class Agent < ApplicationRecord
   }, default: :offline
 
   validates :name, presence: true
+
+  def self.health_stats_for(agents, window: HEALTH_WINDOW)
+    agent_ids = Array(agents).map(&:id)
+    return {} if agent_ids.empty?
+
+    window_start = window.ago
+    completed_counts = Task.unscoped.done
+      .where(claimed_by_agent_id: agent_ids)
+      .where("completed_at >= ?", window_start)
+      .reorder(nil)
+      .group(:claimed_by_agent_id)
+      .count
+    command_counts = AgentCommand
+      .where(agent_id: agent_ids, created_at: window_start..)
+      .group(:agent_id)
+      .count
+    failed_counts = AgentCommand.failed
+      .where(agent_id: agent_ids, created_at: window_start..)
+      .group(:agent_id)
+      .count
+    pending_counts = AgentCommand.pending
+      .where(agent_id: agent_ids)
+      .group(:agent_id)
+      .count
+
+    agent_ids.each_with_object({}) do |agent_id, stats|
+      total_commands = command_counts[agent_id].to_i
+      failed_commands = failed_counts[agent_id].to_i
+
+      stats[agent_id] = {
+        completed: completed_counts[agent_id].to_i,
+        commands: total_commands,
+        failed: failed_commands,
+        pending: pending_counts[agent_id].to_i,
+        error_rate: total_commands.zero? ? 0 : ((failed_commands.to_f / total_commands) * 100).round
+      }
+    end
+  end
+
+  def heartbeat_stale?
+    return true if last_heartbeat_at.blank?
+
+    last_heartbeat_at < HEARTBEAT_STALE_AFTER.ago
+  end
+
+  def health_status
+    return :disabled if disabled?
+    return :offline if offline? || heartbeat_stale?
+    return :draining if draining?
+
+    task_runner_active? ? :healthy : :degraded
+  end
+
+  def health_badge_label
+    case health_status
+    when :healthy then "Healthy"
+    when :degraded then "Degraded"
+    when :draining then "Draining"
+    when :disabled then "Disabled"
+    else "Offline"
+    end
+  end
+
+  def uptime_seconds
+    metadata_value("uptime_seconds")&.to_i
+  end
+
+  def uptime_label
+    seconds = uptime_seconds
+    return "Unknown" if seconds.blank? || seconds <= 0
+
+    duration = ActiveSupport::Duration.build(seconds)
+    parts = []
+    parts << "#{duration.parts[:days]}d" if duration.parts[:days].to_i > 0
+    parts << "#{duration.parts[:hours]}h" if duration.parts[:hours].to_i > 0
+    parts << "#{duration.parts[:minutes]}m" if duration.parts[:minutes].to_i > 0
+    parts.any? ? parts.join(" ") : "< 1m"
+  end
+
+  def task_runner_active?
+    ActiveModel::Type::Boolean.new.cast(metadata_value("task_runner_active"))
+  end
+
+  def recent_completed_tasks_count(window: HEALTH_WINDOW)
+    claimed_tasks.done.where("completed_at >= ?", window.ago).count
+  end
+
+  def recent_commands_count(window: HEALTH_WINDOW)
+    agent_commands.where(created_at: window.ago..).count
+  end
+
+  def recent_failed_commands_count(window: HEALTH_WINDOW)
+    agent_commands.failed.where(created_at: window.ago..).count
+  end
+
+  def recent_command_error_rate(window: HEALTH_WINDOW)
+    total = recent_commands_count(window: window)
+    return 0 if total.zero?
+
+    ((recent_failed_commands_count(window: window).to_f / total) * 100).round
+  end
+
+  def pending_commands_count
+    agent_commands.pending.count
+  end
+
+  private
+
+  def metadata_value(key)
+    metadata&.[](key) || metadata&.[](key.to_sym)
+  end
 end

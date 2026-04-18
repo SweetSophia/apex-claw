@@ -1,3 +1,4 @@
+<% health_stats ||= {} %>
 <div id="agent_<%= agent.id %>" class="block p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -8,6 +9,14 @@
         <div class="flex items-center gap-2">
           <span class="text-sm font-bold text-[#e0e0e0]"><%= agent.name %></span>
           <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= agent.status == "online" ? "bg-emerald-500/20 text-emerald-400" : agent.status == "draining" ? "bg-yellow-500/20 text-yellow-400" : agent.status == "disabled" ? "bg-red-500/20 text-red-400" : "bg-white/[0.06] text-[#666]" %>"><%= agent.status.humanize %></span>
+          <% badge_classes = case agent.health_status
+             when :healthy then "bg-emerald-500/15 text-emerald-300"
+             when :degraded then "bg-amber-500/15 text-amber-300"
+             when :draining then "bg-yellow-500/15 text-yellow-300"
+             when :disabled then "bg-red-500/15 text-red-300"
+             else "bg-white/[0.06] text-[#777]"
+             end %>
+          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= badge_classes %>"><%= agent.health_badge_label %></span>
         </div>
         <div class="text-xs text-[#555] mt-0.5 flex items-center gap-2">
           <% if agent.hostname.present? %>
@@ -34,6 +43,27 @@
           <% end %>
         </div>
       <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Uptime</div>
+      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= agent.uptime_label %></div>
+    </div>
+    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Throughput 24h</div>
+      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= health_stats.fetch(:completed, agent.recent_completed_tasks_count) %> done</div>
+    </div>
+    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Command Errors</div>
+      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= health_stats.fetch(:error_rate, agent.recent_command_error_rate) %>%</div>
+    </div>
+    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
+      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Runner</div>
+      <div class="text-sm font-semibold mt-1 <%= agent.task_runner_active? ? 'text-emerald-300' : 'text-amber-300' %>">
+        <%= agent.task_runner_active? ? 'Active' : 'Idle' %>
+      </div>
     </div>
   </div>
 </div>

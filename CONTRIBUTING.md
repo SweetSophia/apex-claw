@@ -4,13 +4,12 @@ Thank you for your interest in contributing to ClawDeck! 🦞
 
 ## Getting Started
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/clawdeck.git`
-3. Create a branch: `git checkout -b feature/your-feature`
-4. Make your changes
-5. Run tests: `bin/ci`
-6. Commit with a clear message
-7. Push and open a Pull Request
+1. Clone the repository: `git clone https://github.com/SweetSophia/clawdeck.git`
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Make your changes
+4. Run tests: `bin/ci`
+5. Commit with a clear message
+6. Push your branch and open a Pull Request
 
 ## Development Setup
 

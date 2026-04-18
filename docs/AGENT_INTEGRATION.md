@@ -238,6 +238,13 @@ Content-Type: application/json
 }
 ```
 
+### API Semantics Notes
+
+A few task and handoff behaviors are intentional and worth knowing when writing agents or tests:
+
+- `POST /api/v1/tasks` does **not** accept agent ownership fields like `assigned_agent_id` or `claimed_by_agent_id`. Create the task first, then use the normal assignment/claim flow.
+- Handoff acceptance activity is attributed to the **accepting** agent, because that agent performed the state transition that completed the handoff.
+
 ### Update Task
 
 ```http

@@ -1,111 +1,101 @@
-# Quick Start: Deploy ClawDeck in 10 Minutes
+# ClawDeck Quick Start
 
-## What You'll Get
+Fastest path to a running local ClawDeck instance.
 
-- ✅ **Fast deployments**: ~30-60 seconds (not 7+ minutes)
-- ✅ **Low memory**: Runs perfectly on 512MB RAM
-- ✅ **Auto-deploy**: Push to main → automatic deployment
-- ✅ **Simple**: No Docker complexity
-- ✅ **Reliable**: Like your Hatchbox app
+## Recommended: Docker development
 
-## Step 1: Create VPS (2 minutes)
-
-1. Create DigitalOcean Droplet:
-   - Ubuntu 24.04 LTS
-   - $4-6/month (512MB or 1GB RAM)
-   - Add your SSH key
-
-2. Point DNS to VPS IP:
-   - `clawdeck.so` → your VPS IP
-   - `www.clawdeck.so` → your VPS IP
-
-## Step 2: Setup VPS (5 minutes)
+This is the lowest-friction setup right now.
 
 ```bash
-# SSH to VPS
-ssh root@YOUR_VPS_IP
-
-# Set database password
-export DB_PASSWORD="choose_a_secure_password"
-
-# Run setup script
-curl -fsSL https://raw.githubusercontent.com/andresmax/clawdeck/main/script/setup_vps.sh | bash
-
-# Clone repository
-cd /var/www
-git clone https://github.com/YOUR_GITHUB_USERNAME/clawdeck.git
+git clone https://github.com/SweetSophia/clawdeck.git
 cd clawdeck
-
-# Create environment file
-cp .env.production.example .env.production
-nano .env.production
-# Fill in: RAILS_MASTER_KEY (from config/master.key) and DATABASE_PASSWORD
-
-# Install dependencies and setup
-export PATH="/root/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-bundle install --deployment --without development test
-RAILS_ENV=production bundle exec rails db:migrate
-RAILS_ENV=production bundle exec rails assets:precompile
-
-# Install services
-bash script/install_services.sh
-
-# Start services
-systemctl start puma solid_queue
+docker compose up --build
 ```
 
-## Step 3: Configure GitHub Actions (1 minute)
+Open <http://localhost:3000>.
 
-Add these secrets to your GitHub repo (Settings → Secrets):
+Services started by `docker compose`:
+- Rails app on `localhost:3000`
+- PostgreSQL 16 on `localhost:5432`
 
-- `VPS_HOST`: Your VPS IP address
-- `VPS_SSH_KEY`: Your private SSH key (content of `~/.ssh/id_rsa`)
+### Common Docker recovery
 
-## Step 4: Deploy! (30 seconds)
+If the app container fails after gem changes, the persistent `bundle_cache` volume may be stale.
+Populate it again with:
 
 ```bash
-# On your laptop
-git push origin main
+docker compose run --rm app bundle install
+docker compose up -d app
 ```
 
-GitHub Actions will automatically deploy. Check progress in Actions tab.
+Useful commands:
 
-## Verify Deployment
-
-Visit https://clawdeck.so
-
-Check services:
 ```bash
-ssh root@YOUR_VPS_IP
-systemctl status puma solid_queue nginx
+# start in background
+docker compose up -d
+
+# view logs
+docker compose logs -f app
+
+# run Rails tests
+docker compose exec app bin/rails test
+
+# stop everything
+docker compose down
 ```
 
-## Future Deployments
+## Native development
 
-Just push to main:
+Native setup is available, but Docker is currently the smoother path.
+
+Runtime version:
+- `.ruby-version` specifies Ruby `4.0.3`
+- Docker uses the published `ruby:4.0-slim` image while the app/runtime target is Ruby `4.0.3`
+
+Requirements:
+- Ruby `4.0.3`
+- PostgreSQL 16
+- Node.js 20
+- Bundler
+
+Setup:
+
 ```bash
-git push origin main
+git clone https://github.com/SweetSophia/clawdeck.git
+cd clawdeck
+bin/setup --skip-server
+bin/dev
 ```
 
-Deploys automatically in 30-60 seconds!
+Manual alternative:
 
-## Troubleshooting
-
-**Services won't start?**
 ```bash
-journalctl -u puma -n 50
-journalctl -u solid_queue -n 50
+bundle install
+bin/rails db:prepare
+bin/dev
 ```
 
-**Need to restart?**
+## Test commands
+
+Core checks used in the repo:
+
 ```bash
-systemctl restart puma solid_queue
+bin/ci
 ```
 
-**Check logs:**
+Individual commands:
+
 ```bash
-tail -f /var/log/clawdeck/puma.log
+bin/rubocop
+bin/bundler-audit
+bin/importmap audit
+bin/brakeman --no-pager
+bin/rails test
+bin/rails test:system
 ```
 
-See DEPLOYMENT.md for detailed documentation.
+## Where to go next
+
+- API/agent integration: `docs/AGENT_INTEGRATION.md`
+- Roadmap and implementation phases: `docs/ADVANCEMENT_PLAN.md`
+- Deployment details: `DEPLOYMENT.md`

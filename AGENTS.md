@@ -69,7 +69,7 @@ tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 ## Architecture
 
 ### Technology Stack
-- **Ruby/Rails**: 3.3.1 / 8.1.0
+- **Ruby/Rails**: 4.0.3 / 8.1.x
 - **Database**: PostgreSQL with multi-database setup (primary, cache, queue, cable)
 - **Background Jobs**: Solid Queue (database-backed)
 - **Caching**: Solid Cache (database-backed)
@@ -78,7 +78,7 @@ tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 - **Email**: Resend API (passwordless authentication with 6-digit codes)
 - **OAuth**: GitHub authentication support
 - **Image Processing**: Active Storage with image_processing gem
-- **Deployment**: DigitalOcean VPS + GitHub Actions auto-deploy
+- **Deployment**: bare-metal VPS scripts + systemd/nginx, local Docker for development, GitHub Actions for CI/releases
 - **Web Server**: Puma with Nginx reverse proxy
 
 ### Key Models and Relationships
@@ -131,7 +131,7 @@ tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 - Commands queued for agents to execute
 - `belongs_to :agent`
 - `belongs_to :requested_by_user`
-- States: `pending`, `acked`, `completed`
+- States: `pending`, `acknowledged`, `completed`, `failed`
 - Stores `kind`, `payload` (JSON), `result` (JSON)
 
 #### TaskActivity
