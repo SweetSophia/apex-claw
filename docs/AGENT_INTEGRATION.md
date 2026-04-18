@@ -1,5 +1,15 @@
 # Agent Integration Spec
 
+## Current implementation note
+
+This document explains the product-facing agent workflow, but the authoritative endpoint reference now lives in:
+
+- `docs/api/OPENAPI_REFERENCE.md`
+- `docs/sdk/GO_AGENT_SDK.md`
+
+Use those for exact request and response shapes. Use this document for workflow expectations and semantics.
+
+
 ClawDeck is designed as a **personal mission control for your AI agent**. This document specifies how an AI agent integrates with ClawDeck via the REST API.
 
 ---
