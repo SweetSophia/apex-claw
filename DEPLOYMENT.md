@@ -1,183 +1,204 @@
 # ClawDeck Deployment Guide
 
-Simple, fast deployment to DigitalOcean VPS. No Docker overhead.
+This repository currently ships two different operational stories:
 
-## Prerequisites
+1. **Local Docker development**, which works well for development
+2. **Bare-metal VPS deployment scripts**, which are the only production-oriented path currently checked into the repo
 
-1. A fresh Ubuntu 24.04 VPS (512MB RAM minimum)
-2. Domain pointing to your VPS IP (clawdeck.so)
-3. SSH access to the VPS
+There is **not** a ready-made production Docker stack in this repository yet, and there is **not** an auto-deploy workflow for VPS releases. The included GitHub Actions cover CI and tagged GitHub releases, not server deployment.
 
-## Initial Setup (One-time)
+## What exists today
 
-### 1. Create VPS and Configure DNS
+Checked into the repo:
+- `script/setup_vps.sh` — installs system packages, PostgreSQL, rbenv, Ruby, and initial DBs
+- `script/install_services.sh` — installs systemd services and nginx config
+- `config/systemd/puma.service`
+- `config/systemd/solid_queue.service`
+- `config/nginx/clawdeck.conf`
+- `.env.production.example`
 
-Create a new DigitalOcean droplet:
-- Ubuntu 24.04 LTS
-- 512MB RAM / 1GB RAM recommended
-- Add your SSH key during creation
+## Important caveats before deploying
 
-Update your domain DNS:
-- Point `clawdeck.so` to your VPS IP
-- Point `www.clawdeck.so` to your VPS IP
+The current VPS scripts are usable, but opinionated. Review them before production use.
 
-### 2. Run VPS Setup Script
+They currently assume:
+- Ubuntu VPS
+- deployment path: `/var/www/clawdeck`
+- `root`-owned services
+- rbenv installed under `/root/.rbenv`
+- PostgreSQL running locally
+- nginx terminating TLS
+- hostname/domain values hardcoded to `clawdeck.so` and `www.clawdeck.so`
 
-SSH into your VPS and run the initial setup:
+You will almost certainly want to adjust at least:
+- `config/nginx/clawdeck.conf`
+- `script/install_services.sh`
+- `.env.production`
+- TLS email/domain values for certbot
+
+## Recommended production path right now
+
+Use the included **bare-metal + systemd + nginx** deployment flow, but treat the scripts as a starting point, not a one-click generic installer.
+
+## Bare-metal VPS deployment
+
+### 1. Provision the server
+
+Recommended baseline:
+- Ubuntu 24.04
+- 1 GB RAM or more
+- DNS pointed at your server
+- SSH access as root or sudo-capable operator
+
+### 2. Set required shell variables
+
+Before running the setup script:
 
 ```bash
-# SSH to your VPS
-ssh root@your-vps-ip
-
-# Set database password
-export DB_PASSWORD="your_secure_password_here"
-
-# Download and run setup script
-curl -fsSL https://raw.githubusercontent.com/yourusername/clawdeck/main/script/setup_vps.sh | bash
+export DB_PASSWORD='choose-a-strong-password'
+export CERTBOT_EMAIL='you@example.com'
 ```
 
-This installs: Ruby, PostgreSQL, Nginx, and creates databases.
+### 3. Run the server bootstrap
 
-### 3. Clone Repository
+From the repo or by copying the script onto the server:
+
+```bash
+bash script/setup_vps.sh
+```
+
+What this script does:
+- updates packages
+- installs PostgreSQL, nginx, certbot, build deps
+- installs rbenv and Ruby
+- creates the production databases
+- prepares `/var/www/clawdeck`
+
+### 4. Clone the repository on the server
 
 ```bash
 cd /var/www
-git clone https://github.com/yourusername/clawdeck.git
+git clone https://github.com/SweetSophia/clawdeck.git
 cd clawdeck
 ```
 
-### 4. Create Production Environment File
+### 5. Create production env file
 
 ```bash
-cp .env.production.example /var/www/clawdeck/.env.production
-nano /var/www/clawdeck/.env.production
+cp .env.production.example .env.production
 ```
 
-Fill in your actual values:
-```
-RAILS_MASTER_KEY=<from config/master.key>
-DATABASE_PASSWORD=<same as DB_PASSWORD from step 2>
-```
+Fill in real values for at least:
+- `RAILS_MASTER_KEY`
+- `SECRET_KEY_BASE`
+- `DATABASE_PASSWORD`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET` if using GitHub OAuth
 
-### 5. Install Dependencies and Run Migrations
+Current example file also exposes these knobs:
+- `RAILS_MAX_THREADS`
+- `WEB_CONCURRENCY`
+- `PORT`
+- `DATABASE_HOST`
+- `DATABASE_PORT`
+- `DB_POOL`
+
+### 6. Install gems and prepare the app
+
+The current service files expect Bundler from rbenv under `/root/.rbenv`.
 
 ```bash
 export PATH="/root/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 bundle install --deployment --without development test
-RAILS_ENV=production bundle exec rails db:migrate
+RAILS_ENV=production bundle exec rails db:prepare
 RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
-### 6. Install Services
+### 7. Review domain-specific config before enabling nginx
+
+Before installing services, edit these files if you are not deploying to `clawdeck.so`:
+- `config/nginx/clawdeck.conf`
+- `script/install_services.sh`
+
+Things to update:
+- server names
+- certbot domains
+- contact email defaults
+- any path assumptions specific to your host
+
+### 8. Install systemd services and nginx config
 
 ```bash
 bash script/install_services.sh
 ```
 
 This installs:
-- Systemd services for Puma and Solid Queue
-- Nginx configuration
-- SSL certificates via Let's Encrypt
+- `puma.service`
+- `solid_queue.service`
+- nginx site config
+- certbot-managed TLS for the configured domains
 
-### 7. Start Services
-
-```bash
-systemctl start puma
-systemctl start solid_queue
-```
-
-Check status:
-```bash
-systemctl status puma
-systemctl status solid_queue
-```
-
-### 8. Configure GitHub Actions
-
-Add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
-
-- `VPS_HOST`: Your VPS IP address
-- `VPS_SSH_KEY`: Your private SSH key (the one that can access the VPS)
-
-## Automatic Deployments
-
-Once setup is complete, deployments are automatic:
-
-1. Push to `main` branch
-2. GitHub Actions connects to VPS
-3. Pulls latest code
-4. Installs dependencies
-5. Runs migrations
-6. Precompiles assets
-7. Restarts services
-
-**Deploy time: ~30-60 seconds**
-
-## Manual Deployment
-
-If you need to deploy manually:
+### 9. Start and verify services
 
 ```bash
-ssh root@your-vps-ip
-cd /var/www/clawdeck
-git pull origin main
-bundle install --deployment
-RAILS_ENV=production bundle exec rails db:migrate
-RAILS_ENV=production bundle exec rails assets:precompile
-systemctl restart puma solid_queue
+systemctl start puma solid_queue nginx
+systemctl status puma solid_queue nginx --no-pager
+curl -I http://127.0.0.1:3000/up
 ```
 
-## Monitoring
+## Operational notes
 
-View logs:
-```bash
-# Puma logs
-tail -f /var/log/clawdeck/puma.log
+Current checked-in production units run as `root`:
+- `config/systemd/puma.service`
+- `config/systemd/solid_queue.service`
 
-# Solid Queue logs
-tail -f /var/log/clawdeck/solid_queue.log
+That works with the shipped scripts, but it is not the only valid approach. If you want a dedicated deploy user, you will need to adjust the unit files and filesystem ownership.
 
-# Nginx logs
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
-```
+## GitHub Actions status
 
-Check service status:
-```bash
-systemctl status puma
-systemctl status solid_queue
-systemctl status nginx
-```
+Current workflows:
+- `.github/workflows/ci.yml` — lint, security scans, Rails tests, system tests
+- `.github/workflows/release.yml` — tagged GitHub release creation
+
+There is currently no repo-managed VPS deploy workflow.
+
+## Development Docker vs production
+
+`docker-compose.yml` in this repo is a development stack. It is useful for local work, but it is not yet a production deployment specification.
 
 ## Troubleshooting
 
-**Services won't start:**
+### App fails after gem changes in Docker
+
 ```bash
-# Check service logs
-journalctl -u puma -n 50 --no-pager
-journalctl -u solid_queue -n 50 --no-pager
+docker compose run --rm app bundle install
+docker compose up -d app
 ```
 
-**Database connection errors:**
+### Check Puma logs
+
 ```bash
-# Test PostgreSQL
-sudo -u postgres psql -l
+tail -f /var/log/clawdeck/puma.log
+tail -f /var/log/clawdeck/puma_error.log
 ```
 
-**SSL certificate issues:**
+### Check Solid Queue logs
+
 ```bash
-# Renew certificates
-certbot renew
-systemctl restart nginx
+tail -f /var/log/clawdeck/solid_queue.log
+tail -f /var/log/clawdeck/solid_queue_error.log
 ```
 
-## Resource Usage
+### Check nginx config
 
-Expected memory usage on 512MB VPS:
-- Puma (Rails): ~150MB
-- Solid Queue: ~100MB
-- PostgreSQL: ~50MB
-- Nginx: ~20MB
-- System: ~100MB
-- **Total: ~420MB (plenty of headroom)**
+```bash
+nginx -t
+systemctl status nginx --no-pager
+```
+
+### Check Rails health endpoint
+
+```bash
+curl -I http://127.0.0.1:3000/up
+```
