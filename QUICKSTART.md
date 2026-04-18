@@ -49,11 +49,11 @@ docker compose down
 Native setup is available, but Docker is currently the smoother path.
 
 Runtime version:
-- `.ruby-version` specifies Ruby `4.0.2`
-- Docker and repo docs are aligned to Ruby `4.0.2`
+- `.ruby-version` specifies Ruby `4.0.3`
+- Docker uses the published `ruby:4.0-slim` image while the app/runtime target is Ruby `4.0.3`
 
 Requirements:
-- Ruby `4.0.2`
+- Ruby `4.0.3`
 - PostgreSQL 16
 - Node.js 20
 - Bundler

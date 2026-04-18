@@ -33,12 +33,12 @@ fi
 export PATH="/root/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
-# Install Ruby 4.0.2
-echo "==> Installing Ruby 4.0.2..."
-if ! rbenv versions | grep -q "4.0.2"; then
-  rbenv install 4.0.2
+# Install Ruby 4.0.3
+echo "==> Installing Ruby 4.0.3..."
+if ! rbenv versions | grep -q "4.0.3"; then
+  rbenv install 4.0.3
 fi
-rbenv global 4.0.2
+rbenv global 4.0.3
 
 # Install bundler
 echo "==> Installing bundler..."

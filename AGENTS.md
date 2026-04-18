@@ -69,7 +69,7 @@ tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 ## Architecture
 
 ### Technology Stack
-- **Ruby/Rails**: 4.0.2 / 8.1.x
+- **Ruby/Rails**: 4.0.3 / 8.1.x
 - **Database**: PostgreSQL with multi-database setup (primary, cache, queue, cable)
 - **Background Jobs**: Solid Queue (database-backed)
 - **Caching**: Solid Cache (database-backed)

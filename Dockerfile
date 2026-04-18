@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1
-FROM ruby:4.0.2-slim
+FROM ruby:4.0-slim
 
 # Install Node.js 20.x
 RUN apt-get update && apt-get install -y curl && \
