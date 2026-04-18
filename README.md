@@ -2,13 +2,13 @@
 
 Mission control for AI agents, built with Rails and a Go agent runtime.
 
-This repository is the actively maintained **SweetSophia/clawdeck** fork. It extends the original ClawDeck concept into a more capable agent orchestration platform with agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and real-time updates.
+This repository is **SweetSophia/clawdeck**, an independently maintained AI agent orchestration platform with agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and real-time updates.
 
 ## Current Status
 
 ClawDeck is under active development.
 
-Implemented today in this fork:
+Currently implemented in this codebase:
 - multi-board kanban task management
 - agent registration with join tokens
 - heartbeat-based agent presence and metadata
@@ -137,9 +137,9 @@ Useful references:
 - `docs/AGENT_INTEGRATION.md`
 - `config/routes.rb`
 
-## Agent Features in This Fork
+## Agent Platform Features
 
-Compared to the older upstream baseline, this fork includes substantial agent-platform work:
+ClawDeck includes substantial agent-platform capabilities across the Rails control plane and Go runtime:
 
 - pluggable Go executor framework
 - retry and backoff support
@@ -174,12 +174,10 @@ git commit -m "feat: describe your change"
 
 Please keep PRs focused and update docs when behavior changes.
 
-## Fork / Upstream
+## Project
 
-- maintained fork: <https://github.com/SweetSophia/clawdeck>
-- original upstream: <https://github.com/clawdeckio/clawdeck>
-
-This fork is currently the primary place where new agent-platform work is landing.
+- repository: <https://github.com/SweetSophia/clawdeck>
+- status: independently maintained and actively expanded
 
 ## License
 

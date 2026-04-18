@@ -1,7 +1,7 @@
 # ClawDeck Advancement Plan
 
 **Created**: 2026-04-16 | **Status**: In Progress
-**Repo**: SweetSophia/clawdeck (fork of abandoned clawdeckio/clawdeck)
+**Repo**: SweetSophia/clawdeck (independently maintained)
 
 ## Overview
 Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent orchestration platform.
@@ -101,7 +101,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [ ] Command bar improvements (natural language task creation)
 
 ### 4.2 Documentation
-- [ ] Fork README — architecture, setup, screenshots
+- [ ] README — architecture, setup, screenshots
 - [ ] API reference (OpenAPI/Swagger)
 - [ ] Deployment guide (Docker, bare metal)
 - [ ] Agent SDK docs (Go client library)
