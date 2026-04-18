@@ -38,6 +38,44 @@ class Agent < ApplicationRecord
 
   validates :name, presence: true
 
+  def self.health_stats_for(agents, window: HEALTH_WINDOW)
+    agent_ids = Array(agents).map(&:id)
+    return {} if agent_ids.empty?
+
+    window_start = window.ago
+    completed_counts = Task.unscoped.done
+      .where(claimed_by_agent_id: agent_ids)
+      .where("completed_at >= ?", window_start)
+      .reorder(nil)
+      .group(:claimed_by_agent_id)
+      .count
+    command_counts = AgentCommand
+      .where(agent_id: agent_ids, created_at: window_start..)
+      .group(:agent_id)
+      .count
+    failed_counts = AgentCommand.failed
+      .where(agent_id: agent_ids, created_at: window_start..)
+      .group(:agent_id)
+      .count
+    pending_counts = AgentCommand.pending
+      .where(agent_id: agent_ids)
+      .group(:agent_id)
+      .count
+
+    agent_ids.each_with_object({}) do |agent_id, stats|
+      total_commands = command_counts[agent_id].to_i
+      failed_commands = failed_counts[agent_id].to_i
+
+      stats[agent_id] = {
+        completed: completed_counts[agent_id].to_i,
+        commands: total_commands,
+        failed: failed_commands,
+        pending: pending_counts[agent_id].to_i,
+        error_rate: total_commands.zero? ? 0 : ((failed_commands.to_f / total_commands) * 100).round
+      }
+    end
+  end
+
   def heartbeat_stale?
     return true if last_heartbeat_at.blank?
 
@@ -70,7 +108,12 @@ class Agent < ApplicationRecord
     seconds = uptime_seconds
     return "Unknown" if seconds.blank? || seconds <= 0
 
-    ApplicationController.helpers.distance_of_time_in_words(seconds)
+    duration = ActiveSupport::Duration.build(seconds)
+    parts = []
+    parts << "#{duration.parts[:days]}d" if duration.parts[:days].to_i > 0
+    parts << "#{duration.parts[:hours]}h" if duration.parts[:hours].to_i > 0
+    parts << "#{duration.parts[:minutes]}m" if duration.parts[:minutes].to_i > 0
+    parts.any? ? parts.join(" ") : "< 1m"
   end
 
   def task_runner_active?

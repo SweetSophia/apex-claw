@@ -131,7 +131,7 @@ tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 - Commands queued for agents to execute
 - `belongs_to :agent`
 - `belongs_to :requested_by_user`
-- States: `pending`, `acked`, `completed`
+- States: `pending`, `acknowledged`, `completed`, `failed`
 - Stores `kind`, `payload` (JSON), `result` (JSON)
 
 #### TaskActivity

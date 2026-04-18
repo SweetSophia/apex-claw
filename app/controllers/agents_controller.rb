@@ -5,6 +5,7 @@ class AgentsController < ApplicationController
     @agents = current_user.agents
       .includes(:agent_commands, :assigned_tasks, :claimed_tasks)
       .order(last_heartbeat_at: :desc)
+    @agent_health_stats = Agent.health_stats_for(@agents)
   end
 
   def show

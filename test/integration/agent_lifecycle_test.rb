@@ -580,7 +580,9 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
   private
 
   def uploaded_file(filename, content, content_type = "text/plain")
+    @tempfiles ||= []
     tempfile = Tempfile.new([ File.basename(filename, ".*"), File.extname(filename) ])
+    @tempfiles << tempfile
     tempfile.binmode
     tempfile.write(content)
     tempfile.rewind
