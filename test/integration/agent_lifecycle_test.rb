@@ -396,6 +396,187 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+
+  test "target agent can reject a handoff and task stays with source agent" do
+    join_token_one, plaintext_join_token_one = JoinToken.issue!(user: @user, created_by_user: @user)
+    join_token_two, plaintext_join_token_two = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_one,
+      agent: {
+        name: "Source Reject Worker",
+        hostname: "source-reject-worker.local",
+        host_uid: "source-reject-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    source_body = response.parsed_body
+    source_agent = Agent.find(source_body.dig("agent", "id"))
+    source_token = source_body.fetch("agent_token")
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_two,
+      agent: {
+        name: "Target Reject Worker",
+        hostname: "target-reject-worker.local",
+        host_uid: "target-reject-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    target_body = response.parsed_body
+    target_agent = Agent.find(target_body.dig("agent", "id"))
+    target_token = target_body.fetch("agent_token")
+
+    post api_v1_tasks_url,
+         headers: @user_auth_header,
+         params: {
+           task: {
+             name: "Rejected handoff task",
+             description: "Verify rejection keeps ownership unchanged",
+             board_id: @board.id,
+             status: "in_progress",
+             priority: "medium"
+           }
+         }
+
+    assert_response :created
+    task = Task.find(response.parsed_body.fetch("id"))
+    task.update!(
+      assigned_agent: source_agent,
+      claimed_by_agent: source_agent,
+      agent_claimed_at: Time.current
+    )
+
+    post "/api/v1/tasks/#{task.id}/handoff",
+         headers: agent_auth_header(source_token),
+         params: {
+           to_agent_id: target_agent.id,
+           context: "Please take the rejection path"
+         }
+
+    assert_response :created
+    handoff_id = response.parsed_body.fetch("id")
+
+    patch "/api/v1/task_handoffs/#{handoff_id}/reject",
+          headers: agent_auth_header(target_token)
+
+    assert_response :success
+    reject_body = response.parsed_body
+    assert_equal "rejected", reject_body.fetch("status")
+    assert reject_body.fetch("responded_at").present?
+
+    handoff = TaskHandoff.find(handoff_id)
+    assert_equal "rejected", handoff.status
+    assert handoff.responded_at.present?
+
+    task.reload
+    assert_equal source_agent.id, task.assigned_agent_id
+    assert_equal source_agent.id, task.claimed_by_agent_id
+
+    activity = task.activities.where(field_name: "handoff", new_value: target_agent.name).order(:created_at).last
+    assert_not_nil activity
+    assert_equal target_agent.id, activity.actor_agent_id
+    assert_equal "api", activity.source
+    assert_match(/Handoff rejected:/, activity.note)
+  end
+
+
+  test "revoked agent token can no longer heartbeat" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Revocation Worker",
+        hostname: "revocation-worker.local",
+        host_uid: "revocation-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+
+    assert_response :created
+    register_body = response.parsed_body
+    agent = Agent.find(register_body.dig("agent", "id"))
+    agent_token = register_body.fetch("agent_token")
+
+    post "/api/v1/agents/#{agent.id}/revoke_token", headers: @user_auth_header
+    assert_response :success
+    assert_equal 1, response.parsed_body.fetch("revoked_tokens")
+
+    post heartbeat_api_v1_agent_url(agent),
+         headers: agent_auth_header(agent_token),
+         params: { status: "online", version: "4.0.3" }
+
+    assert_response :unauthorized
+  end
+
+
+  test "claiming agent artifact upload rejects invalid metadata and oversized files" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Artifact Failure Worker",
+        hostname: "artifact-failure-worker.local",
+        host_uid: "artifact-failure-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    register_body = response.parsed_body
+    agent = Agent.find(register_body.dig("agent", "id"))
+    agent_token = register_body.fetch("agent_token")
+
+    post api_v1_tasks_url,
+         headers: @user_auth_header,
+         params: {
+           task: {
+             name: "Artifact failure task",
+             description: "Verify artifact failure paths",
+             board_id: @board.id,
+             status: "in_progress",
+             priority: "medium"
+           }
+         }
+
+    assert_response :created
+    task = Task.find(response.parsed_body.fetch("id"))
+    task.update!(
+      assigned_agent: agent,
+      claimed_by_agent: agent,
+      agent_claimed_at: Time.current
+    )
+
+    post api_v1_task_artifacts_url(task),
+         headers: agent_auth_header(agent_token),
+         params: {
+           file: uploaded_file("bad-metadata.txt", "artifact payload"),
+           metadata: "not json"
+         },
+         as: :multipart
+
+    assert_response :unprocessable_entity
+    assert_equal "Metadata must be valid JSON", response.parsed_body.fetch("error")
+
+    oversized = "a" * (Api::V1::TaskArtifactsController::MAX_ARTIFACT_SIZE + 1)
+    post api_v1_task_artifacts_url(task),
+         headers: agent_auth_header(agent_token),
+         params: {
+           file: uploaded_file("too-large.txt", oversized)
+         },
+         as: :multipart
+
+    assert_response :unprocessable_entity
+    assert_match(/File exceeds max size/, response.parsed_body.fetch("error"))
+  end
+
   private
 
   def uploaded_file(filename, content, content_type = "text/plain")
