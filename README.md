@@ -24,7 +24,7 @@ Currently implemented in this codebase:
 
 ## Stack
 
-- Ruby 3.3 / Rails 8.1
+- Ruby 4.0.2 / Rails 8.1
 - PostgreSQL 16
 - Hotwire (Turbo + Stimulus)
 - Tailwind CSS
@@ -69,7 +69,7 @@ docker compose up -d app
 ### Option B: Native development
 
 Requirements:
-- Ruby 3.3.x
+- Ruby 4.0.2
 - PostgreSQL 16
 - Node.js 20
 - Bundler

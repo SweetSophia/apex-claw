@@ -48,11 +48,9 @@ docker compose down
 
 Native setup is available, but Docker is currently the smoother path.
 
-Important version note:
-- `.ruby-version` currently specifies `4.0.2`
-- the checked-in Docker image is still based on Ruby `3.3`
-
-For native development, follow `.ruby-version`.
+Runtime version:
+- `.ruby-version` specifies Ruby `4.0.2`
+- Docker and repo docs are aligned to Ruby `4.0.2`
 
 Requirements:
 - Ruby `4.0.2`
