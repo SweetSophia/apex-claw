@@ -35,8 +35,11 @@ Currently implemented in this codebase:
 
 - `app/` — Rails app
 - `agent/` — Go agent runtime and client
-- `docs/AGENT_INTEGRATION.md` — agent API integration guide
+- `docs/AGENT_INTEGRATION.md` — agent integration guide
+- `docs/api/OPENAPI_REFERENCE.md` — current API reference
+- `docs/sdk/GO_AGENT_SDK.md` — Go client / SDK guide
 - `docs/ADVANCEMENT_PLAN.md` — current roadmap and delivery phases
+- `script/loadtest/agent_concurrency_smoke.rb` — concurrent-agent smoke load test
 - `docker-compose.yml` — local development stack
 
 ## Quick Start
@@ -135,6 +138,8 @@ Key resources:
 
 Useful references:
 - `docs/AGENT_INTEGRATION.md`
+- `docs/api/OPENAPI_REFERENCE.md`
+- `docs/sdk/GO_AGENT_SDK.md`
 - `config/routes.rb`
 
 ## Agent Platform Features
