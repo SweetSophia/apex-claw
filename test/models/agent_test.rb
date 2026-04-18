@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AgentTest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::TimeHelpers
+
   setup do
     @user = users(:one)
   end
@@ -117,5 +119,102 @@ class AgentTest < ActiveSupport::TestCase
   test "metadata defaults to empty hash" do
     agent = Agent.create!(user: @user, name: "No Meta")
     assert_equal({}, agent.metadata)
+  end
+
+  test "heartbeat_stale? is true when never connected" do
+    agent = Agent.create!(user: @user, name: "No Heartbeat")
+
+    assert agent.heartbeat_stale?
+  end
+
+  test "health_status is healthy when online with active runner and fresh heartbeat" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Healthy Agent",
+        status: :online,
+        last_heartbeat_at: 2.minutes.ago,
+        metadata: { "task_runner_active" => true, "uptime_seconds" => 3600 }
+      )
+
+      assert_equal :healthy, agent.health_status
+      assert_equal "Healthy", agent.health_badge_label
+    end
+  end
+
+  test "health_status is degraded when online but runner inactive" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Idle Agent",
+        status: :online,
+        last_heartbeat_at: 1.minute.ago,
+        metadata: { "task_runner_active" => false }
+      )
+
+      assert_equal :degraded, agent.health_status
+    end
+  end
+
+  test "health_status is offline when heartbeat is stale" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Stale Agent",
+        status: :online,
+        last_heartbeat_at: 10.minutes.ago,
+        metadata: { "task_runner_active" => true }
+      )
+
+      assert_equal :offline, agent.health_status
+    end
+  end
+
+  test "uptime_label is human friendly" do
+    agent = Agent.create!(user: @user, name: "Timed Agent", metadata: { "uptime_seconds" => 3660 })
+
+    assert_match(/about 1 hour|about 1 hour and 1 minute|1 hour/, agent.uptime_label)
+  end
+
+  test "recent completed task and command metrics are calculated over 24 hours" do
+    travel_to Time.current do
+      agent = Agent.create!(
+        user: @user,
+        name: "Metrics Agent",
+        status: :online,
+        last_heartbeat_at: Time.current,
+        metadata: { "task_runner_active" => true }
+      )
+      board = @user.boards.first || @user.boards.create!(name: "Board", icon: "📋", color: "gray")
+
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Recent Done",
+        claimed_by_agent: agent,
+        status: :done,
+        completed: true,
+        completed_at: 2.hours.ago
+      )
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Old Done",
+        claimed_by_agent: agent,
+        status: :done,
+        completed: true,
+        completed_at: 3.days.ago
+      )
+
+      agent.agent_commands.create!(kind: "restart", payload: {}, state: :completed, created_at: 4.hours.ago)
+      agent.agent_commands.create!(kind: "drain", payload: {}, state: :failed, created_at: 3.hours.ago)
+      agent.agent_commands.create!(kind: "resume", payload: {}, state: :pending, created_at: 2.days.ago)
+
+      assert_equal 1, agent.recent_completed_tasks_count
+      assert_equal 2, agent.recent_commands_count
+      assert_equal 1, agent.recent_failed_commands_count
+      assert_equal 50, agent.recent_command_error_rate
+      assert_equal 1, agent.pending_commands_count
+    end
   end
 end
