@@ -56,17 +56,36 @@ class BroadcastableTest < ActionDispatch::IntegrationTest
     assert_equal "online", agent.status
   end
 
-  test "task create triggers SSE broadcast" do
-    # Verify the broadcast method is called by checking side effects
-    post api_v1_tasks_url, params: {
-      task: { name: "SSE test task", board_id: @board.id }
-    }, headers: @auth_header
-    assert_response :created
+  test "task complete broadcasts structured SSE payload" do
+    task = tasks(:one)
+    broadcasts = []
+    server = ActionCable.server
+    singleton = server.singleton_class
 
-    # The after_action callback should have broadcast to the SSE channel
-    # activity_source is an attr_accessor, not persisted — just verify task exists
-    task = Task.find_by(name: "SSE test task")
-    assert_not_nil task
+    singleton.class_eval do
+      alias_method :__broadcastable_test_original_broadcast, :broadcast
+    end
+
+    server.define_singleton_method(:broadcast) do |channel, payload|
+      broadcasts << [channel, payload]
+    end
+
+    patch complete_api_v1_task_url(task), headers: @auth_header
+    assert_response :success
+
+    channel, payload = broadcasts.find { |entry| entry.first == "api:events:#{@user.id}" }
+    assert_not_nil channel
+
+    body = JSON.parse(payload)
+    assert_equal "task.completed", body["type"]
+    assert_equal task.id, body.dig("data", "id")
+    assert_equal "done", body.dig("data", "status")
+    assert body["timestamp"].present?
+  ensure
+    singleton.class_eval do
+      alias_method :broadcast, :__broadcastable_test_original_broadcast
+      remove_method :__broadcastable_test_original_broadcast
+    end
   end
 
   test "claim task broadcasts SSE event" do
