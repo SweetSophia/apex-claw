@@ -116,6 +116,96 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     assert_equal "Lifecycle integration completion", status_activity.note
   end
 
+
+  test "owner can enqueue command, agent can poll and complete it, and token rotation invalidates the old token" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Command Worker",
+        hostname: "command-worker.local",
+        host_uid: "command-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+
+    assert_response :created
+    register_body = response.parsed_body
+    agent = Agent.find(register_body.dig("agent", "id"))
+    old_agent_token = register_body.fetch("agent_token")
+
+    post "/api/v1/agents/#{agent.id}/commands",
+         headers: @user_auth_header,
+         params: {
+           kind: "drain",
+           payload: { reason: "scheduled maintenance" }
+         }
+
+    assert_response :created
+    enqueue_body = response.parsed_body
+    command_id = enqueue_body.fetch("id")
+    assert_equal "pending", enqueue_body.fetch("state")
+    assert_equal "drain", enqueue_body.fetch("kind")
+    assert_equal @user.id, enqueue_body.fetch("requested_by_user_id")
+
+    get "/api/v1/agent_commands/next",
+        headers: agent_auth_header(old_agent_token)
+
+    assert_response :success
+    next_command_body = response.parsed_body
+    assert_equal command_id, next_command_body.fetch("id")
+    assert_equal "acknowledged", next_command_body.fetch("state")
+    assert_equal "scheduled maintenance", next_command_body.dig("payload", "reason")
+
+    command = AgentCommand.find(command_id)
+    assert_equal "acknowledged", command.state
+    assert command.acked_at.present?
+
+    patch "/api/v1/agent_commands/#{command.id}/complete",
+          headers: agent_auth_header(old_agent_token),
+          params: {
+            result: {
+              success: true,
+              message: "Drain completed cleanly"
+            }
+          }
+
+    assert_response :success
+    complete_body = response.parsed_body
+    assert_equal "completed", complete_body.fetch("state")
+    assert_equal "true", complete_body.dig("result", "success")
+    assert_equal "Drain completed cleanly", complete_body.dig("result", "message")
+
+    command.reload
+    assert_equal "completed", command.state
+    assert command.completed_at.present?
+
+    post "/api/v1/agents/#{agent.id}/rotate_token", headers: @user_auth_header
+
+    assert_response :created
+    rotate_body = response.parsed_body
+    new_agent_token = rotate_body.fetch("agent_token")
+    assert new_agent_token.present?
+    refute_equal old_agent_token, new_agent_token
+
+    get "/api/v1/agents", headers: agent_auth_header(old_agent_token)
+    assert_response :unauthorized
+
+    get "/api/v1/agents", headers: agent_auth_header(new_agent_token)
+    assert_response :success
+    ids = response.parsed_body.map { |row| row.fetch("id") }
+    assert_includes ids, agent.id
+
+    post heartbeat_api_v1_agent_url(agent),
+         headers: agent_auth_header(new_agent_token),
+         params: { status: "draining", version: "4.0.3" }
+
+    assert_response :success
+    assert_equal "draining", agent.reload.status
+  end
+
   private
 
   def agent_auth_header(token)
