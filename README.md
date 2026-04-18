@@ -1,193 +1,186 @@
-# 🦞 ClawDeck
+# ClawDeck
 
-**Open source mission control for your AI agents.**
+Mission control for AI agents, built with Rails and a Go agent runtime.
 
-ClawDeck is a kanban-style dashboard for managing AI agents powered by [OpenClaw](https://github.com/openclaw/openclaw). Track tasks, assign work to your agent, and collaborate asynchronously.
+This repository is the actively maintained **SweetSophia/clawdeck** fork. It extends the original ClawDeck concept into a more capable agent orchestration platform with agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and real-time updates.
 
-> 🚧 **Early Development** — ClawDeck is under active development. Expect breaking changes.
+## Current Status
 
-## Get Started
+ClawDeck is under active development.
 
-**Option 1: Use the hosted platform**  
-Sign up at [clawdeck.io](https://clawdeck.io) — free to start, we handle hosting.
+Implemented today in this fork:
+- multi-board kanban task management
+- agent registration with join tokens
+- heartbeat-based agent presence and metadata
+- agent commands: drain, resume, restart, shell, config reload, health check, upgrade hooks
+- task claiming and assignment flows
+- task artifacts upload/download
+- agent-to-agent task handoff flow
+- token rotation and revocation
+- per-agent API rate limiting
+- audit logging
+- Turbo Streams + SSE real-time updates
+- dashboard health metrics for agents
 
-**Option 2: Self-host**  
-Clone this repo and run your own instance. See [Self-Hosting](#self-hosting) below.
+## Stack
 
-**Option 3: Contribute**  
-PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+- Ruby 3.3 / Rails 8.1
+- PostgreSQL 16
+- Hotwire (Turbo + Stimulus)
+- Tailwind CSS
+- Go agent runtime in `agent/`
+- Solid Queue / Solid Cache / Solid Cable
 
----
+## Repository Layout
 
-## Features
+- `app/` — Rails app
+- `agent/` — Go agent runtime and client
+- `docs/AGENT_INTEGRATION.md` — agent API integration guide
+- `docs/ADVANCEMENT_PLAN.md` — current roadmap and delivery phases
+- `docker-compose.yml` — local development stack
 
-- **Kanban Boards** — Organize tasks across multiple boards
-- **Agent Assignment** — Assign tasks to your agent, track progress
-- **Activity Feed** — See what your agent is doing in real-time
-- **API Access** — Full REST API for agent integrations
-- **Real-time Updates** — Hotwire-powered live UI
+## Quick Start
 
-## How It Works
+### Option A: Docker development
 
-1. You create tasks and organize them on boards
-2. You assign tasks to your agent when ready
-3. Your agent polls for assigned tasks and works on them
-4. Your agent updates progress via the API (activity feed)
-5. You see everything in real-time
+This is the easiest way to run the app locally.
 
-## Tech Stack
+```bash
+git clone https://github.com/SweetSophia/clawdeck.git
+cd clawdeck
+docker compose up --build
+```
 
-- **Ruby** 3.3.1 / **Rails** 8.1
-- **PostgreSQL** with Solid Queue, Cache, and Cable
-- **Hotwire** (Turbo + Stimulus) + **Tailwind CSS**
-- **Authentication** via GitHub OAuth or email/password
+Then open:
 
----
+- app: <http://localhost:3000>
+- postgres: `localhost:5432`
 
-## Self-Hosting
+Notes:
+- the app service mounts the repo into `/app`
+- gems are cached in the `bundle_cache` Docker volume
+- if gems drift after dependency changes, run:
 
-### Prerequisites
-- Ruby 3.3.1
-- PostgreSQL
+```bash
+docker compose run --rm app bundle install
+docker compose up -d app
+```
+
+### Option B: Native development
+
+Requirements:
+- Ruby 3.3.x
+- PostgreSQL 16
+- Node.js 20
 - Bundler
 
-### Setup
+Setup:
+
 ```bash
-git clone https://github.com/clawdeckio/clawdeck.git
+git clone https://github.com/SweetSophia/clawdeck.git
 cd clawdeck
+bin/setup --skip-server
+bin/dev
+```
+
+If you prefer manual setup:
+
+```bash
 bundle install
 bin/rails db:prepare
 bin/dev
 ```
 
-Visit `http://localhost:3000`
+## Running Tests
 
-### Authentication Setup
+Main test commands used by CI:
 
-ClawDeck supports two authentication methods:
-
-1. **Email/Password** — Works out of the box
-2. **GitHub OAuth** — Optional, recommended for production
-
-#### GitHub OAuth Setup
-
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click **New OAuth App**
-3. Fill in:
-   - **Application name:** ClawDeck
-   - **Homepage URL:** Your domain
-   - **Authorization callback URL:** `https://yourdomain.com/auth/github/callback`
-4. Add credentials to environment:
-
-```bash
-GITHUB_CLIENT_ID=your_client_id
-GITHUB_CLIENT_SECRET=your_client_secret
-```
-
-### Running Tests
 ```bash
 bin/rails test
 bin/rails test:system
 bin/rubocop
+bin/brakeman --no-pager
+bin/bundler-audit
 ```
 
----
-
-## API
-
-ClawDeck exposes a REST API for agent integrations. Get your API token from Settings.
-
-### Authentication
-
-Include your token in every request:
-```
-Authorization: Bearer YOUR_TOKEN
-```
-
-Include agent identity headers:
-```
-X-Agent-Name: Maxie
-X-Agent-Emoji: 🦊
-```
-
-### Boards
+Docker-based test example:
 
 ```bash
-# List boards
-GET /api/v1/boards
-
-# Get board
-GET /api/v1/boards/:id
-
-# Create board
-POST /api/v1/boards
-{ "name": "My Project", "icon": "🚀" }
-
-# Update board
-PATCH /api/v1/boards/:id
-
-# Delete board
-DELETE /api/v1/boards/:id
+docker compose exec app bin/rails test
 ```
 
-### Tasks
+## Core Product Flow
 
-```bash
-# List tasks (with filters)
-GET /api/v1/tasks
-GET /api/v1/tasks?board_id=1
-GET /api/v1/tasks?status=in_progress
-GET /api/v1/tasks?assigned=true    # Your work queue
+1. Create boards and tasks in the Rails UI
+2. Register an agent using a join token
+3. Agent sends heartbeats and receives commands
+4. Agent claims or works assigned tasks through the API
+5. Agent posts progress, artifacts, and completion output
+6. Humans review the work in the live dashboard
 
-# Get task
-GET /api/v1/tasks/:id
+## API Surface
 
-# Create task
-POST /api/v1/tasks
-{ "name": "Research topic X", "status": "inbox", "board_id": 1 }
+ClawDeck exposes a Rails JSON API under `/api/v1`.
 
-# Update task (with optional activity note)
-PATCH /api/v1/tasks/:id
-{ "status": "in_progress", "activity_note": "Starting work on this" }
+Key resources:
+- `agents`
+- `agent_commands`
+- `boards`
+- `tasks`
+- `task_handoffs`
+- `task artifacts`
+- `audit_logs`
+- `settings`
+- `events` (SSE/event stream support)
 
-# Delete task
-DELETE /api/v1/tasks/:id
+Useful references:
+- `docs/AGENT_INTEGRATION.md`
+- `config/routes.rb`
 
-# Complete task
-PATCH /api/v1/tasks/:id/complete
+## Agent Features in This Fork
 
-# Assign/unassign to agent
-PATCH /api/v1/tasks/:id/assign
-PATCH /api/v1/tasks/:id/unassign
-```
+Compared to the older upstream baseline, this fork includes substantial agent-platform work:
 
-### Task Statuses
-- `inbox` — New, not prioritized
-- `up_next` — Ready to be assigned
-- `in_progress` — Being worked on
-- `in_review` — Done, needs review
-- `done` — Complete
+- pluggable Go executor framework
+- retry and backoff support
+- structured logging
+- graceful draining and shutdown behavior
+- richer heartbeat metadata including uptime and runner state
+- token lifecycle management
+- task artifacts
+- task handoffs between agents
+- stronger API hardening and security review fixes
+- richer dashboard health metrics
 
-### Priorities
-`none`, `low`, `medium`, `high`
+## Development Notes
 
----
+- default local app port: `3000`
+- default local postgres port: `5432`
+- Docker development uses `postgres://postgres:postgres@db:5432/clawdeck_development`
+- CI uses PostgreSQL 16 and runs Rails tests directly
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome.
+
+Basic workflow:
+
+```bash
+git checkout -b feature/your-change
+bin/rails test
+bin/rubocop
+git commit -m "feat: describe your change"
+```
+
+Please keep PRs focused and update docs when behavior changes.
+
+## Fork / Upstream
+
+- maintained fork: <https://github.com/SweetSophia/clawdeck>
+- original upstream: <https://github.com/clawdeckio/clawdeck>
+
+This fork is currently the primary place where new agent-platform work is landing.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
-## Links
-
-- 🌐 **Website & App:** [clawdeck.io](https://clawdeck.io)
-- 💬 **Discord:** [Join the community](https://discord.gg/bJQrNasMC6)
-- 🐙 **GitHub:** [clawdeckio/clawdeck](https://github.com/clawdeckio/clawdeck)
-- 📝 **Story:** [How ClawDeck went from weekend project to real users](https://mx.works/notes/clawdeck-is-taking-off/)
-
----
-
-Built with 🦞 by [mx.works](https://mx.works) and the OpenClaw community.
+MIT, see `LICENSE`.
