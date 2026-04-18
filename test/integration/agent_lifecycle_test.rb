@@ -206,6 +206,107 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     assert_equal "draining", agent.reload.status
   end
 
+
+  test "assigned agent can hand off a task and target agent can accept it" do
+    join_token_one, plaintext_join_token_one = JoinToken.issue!(user: @user, created_by_user: @user)
+    join_token_two, plaintext_join_token_two = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_one,
+      agent: {
+        name: "Source Worker",
+        hostname: "source-worker.local",
+        host_uid: "source-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    source_body = response.parsed_body
+    source_agent = Agent.find(source_body.dig("agent", "id"))
+    source_token = source_body.fetch("agent_token")
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_two,
+      agent: {
+        name: "Target Worker",
+        hostname: "target-worker.local",
+        host_uid: "target-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    target_body = response.parsed_body
+    target_agent = Agent.find(target_body.dig("agent", "id"))
+    target_token = target_body.fetch("agent_token")
+
+    post api_v1_tasks_url,
+         headers: @user_auth_header,
+         params: {
+           task: {
+             name: "Handoff integration task",
+             description: "Verify task handoff acceptance",
+             board_id: @board.id,
+             status: "in_progress",
+             priority: "high"
+           }
+         }
+
+    assert_response :created
+    task_id = response.parsed_body.fetch("id")
+    task = Task.find(task_id)
+    task.update!(
+      assigned_agent: source_agent,
+      claimed_by_agent: source_agent,
+      agent_claimed_at: Time.current
+    )
+
+    post "/api/v1/tasks/#{task.id}/handoff",
+         headers: agent_auth_header(source_token),
+         params: {
+           to_agent_id: target_agent.id,
+           context: "Needs a Linux packaging specialist"
+         }
+
+    assert_response :created
+    create_body = response.parsed_body
+    handoff_id = create_body.fetch("id")
+    assert_equal task.id, create_body.fetch("task_id")
+    assert_equal source_agent.id, create_body.fetch("from_agent_id")
+    assert_equal target_agent.id, create_body.fetch("to_agent_id")
+    assert_equal "pending", create_body.fetch("status")
+    assert_equal "Needs a Linux packaging specialist", create_body.fetch("context")
+
+    get "/api/v1/task_handoffs", headers: agent_auth_header(target_token)
+    assert_response :success
+    handoff_ids = response.parsed_body.map { |handoff| handoff.fetch("id") }
+    assert_includes handoff_ids, handoff_id
+
+    patch "/api/v1/task_handoffs/#{handoff_id}/accept",
+          headers: agent_auth_header(target_token)
+
+    assert_response :success
+    accept_body = response.parsed_body
+    assert_equal "accepted", accept_body.fetch("status")
+    assert accept_body.fetch("responded_at").present?
+
+    handoff = TaskHandoff.find(handoff_id)
+    assert_equal "accepted", handoff.status
+    assert handoff.responded_at.present?
+
+    task.reload
+    assert_equal target_agent.id, task.assigned_agent_id
+    assert_equal target_agent.id, task.claimed_by_agent_id
+    assert task.agent_claimed_at.present?
+
+    activity = task.activities.where(field_name: "handoff", new_value: target_agent.name).order(:created_at).last
+    assert_not_nil activity
+    assert_equal target_agent.id, activity.actor_agent_id
+    assert_equal "api", activity.source
+    assert_match(/Handoff accepted:/, activity.note)
+  end
+
   private
 
   def agent_auth_header(token)
