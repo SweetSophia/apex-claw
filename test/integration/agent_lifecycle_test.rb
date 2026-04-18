@@ -1,4 +1,5 @@
 require "test_helper"
+require "tempfile"
 
 class AgentLifecycleTest < ActionDispatch::IntegrationTest
   setup do
@@ -307,7 +308,108 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     assert_match(/Handoff accepted:/, activity.note)
   end
 
+
+  test "claiming agent can upload list and download task artifacts while unrelated agent is forbidden" do
+    join_token_one, plaintext_join_token_one = JoinToken.issue!(user: @user, created_by_user: @user)
+    join_token_two, plaintext_join_token_two = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_one,
+      agent: {
+        name: "Artifact Worker",
+        hostname: "artifact-worker.local",
+        host_uid: "artifact-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    source_body = response.parsed_body
+    source_agent = Agent.find(source_body.dig("agent", "id"))
+    source_token = source_body.fetch("agent_token")
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token_two,
+      agent: {
+        name: "Unrelated Worker",
+        hostname: "unrelated-worker.local",
+        host_uid: "unrelated-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3"
+      }
+    }
+    assert_response :created
+    other_token = response.parsed_body.fetch("agent_token")
+
+    post api_v1_tasks_url,
+         headers: @user_auth_header,
+         params: {
+           task: {
+             name: "Artifact lifecycle task",
+             description: "Verify artifact upload and download flow",
+             board_id: @board.id,
+             status: "in_progress",
+             priority: "medium"
+           }
+         }
+
+    assert_response :created
+    task = Task.find(response.parsed_body.fetch("id"))
+    task.update!(
+      assigned_agent: source_agent,
+      claimed_by_agent: source_agent,
+      agent_claimed_at: Time.current
+    )
+
+    post api_v1_task_artifacts_url(task),
+         headers: agent_auth_header(source_token),
+         params: {
+           file: uploaded_file("build-log.txt", "artifact payload"),
+           metadata: { kind: "log", stage: "integration" }.to_json
+         },
+         as: :multipart
+
+    assert_response :created
+    upload_body = response.parsed_body
+    artifact_id = upload_body.fetch("id")
+    assert_equal "build-log.txt", upload_body.fetch("filename")
+    assert_equal "text/plain", upload_body.fetch("content_type")
+    assert_equal({ "kind" => "log", "stage" => "integration" }, upload_body.fetch("metadata"))
+
+    artifact = TaskArtifact.find(artifact_id)
+    assert_equal task.id, artifact.task_id
+    assert artifact.file.attached?
+
+    get api_v1_task_artifacts_url(task), headers: @user_auth_header
+    assert_response :success
+    listed = response.parsed_body.find { |entry| entry.fetch("id") == artifact_id }
+    assert_not_nil listed
+    assert_equal "build-log.txt", listed.fetch("filename")
+
+    get "/api/v1/tasks/#{task.id}/artifacts/#{artifact_id}", headers: agent_auth_header(source_token)
+    assert_response :success
+    assert_equal "artifact payload", response.body
+    assert_equal "text/plain", response.media_type
+    assert_match(/attachment; filename="build-log.txt"/, response.headers["Content-Disposition"])
+
+    get "/api/v1/tasks/#{task.id}/artifacts/#{artifact_id}", headers: agent_auth_header(other_token)
+    assert_response :forbidden
+  end
+
   private
+
+  def uploaded_file(filename, content, content_type = "text/plain")
+    tempfile = Tempfile.new([ File.basename(filename, ".*"), File.extname(filename) ])
+    tempfile.binmode
+    tempfile.write(content)
+    tempfile.rewind
+
+    Rack::Test::UploadedFile.new(
+      tempfile.path,
+      content_type,
+      original_filename: filename
+    )
+  end
 
   def agent_auth_header(token)
     { "Authorization" => "Bearer #{token}" }
