@@ -16,12 +16,13 @@ class BoardsController < ApplicationController
   def show
     @board_page = true
     session[:last_board_id] = @board.id
-    @tasks = @board.tasks.includes(:user)
+    @view_mode = params[:view] == "timeline" ? "timeline" : "board"
+    @current_tag = params[:tag].presence
+    @tasks = @board.tasks.includes(:user, :assigned_agent, :claimed_by_agent)
 
     # Filter by tag if specified
-    if params[:tag].present?
-      @tasks = @tasks.where("? = ANY(tags)", params[:tag])
-      @current_tag = params[:tag]
+    if @current_tag.present?
+      @tasks = @tasks.where("? = ANY(tasks.tags)", @current_tag)
     end
 
     # Group tasks by status
@@ -32,6 +33,20 @@ class BoardsController < ApplicationController
       in_review: @tasks.in_review.order(position: :asc),
       done: @tasks.done.order(position: :asc)
     }
+
+    @timeline_tasks = @tasks
+      .where.not(due_date: nil)
+      .reorder(due_date: :asc, position: :asc)
+
+    minimum_timeline_days = 14
+    maximum_timeline_days = 90
+    furthest_due_date = @timeline_tasks.maximum(:due_date)
+
+    @timeline_start = @timeline_tasks.minimum(:due_date) || Date.current
+    requested_timeline_end = [furthest_due_date || Date.current, @timeline_start + (minimum_timeline_days - 1).days].max
+    @timeline_end = [requested_timeline_end, @timeline_start + (maximum_timeline_days - 1).days].min
+    @timeline_days = (@timeline_start..@timeline_end).to_a
+    @timeline_truncated = furthest_due_date.present? && furthest_due_date > @timeline_end
 
     # Get all unique tags for the sidebar filter
     @all_tags = @board.tasks.where.not(tags: []).pluck(:tags).flatten.uniq.sort

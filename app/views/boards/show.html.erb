@@ -11,13 +11,17 @@
   <%# Board modals (new board, settings) %>
   <%= render "boards/header" %>
 
+  <div class="flex items-center justify-end px-6 py-3 border-b border-border bg-bg-surface">
+    <%= render "boards/view_toggle" %>
+  </div>
+
   <%# Tag filter indicator %>
   <% if @current_tag.present? %>
     <div class="flex items-center gap-2 px-6 py-2 bg-bg-surface border-b border-border">
       <span class="text-xs text-content-muted">Filtered by:</span>
       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-bg-elevated text-content">
         <%= @current_tag %>
-        <%= link_to board_path(@board), class: "ml-1 hover:text-status-error" do %>
+        <%= link_to board_path(@board, view: @view_mode), class: "ml-1 hover:text-status-error" do %>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
           </svg>
@@ -26,14 +30,18 @@
     </div>
   <% end %>
 
-  <%# Kanban Columns - scrollable page, variable height columns %>
-  <div class="flex-1 overflow-auto bg-bg-base">
-    <div class="flex gap-2.5 items-start min-h-full" style="padding:12px 16px 16px">
-      <% Task.statuses.keys.each do |status| %>
-        <%= render "boards/column", status: status, tasks: @columns[status.to_sym] %>
-      <% end %>
+  <% if @view_mode == "timeline" %>
+    <%= render "boards/timeline" %>
+  <% else %>
+    <%# Kanban Columns - scrollable page, variable height columns %>
+    <div class="flex-1 overflow-auto bg-bg-base" id="board-view-panel">
+      <div class="flex gap-2.5 items-start min-h-full" style="padding:12px 16px 16px">
+        <% Task.statuses.keys.each do |status| %>
+          <%= render "boards/column", status: status, tasks: @columns[status.to_sym] %>
+        <% end %>
+      </div>
     </div>
-  </div>
+  <% end %>
 
   <%# Task Panel Container - loaded via Turbo Frame %>
   <%= turbo_frame_tag "task_panel" %>

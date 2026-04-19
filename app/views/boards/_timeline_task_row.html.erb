@@ -1,0 +1,48 @@
+<%
+  total_days = [(@timeline_end - @timeline_start).to_i + 1, 1].max
+  offset_days = (task.due_date - @timeline_start).to_i
+  left_pct = (offset_days.to_f / total_days * 100).clamp(0, 100)
+  width_pct = (100.0 / total_days)
+  status_colors = {
+    'inbox' => '#6b7280',
+    'up_next' => '#60a5fa',
+    'in_progress' => '#fbbf24',
+    'in_review' => '#a78bfa',
+    'done' => '#34d399'
+  }
+  bar_color = status_colors.fetch(task.status, '#60a5fa')
+  agent_label = task.claimed_by_agent&.name || task.assigned_agent&.name
+%>
+
+<div class="grid gap-4 border-b border-white/[0.04] px-4 py-3 md:grid-cols-[minmax(0,320px)_1fr] md:items-center">
+  <div class="min-w-0">
+    <div class="flex items-center gap-2">
+      <%= link_to task.name, board_task_path(task.board, task), data: { turbo_frame: 'task_panel' }, class: 'truncate text-sm font-semibold text-content hover:text-accent' %>
+      <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: color-mix(in srgb, <%= bar_color %> 18%, transparent); color: <%= bar_color %>">
+        <%= task.status.humanize %>
+      </span>
+    </div>
+    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-content-muted">
+      <span>Due <%= task.due_date.strftime('%b %-d') %></span>
+      <% if task.priority != 'none' %>
+        <span>Priority: <%= task.priority.humanize %></span>
+      <% end %>
+      <% if agent_label.present? %>
+        <span>Agent: <%= agent_label %></span>
+      <% end %>
+      <% if task.blocked? %>
+        <span class="text-status-error">Blocked</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <div class="relative h-8 overflow-hidden rounded-lg border border-white/[0.06] bg-bg-card">
+      <div class="absolute inset-y-0" aria-label="<%= [task.name, "due #{task.due_date.strftime('%B %-d, %Y')}", task.status.humanize].join(', ') %>" style="left: <%= left_pct %>%; width: max(<%= width_pct.round(2) %>%, 14px); padding: 4px 0">
+        <div class="h-full rounded-md px-2 text-[10px] font-semibold leading-5 text-black/80" style="background: <%= bar_color %>">
+          <%= task.due_date.strftime('%a') %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

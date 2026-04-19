@@ -1,0 +1,36 @@
+<div class="flex-1 overflow-auto bg-bg-base" id="board-view-panel">
+  <div class="px-4 py-4">
+    <% if @timeline_tasks.any? %>
+      <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-bg-surface">
+        <div class="grid gap-4 border-b border-white/[0.06] px-4 py-3 md:grid-cols-[minmax(0,320px)_1fr] md:items-center">
+          <div>
+            <h2 class="text-sm font-bold text-content">Timeline</h2>
+            <p class="mt-1 text-xs text-content-muted">Tasks with due dates, ordered across the next timeline window.</p>
+            <% if @timeline_truncated %>
+              <p class="mt-1 text-xs text-content-muted">Showing the next <%= @timeline_days.length %> days. Later due dates stay listed but are compressed to the edge of the visible window.</p>
+            <% end %>
+          </div>
+          <div class="grid" style="grid-template-columns: repeat(<%= @timeline_days.length %>, minmax(40px, 1fr)); gap: 4px;">
+            <% @timeline_days.each do |day| %>
+              <div class="rounded-md bg-bg-card px-2 py-1 text-center text-[10px] font-semibold text-content-muted">
+                <div><%= day.strftime('%a') %></div>
+                <div><%= day.strftime('%-d') %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <% @timeline_tasks.each do |task| %>
+            <%= render 'boards/timeline_task_row', task: task %>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="rounded-xl border border-dashed border-white/[0.08] bg-bg-surface px-6 py-10 text-center">
+        <div class="text-sm font-semibold text-content">No scheduled tasks yet</div>
+        <p class="mt-2 text-sm text-content-muted">Add due dates to tasks and they’ll appear here as a lightweight timeline view.</p>
+      </div>
+    <% end %>
+  </div>
+</div>
