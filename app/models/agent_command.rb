@@ -22,6 +22,6 @@ class AgentCommand < ApplicationRecord
   private
 
   def broadcast_agent_dashboard
-    Agent.broadcast_dashboard_update(agent)
+    Agent.broadcast_dashboard_update(agent, sections: [:card, :summary, :commands])
   end
 end

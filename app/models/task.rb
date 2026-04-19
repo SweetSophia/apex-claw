@@ -210,6 +210,9 @@ class Task < ApplicationRecord
   end
 
   def broadcast_related_agent_dashboards
+    changed_keys = previous_changes.keys
+    return if (changed_keys & %w[name status completed completed_at claimed_by_agent_id assigned_agent_id board_id]).empty?
+
     agent_ids = [ claimed_by_agent_id, assigned_agent_id ]
 
     if previous_changes["claimed_by_agent_id"]
@@ -220,8 +223,10 @@ class Task < ApplicationRecord
       agent_ids.concat(Array(previous_changes["assigned_agent_id"]))
     end
 
+    sections = [:card, :summary, :recent_work, :tasks]
+
     Agent.where(user_id: user_id, id: agent_ids.compact.uniq).find_each do |agent|
-      Agent.broadcast_dashboard_update(agent)
+      Agent.broadcast_dashboard_update(agent, sections: sections)
     end
   end
 

@@ -1,0 +1,21 @@
+<% commands = agent.agent_commands.order(created_at: :desc).limit(20) %>
+<div id="agent_show_commands_<%= agent.id %>">
+  <div class="mb-8">
+    <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Recent Commands</div>
+    <% if commands.any? %>
+      <div class="space-y-2">
+        <% commands.each do |cmd| %>
+          <div class="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded <%= cmd.state == "completed" ? "bg-emerald-500/20 text-emerald-400" : cmd.state == "failed" ? "bg-red-500/20 text-red-400" : cmd.state == "acknowledged" ? "bg-blue-500/20 text-blue-400" : "bg-white/[0.06] text-[#666]" %>"><%= cmd.state.humanize %></span>
+              <span class="text-sm font-semibold text-[#888]"><%= cmd.kind.humanize %></span>
+            </div>
+            <span class="text-xs text-[#555]"><%= cmd.created_at.strftime("%b %d, %H:%M") %></span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-sm text-[#555] p-4 rounded-lg bg-white/[0.03] border border-white/[0.06]">No commands yet</div>
+    <% end %>
+  </div>
+</div>

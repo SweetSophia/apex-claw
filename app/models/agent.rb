@@ -38,26 +38,82 @@ class Agent < ApplicationRecord
 
   validates :name, presence: true
 
-  after_update_commit :broadcast_dashboard_update
+  after_update_commit :broadcast_dashboard_update, if: :dashboard_summary_changed?
 
-  def self.broadcast_dashboard_update(agent)
+  def self.broadcast_dashboard_update(agent, sections: [:card, :summary, :commands, :recent_work, :tasks, :metadata, :tags])
     return unless agent&.user_id
 
-    Turbo::StreamsChannel.broadcast_action_to(
-      "agents:#{agent.user_id}",
-      action: :replace,
-      target: "agent_#{agent.id}",
-      partial: "agents/agent_card",
-      locals: { agent: agent, health_stats: health_stats_for([ agent ])[agent.id] || {} }
-    )
+    stats = health_stats_for([ agent ])[agent.id] || {}
 
-    Turbo::StreamsChannel.broadcast_action_to(
-      "agents:#{agent.user_id}",
-      action: :replace,
-      target: "agent_show_#{agent.id}",
-      partial: "agents/show_dashboard",
-      locals: { agent: agent }
-    )
+    if sections.include?(:card)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_#{agent.id}",
+        partial: "agents/agent_card",
+        locals: { agent: agent, health_stats: stats }
+      )
+    end
+
+    if sections.include?(:summary)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_summary_#{agent.id}",
+        partial: "agents/show_summary",
+        locals: { agent: agent, health_stats: stats }
+      )
+    end
+
+    if sections.include?(:recent_work)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_recent_work_#{agent.id}",
+        partial: "agents/show_recent_work",
+        locals: { agent: agent }
+      )
+    end
+
+    if sections.include?(:tags)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_tags_#{agent.id}",
+        partial: "agents/show_tags",
+        locals: { agent: agent }
+      )
+    end
+
+    if sections.include?(:metadata)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_metadata_#{agent.id}",
+        partial: "agents/show_metadata",
+        locals: { agent: agent }
+      )
+    end
+
+    if sections.include?(:commands)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_commands_#{agent.id}",
+        partial: "agents/show_commands",
+        locals: { agent: agent }
+      )
+    end
+
+    if sections.include?(:tasks)
+      Turbo::StreamsChannel.broadcast_action_to(
+        "agents:#{agent.user_id}",
+        action: :replace,
+        target: "agent_show_tasks_#{agent.id}",
+        partial: "agents/show_tasks",
+        locals: { agent: agent }
+      )
+    end
   end
 
   def self.health_stats_for(agents, window: HEALTH_WINDOW)
@@ -83,6 +139,14 @@ class Agent < ApplicationRecord
       .where(agent_id: agent_ids)
       .group(:agent_id)
       .count
+    claimed_counts = Task.unscoped
+      .where(claimed_by_agent_id: agent_ids)
+      .group(:claimed_by_agent_id)
+      .count
+    assigned_counts = Task.unscoped
+      .where(assigned_agent_id: agent_ids)
+      .group(:assigned_agent_id)
+      .count
 
     agent_ids.each_with_object({}) do |agent_id, stats|
       total_commands = command_counts[agent_id].to_i
@@ -93,6 +157,8 @@ class Agent < ApplicationRecord
         commands: total_commands,
         failed: failed_commands,
         pending: pending_counts[agent_id].to_i,
+        claimed_count: claimed_counts[agent_id].to_i,
+        assigned_count: assigned_counts[agent_id].to_i,
         error_rate: total_commands.zero? ? 0 : ((failed_commands.to_f / total_commands) * 100).round
       }
     end
@@ -168,9 +234,16 @@ class Agent < ApplicationRecord
   private
 
   def broadcast_dashboard_update
-    self.class.broadcast_dashboard_update(self)
+    sections = [:card, :summary]
+    sections << :metadata if previous_changes.key?("metadata")
+    sections << :tags if previous_changes.key?("tags")
+
+    self.class.broadcast_dashboard_update(self, sections: sections)
   end
 
+  def dashboard_summary_changed?
+    (previous_changes.keys & %w[name status hostname platform version last_heartbeat_at metadata tags]).any?
+  end
 
   def metadata_value(key)
     metadata&.[](key) || metadata&.[](key.to_sym)

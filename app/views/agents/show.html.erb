@@ -13,7 +13,5 @@
     <span class="text-[#888]"><%= @agent.name %></span>
   </div>
 
-  <div id="agent_show_<%= @agent.id %>">
-    <%= render "agents/show_dashboard", agent: @agent %>
-  </div>
+  <%= render "agents/show_dashboard", agent: @agent %>
 </div>

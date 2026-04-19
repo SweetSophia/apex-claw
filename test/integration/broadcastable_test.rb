@@ -117,7 +117,11 @@ class BroadcastableTest < ActionDispatch::IntegrationTest
 
     targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
     assert_includes targets, "agent_#{agent.id}"
-    assert_includes targets, "agent_show_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_tags_#{agent.id}"
+    refute_includes targets, "agent_show_commands_#{agent.id}"
+    refute_includes targets, "agent_show_tasks_#{agent.id}"
   ensure
     Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
   end
@@ -137,7 +141,11 @@ class BroadcastableTest < ActionDispatch::IntegrationTest
 
     targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
     assert_includes targets, "agent_#{agent.id}"
-    assert_includes targets, "agent_show_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_recent_work_#{agent.id}"
+    assert_includes targets, "agent_show_tasks_#{agent.id}"
+    refute_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_commands_#{agent.id}"
   ensure
     Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
   end
@@ -156,7 +164,10 @@ class BroadcastableTest < ActionDispatch::IntegrationTest
 
     targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
     assert_includes targets, "agent_#{agent.id}"
-    assert_includes targets, "agent_show_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_commands_#{agent.id}"
+    refute_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_tasks_#{agent.id}"
   ensure
     Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
   end

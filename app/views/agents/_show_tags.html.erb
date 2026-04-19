@@ -1,0 +1,12 @@
+<div id="agent_show_tags_<%= agent.id %>">
+  <% if agent.tags.any? %>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Tags</div>
+      <div class="flex flex-wrap gap-2">
+        <% agent.tags.each do |tag| %>
+          <span class="px-2.5 py-1 rounded-lg bg-white/[0.06] text-xs font-medium text-[#888]"><%= tag %></span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

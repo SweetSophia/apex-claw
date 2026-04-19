@@ -267,6 +267,8 @@ class AgentTest < ActiveSupport::TestCase
         commands: 2,
         failed: 1,
         pending: 1,
+        claimed_count: 1,
+        assigned_count: 0,
         error_rate: 50
       }, stats.fetch(first_agent.id))
       assert_equal({
@@ -274,6 +276,8 @@ class AgentTest < ActiveSupport::TestCase
         commands: 1,
         failed: 0,
         pending: 1,
+        claimed_count: 1,
+        assigned_count: 0,
         error_rate: 0
       }, stats.fetch(second_agent.id))
     end

@@ -1,0 +1,10 @@
+<div id="agent_show_metadata_<%= agent.id %>">
+  <% if agent.metadata.present? && agent.metadata.any? %>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Metadata</div>
+      <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+        <pre class="text-xs text-[#888] overflow-x-auto"><%= JSON.pretty_generate(agent.metadata) %></pre>
+      </div>
+    </div>
+  <% end %>
+</div>
