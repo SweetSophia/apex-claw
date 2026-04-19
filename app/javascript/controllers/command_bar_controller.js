@@ -1,17 +1,24 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Connects to data-controller="command-bar"
 export default class extends Controller {
-  static targets = ["dialog", "backdrop", "input", "body", "searchResults", "actionsPanel", "agentPanel", "agentMessages", "modeIcon", "backButton", "escBadge"]
-  static values = { mode: { type: String, default: "search" }, open: { type: Boolean, default: false } }
+  static targets = ["dialog", "backdrop", "input", "body", "searchResults", "actionsPanel", "agentPanel", "agentMessages", "modeIcon", "backButton"]
+  static values = {
+    mode: { type: String, default: "search" },
+    open: { type: Boolean, default: false },
+    searchItems: Array,
+  }
 
   connect() {
     this.boundKeydown = this.globalKeydown.bind(this)
     this.boundToggle = this.toggle.bind(this)
     document.addEventListener("keydown", this.boundKeydown)
     document.addEventListener("command-bar:toggle", this.boundToggle)
+
     this.messages = []
     this.typing = false
+    this.results = []
+    this.activeIndex = -1
+    this.previousFocus = null
   }
 
   disconnect() {
@@ -20,13 +27,21 @@ export default class extends Controller {
   }
 
   globalKeydown(e) {
-    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
       e.preventDefault()
       this.toggle()
+      return
     }
-    if (e.key === "Escape" && this.openValue) {
+
+    if (!this.openValue) return
+
+    if (e.key === "Escape") {
       e.preventDefault()
-      this.close()
+      if (this.modeValue === "agent" && this.messages.length > 0) {
+        this.switchToSearch()
+      } else {
+        this.close()
+      }
     }
   }
 
@@ -35,12 +50,15 @@ export default class extends Controller {
   }
 
   open() {
+    this.previousFocus = document.activeElement
     this.openValue = true
     this.modeValue = "search"
     this.messages = []
+    this.typing = false
     this.dialogTarget.classList.remove("hidden")
     this.backdropTarget.classList.remove("hidden")
     this.showSearchMode()
+
     requestAnimationFrame(() => {
       this.inputTarget.value = ""
       this.inputTarget.focus()
@@ -54,19 +72,39 @@ export default class extends Controller {
     this.inputTarget.value = ""
     this.messages = []
     this.typing = false
+    this.results = []
+    this.activeIndex = -1
     this.modeValue = "search"
+
+    if (this.previousFocus && typeof this.previousFocus.focus === "function") {
+      this.previousFocus.focus()
+    }
   }
 
   onInputKeydown(e) {
+    if (this.modeValue === "agent") {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
+        this.sendMessage()
+      }
+      return
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      this.moveSelection(1)
+      return
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      this.moveSelection(-1)
+      return
+    }
+
     if (e.key === "Enter") {
       e.preventDefault()
-      if (this.modeValue === "agent") {
-        this.sendMessage()
-      } else {
-        // Select first search result
-        const firstLink = this.searchResultsTarget.querySelector("a, button")
-        if (firstLink) firstLink.click()
-      }
+      this.activateCurrentResult()
     }
   }
 
@@ -76,91 +114,230 @@ export default class extends Controller {
     }
   }
 
-  // --- Search mode ---
-
   showSearchMode() {
     this.modeValue = "search"
     this.agentPanelTarget.classList.add("hidden")
-    this.searchResultsTarget.classList.remove("hidden")
+    this.searchResultsTarget.classList.add("hidden")
     this.actionsPanelTarget.classList.remove("hidden")
     this.updateModeIcon()
     this.updateInputPlaceholder()
-    if (this.hasBackButtonTarget) this.backButtonTarget.classList.add("hidden")
-    this.search()
+
+    if (this.hasBackButtonTarget) {
+      this.backButtonTarget.classList.add("hidden")
+    }
+
+    this.renderDefaultState()
   }
 
   search() {
     const query = this.inputTarget.value.trim().toLowerCase()
 
     if (!query) {
-      this.searchResultsTarget.classList.add("hidden")
-      this.actionsPanelTarget.classList.remove("hidden")
+      this.renderDefaultState()
       return
     }
 
+    const matches = this.searchItemsValue
+      .map(item => ({ item, score: this.scoreItem(item, query) }))
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score || this.kindRank(a.item.kind) - this.kindRank(b.item.kind))
+      .slice(0, 12)
+      .map(result => result.item)
+
+    this.results = matches
     this.actionsPanelTarget.classList.add("hidden")
     this.searchResultsTarget.classList.remove("hidden")
 
-    // Client-side search from DOM
-    const cards = document.querySelectorAll("[data-task-id]")
-    const results = []
-
-    cards.forEach(card => {
-      const nameEl = card.querySelector(".text-sm.font-medium")
-      if (!nameEl) return
-      const name = nameEl.textContent.trim()
-      if (name.toLowerCase().includes(query)) {
-        const link = card.querySelector("a[href]")
-        results.push({
-          name,
-          status: card.dataset.taskStatus,
-          href: link ? link.getAttribute("href") : null,
-          taskId: card.dataset.taskId,
-        })
-      }
-    })
-
-    const shown = results.slice(0, 6)
-    if (shown.length === 0) {
-      this.searchResultsTarget.innerHTML = `<div class="py-5 text-center text-xs text-[#444]">No cards found for &ldquo;${this.escapeHtml(this.inputTarget.value.trim())}&rdquo;</div>`
+    if (matches.length === 0) {
+      this.activeIndex = -1
+      this.searchResultsTarget.innerHTML = `
+        <div class="px-4 py-8 text-center">
+          <div class="text-sm font-semibold text-[#888]">No results</div>
+          <div class="mt-1 text-xs text-[#555]">Try a task name, board, or command like “focus” or “settings”.</div>
+        </div>`
       return
     }
 
-    const statusLabels = { inbox: "Inbox", up_next: "Up Next", in_progress: "In Progress", in_review: "In Review", done: "Done" }
-    const statusDots = { inbox: "#888", up_next: "#60a5fa", in_progress: "#fbbf24", in_review: "#a78bfa", done: "#34d399" }
-
-    this.searchResultsTarget.innerHTML = `
-      <div class="px-2 py-1">
-        <div class="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#444]">Cards</div>
-        ${shown.map(r => {
-          const label = statusLabels[r.status] || r.status
-          const dot = statusDots[r.status] || "#444"
-          return `<a href="${r.href}" data-turbo-frame="task_panel" data-action="click->command-bar#close"
-                    class="flex items-center gap-2.5 w-full px-2.5 py-[9px] rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer no-underline">
-                   <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${dot}"></div>
-                   <span class="flex-1 text-[13px] font-medium text-[#ccc] truncate">${this.escapeHtml(r.name)}</span>
-                   <div class="flex items-center gap-1">
-                     <div class="w-[5px] h-[5px] rounded-full" style="background:${dot}"></div>
-                     <span class="text-[10px] font-medium text-[#444]">${label}</span>
-                   </div>
-                 </a>`
-        }).join("")}
-      </div>`
+    this.searchResultsTarget.innerHTML = this.renderSections(this.groupItems(matches), { emptyState: false })
+    this.setActiveIndex(0)
   }
 
-  // --- Agent mode ---
+  renderDefaultState() {
+    const featuredActions = this.searchItemsValue.filter(item => item.kind === "action" && item.featured)
+    const navigation = this.searchItemsValue.filter(item => item.kind === "nav").slice(0, 4)
+    const boards = this.searchItemsValue.filter(item => item.kind === "board").slice(0, 5)
+    const recentTasks = this.searchItemsValue.filter(item => item.kind === "task").slice(0, 5)
+
+    this.results = [...featuredActions, ...navigation, ...boards, ...recentTasks]
+    this.activeIndex = -1
+    this.searchResultsTarget.classList.add("hidden")
+    this.actionsPanelTarget.classList.remove("hidden")
+    this.actionsPanelTarget.innerHTML = this.renderSections([
+      { label: "Actions", items: featuredActions },
+      { label: "Jump to", items: navigation },
+      { label: "Boards", items: boards },
+      { label: "Recent tasks", items: recentTasks },
+    ], { emptyState: true })
+
+    if (this.results.length > 0) {
+      this.setActiveIndex(0)
+    }
+  }
+
+  groupItems(items) {
+    return [
+      { label: "Actions", items: items.filter(item => item.kind === "action") },
+      { label: "Navigation", items: items.filter(item => item.kind === "nav") },
+      { label: "Boards", items: items.filter(item => item.kind === "board") },
+      { label: "Tasks", items: items.filter(item => item.kind === "task") },
+    ].filter(section => section.items.length > 0)
+  }
+
+  renderSections(sections, { emptyState }) {
+    let index = 0
+
+    const content = sections.map(section => {
+      const itemsHtml = section.items.map(item => {
+        const currentIndex = index
+        index += 1
+        return this.renderItem(item, currentIndex)
+      }).join("")
+
+      return `
+        <section class="px-2 py-1">
+          <div class="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#444]">${this.escapeHtml(section.label)}</div>
+          <div class="flex flex-col gap-1">${itemsHtml}</div>
+        </section>`
+    }).join("")
+
+    if (emptyState) {
+      return `${content}
+        <div class="px-4 pt-3 pb-4 text-[10px] font-medium text-[#444] border-t border-white/[0.05] mt-2 flex items-center justify-between">
+          <span>Use ↑ ↓ to move, ↵ to open</span>
+          <span>Esc to close</span>
+        </div>`
+    }
+
+    return content
+  }
+
+  renderItem(item, index) {
+    return `
+      <button type="button"
+              data-command-bar-result-index="${index}"
+              data-action="click->command-bar#clickResult mouseenter->command-bar#hoverResult"
+              class="command-bar-result flex items-center gap-3 w-full rounded-lg border border-transparent bg-transparent px-2.5 py-[9px] text-left transition-colors hover:bg-white/[0.04] focus:outline-none"
+              aria-selected="false">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.05] bg-white/[0.04] text-[13px] flex-shrink-0">${this.escapeHtml(item.icon || "•")}</div>
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-[13px] font-semibold text-[#ddd]">${this.escapeHtml(item.title)}</div>
+          <div class="truncate text-[11px] font-medium text-[#555]">${this.escapeHtml(item.subtitle || "")}</div>
+        </div>
+        <div class="text-[10px] font-medium uppercase tracking-[0.06em] text-[#444]">${this.escapeHtml(item.kind)}</div>
+      </button>`
+  }
+
+  clickResult(e) {
+    const index = Number.parseInt(e.currentTarget.dataset.commandBarResultIndex, 10)
+    this.selectResult(index)
+  }
+
+  hoverResult(e) {
+    const index = Number.parseInt(e.currentTarget.dataset.commandBarResultIndex, 10)
+    this.setActiveIndex(index)
+  }
+
+  moveSelection(direction) {
+    const elements = this.visibleResultElements()
+    if (elements.length === 0) return
+
+    if (this.activeIndex === -1) {
+      this.setActiveIndex(direction > 0 ? 0 : elements.length - 1)
+      return
+    }
+
+    const nextIndex = (this.activeIndex + direction + elements.length) % elements.length
+    this.setActiveIndex(nextIndex)
+  }
+
+  setActiveIndex(index) {
+    const elements = this.visibleResultElements()
+    if (elements.length === 0) {
+      this.activeIndex = -1
+      return
+    }
+
+    this.activeIndex = Math.max(0, Math.min(index, elements.length - 1))
+
+    elements.forEach((element, currentIndex) => {
+      const isActive = currentIndex === this.activeIndex
+      element.classList.toggle("bg-white/[0.06]", isActive)
+      element.classList.toggle("border-white/[0.08]", isActive)
+      element.setAttribute("aria-selected", isActive ? "true" : "false")
+    })
+
+    const activeElement = elements[this.activeIndex]
+    if (activeElement) {
+      activeElement.scrollIntoView({ block: "nearest" })
+    }
+  }
+
+  activateCurrentResult() {
+    if (this.activeIndex === -1 && this.results.length > 0) {
+      this.setActiveIndex(0)
+    }
+
+    if (this.activeIndex >= 0) {
+      this.selectResult(this.activeIndex)
+    }
+  }
+
+  visibleResultElements() {
+    return Array.from(this.element.querySelectorAll("[data-command-bar-result-index]"))
+  }
+
+  selectResult(index) {
+    const item = this.results[index]
+    if (!item) return
+
+    if (item.actionType === "agent") {
+      this.switchToAgent()
+      return
+    }
+
+    if (item.agentPrompt) {
+      this.switchToAgent()
+      this.sendAgentMessage(item.agentPrompt)
+      return
+    }
+
+    if (item.href) {
+      this.navigate(item.href)
+    }
+  }
+
+  navigate(href) {
+    this.close()
+    window.location.assign(href)
+  }
 
   switchToAgent(e) {
     const prompt = e?.currentTarget?.dataset?.prompt || ""
     this.modeValue = "agent"
     this.messages = []
     this.typing = false
+    this.results = []
+    this.activeIndex = -1
     this.searchResultsTarget.classList.add("hidden")
     this.actionsPanelTarget.classList.add("hidden")
     this.agentPanelTarget.classList.remove("hidden")
     this.updateModeIcon()
     this.updateInputPlaceholder()
-    if (this.hasBackButtonTarget) this.backButtonTarget.classList.remove("hidden")
+
+    if (this.hasBackButtonTarget) {
+      this.backButtonTarget.classList.remove("hidden")
+    }
+
     this.inputTarget.value = ""
     this.inputTarget.focus()
     this.renderAgentPanel()
@@ -173,11 +350,13 @@ export default class extends Controller {
   switchToSearch() {
     this.inputTarget.value = ""
     this.showSearchMode()
+    this.inputTarget.focus()
   }
 
   sendMessage() {
     const text = this.inputTarget.value.trim()
     if (!text) return
+
     this.inputTarget.value = ""
     this.sendAgentMessage(text)
   }
@@ -222,54 +401,21 @@ export default class extends Controller {
   }
 
   detectMessageType(text) {
-    const t = text.toLowerCase()
-    if (t.includes("focus") || t === "what should i focus on?" || t === "what should i focus on today?") return "focus"
-    if (t.includes("weekly recap") || t === "give me a weekly recap") return "weekly_recap"
+    const normalized = text.toLowerCase()
+    if (normalized.includes("focus") || normalized === "what should i focus on?" || normalized === "what should i focus on today?") return "focus"
+    if (normalized.includes("weekly recap") || normalized === "give me a weekly recap") return "weekly_recap"
     return "ask_agent"
-  }
-
-  executeAction(e) {
-    const actionId = e.currentTarget.dataset.actionId
-    if (actionId === "add") {
-      this.close()
-      // Try to click the first inline-add button on the page
-      const addBtn = document.querySelector("[data-action='click->inline-add#show']")
-      if (addBtn) addBtn.click()
-      return
-    }
-    // All others switch to agent mode
-    const prompts = {
-      agent: "",
-      today: "What should I focus on today?",
-      recap: "Give me a weekly recap",
-    }
-    this.modeValue = "agent"
-    this.messages = []
-    this.typing = false
-    this.searchResultsTarget.classList.add("hidden")
-    this.actionsPanelTarget.classList.add("hidden")
-    this.agentPanelTarget.classList.remove("hidden")
-    this.updateModeIcon()
-    this.updateInputPlaceholder()
-    if (this.hasBackButtonTarget) this.backButtonTarget.classList.remove("hidden")
-    this.inputTarget.value = ""
-    this.inputTarget.focus()
-    this.renderAgentPanel()
-
-    const prompt = prompts[actionId] || ""
-    if (prompt) this.sendAgentMessage(prompt)
   }
 
   renderAgentPanel() {
     if (!this.hasAgentMessagesTarget) return
 
     if (this.messages.length === 0 && !this.typing) {
-      // Empty state
       this.agentMessagesTarget.innerHTML = `
         <div class="py-5 text-center">
           <div class="text-[28px] mb-2.5">⌨️</div>
           <div class="text-[13px] font-semibold text-[#666]">Query your tasks</div>
-          <div class="text-[11px] font-medium text-[#444] mt-1">Ask about what's overdue, in progress, blocked, or get a summary</div>
+          <div class="text-[11px] font-medium text-[#444] mt-1">Ask about what is overdue, in progress, blocked, or get a summary.</div>
           <div class="flex gap-[5px] justify-center mt-4 flex-wrap">
             ${["What should I focus on?", "Weekly recap"].map(q =>
               `<button data-action="click->command-bar#chipSend" data-prompt="${this.escapeHtml(q)}"
@@ -282,11 +428,11 @@ export default class extends Controller {
     }
 
     let html = ""
-    this.messages.forEach(m => {
-      if (m.type === "user") {
-        html += `<div class="self-end max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 3px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);color:#ddd;font-size:12.5px;line-height:1.55">${this.escapeHtml(m.text)}</div>`
+    this.messages.forEach(message => {
+      if (message.type === "user") {
+        html += `<div class="self-end max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 3px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);color:#ddd;font-size:12.5px;line-height:1.55">${this.escapeHtml(message.text)}</div>`
       } else {
-        html += `<div class="self-start max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);color:#bbb;font-size:12.5px;line-height:1.55">${this.escapeHtml(m.text)}</div>`
+        html += `<div class="self-start max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);color:#bbb;font-size:12.5px;line-height:1.55">${this.escapeHtml(message.text)}</div>`
       }
     })
 
@@ -316,10 +462,9 @@ export default class extends Controller {
     })
   }
 
-  // --- Helpers ---
-
   updateModeIcon() {
     if (!this.hasModeIconTarget) return
+
     if (this.modeValue === "agent") {
       this.modeIconTarget.innerHTML = `<span class="text-base">🤖</span>`
     } else {
@@ -328,16 +473,36 @@ export default class extends Controller {
   }
 
   updateInputPlaceholder() {
-    if (this.modeValue === "agent") {
-      this.inputTarget.placeholder = "Ask about your tasks..."
-    } else {
-      this.inputTarget.placeholder = "Search cards or run a command..."
-    }
+    this.inputTarget.placeholder = this.modeValue === "agent"
+      ? "Ask about your tasks..."
+      : "Jump to a task, board, or command..."
+  }
+
+  scoreItem(item, query) {
+    const haystack = [item.title, item.subtitle, ...(item.keywords || [])].join(" ").toLowerCase()
+    const title = (item.title || "").toLowerCase()
+
+    if (title === query) return 120
+    if (title.startsWith(query)) return 90
+    if (haystack.includes(query)) return 60
+
+    const terms = query.split(/\s+/).filter(Boolean)
+    if (terms.length === 0) return 0
+
+    const matchedTerms = terms.filter(term => haystack.includes(term)).length
+    if (matchedTerms === terms.length) return 45 + matchedTerms
+    if (matchedTerms > 0) return 20 + matchedTerms
+
+    return 0
+  }
+
+  kindRank(kind) {
+    return { action: 0, nav: 1, board: 2, task: 3 }[kind] ?? 99
   }
 
   escapeHtml(text) {
     const div = document.createElement("div")
-    div.textContent = text
+    div.textContent = text || ""
     return div.innerHTML
   }
 }

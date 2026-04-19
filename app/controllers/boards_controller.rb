@@ -56,6 +56,12 @@ class BoardsController < ApplicationController
 
     # Get API token for agent status display
     @api_token = current_user.api_token
+
+    @selected_task = @board.tasks.includes(:activities, :subtasks).find_by(id: params[:task_id]) if params[:task_id].present?
+
+    if params[:new_task].present?
+      @task = @board.tasks.new(user: current_user)
+    end
   end
 
   def create
