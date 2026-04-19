@@ -16,7 +16,8 @@ class BoardsController < ApplicationController
   def show
     @board_page = true
     session[:last_board_id] = @board.id
-    @tasks = @board.tasks.includes(:user)
+    @view_mode = params[:view] == "timeline" ? "timeline" : "board"
+    @tasks = @board.tasks.includes(:user, :assigned_agent, :claimed_by_agent)
 
     # Filter by tag if specified
     if params[:tag].present?
@@ -32,6 +33,14 @@ class BoardsController < ApplicationController
       in_review: @tasks.in_review.order(position: :asc),
       done: @tasks.done.order(position: :asc)
     }
+
+    @timeline_tasks = @tasks
+      .where.not(due_date: nil)
+      .reorder(due_date: :asc, position: :asc)
+
+    @timeline_start = @timeline_tasks.minimum(:due_date) || Date.current
+    @timeline_end = [@timeline_tasks.maximum(:due_date) || Date.current, @timeline_start + 13.days].max
+    @timeline_days = (@timeline_start..@timeline_end).to_a
 
     # Get all unique tags for the sidebar filter
     @all_tags = @board.tasks.where.not(tags: []).pluck(:tags).flatten.uniq.sort
