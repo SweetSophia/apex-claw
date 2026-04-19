@@ -44,10 +44,19 @@
   <% end %>
 
   <%# Task Panel Container - loaded via Turbo Frame %>
-  <%= turbo_frame_tag "task_panel" %>
-
+  <% if @selected_task %>
+    <%= turbo_frame_tag "task_panel" do %>
+      <%= render "boards/tasks/panel", task: @selected_task %>
+    <% end %>
+  <% else %>
+    <%= turbo_frame_tag "task_panel" %>
+  <% end %>
 
   <%# New Task Modal %>
-  <%= turbo_frame_tag "new_task_modal" %>
+  <% if @task %>
+    <%= render template: "boards/tasks/new" %>
+  <% else %>
+    <%= turbo_frame_tag "new_task_modal" %>
+  <% end %>
 
 </div>
