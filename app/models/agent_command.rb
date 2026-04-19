@@ -15,6 +15,13 @@ class AgentCommand < ApplicationRecord
 
   validates :kind, presence: true
 
+  after_commit :broadcast_agent_dashboard
+
   scope :for_agent, ->(agent) { where(agent: agent) }
   scope :pending_for, ->(agent) { for_agent(agent).pending }
+  private
+
+  def broadcast_agent_dashboard
+    Agent.broadcast_dashboard_update(agent)
+  end
 end

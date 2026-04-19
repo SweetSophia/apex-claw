@@ -38,6 +38,28 @@ class Agent < ApplicationRecord
 
   validates :name, presence: true
 
+  after_update_commit :broadcast_dashboard_update
+
+  def self.broadcast_dashboard_update(agent)
+    return unless agent&.user_id
+
+    Turbo::StreamsChannel.broadcast_action_to(
+      "agents:#{agent.user_id}",
+      action: :replace,
+      target: "agent_#{agent.id}",
+      partial: "agents/agent_card",
+      locals: { agent: agent, health_stats: health_stats_for([ agent ])[agent.id] || {} }
+    )
+
+    Turbo::StreamsChannel.broadcast_action_to(
+      "agents:#{agent.user_id}",
+      action: :replace,
+      target: "agent_show_#{agent.id}",
+      partial: "agents/show_dashboard",
+      locals: { agent: agent }
+    )
+  end
+
   def self.health_stats_for(agents, window: HEALTH_WINDOW)
     agent_ids = Array(agents).map(&:id)
     return {} if agent_ids.empty?
@@ -144,6 +166,11 @@ class Agent < ApplicationRecord
   end
 
   private
+
+  def broadcast_dashboard_update
+    self.class.broadcast_dashboard_update(self)
+  end
+
 
   def metadata_value(key)
     metadata&.[](key) || metadata&.[](key.to_sym)

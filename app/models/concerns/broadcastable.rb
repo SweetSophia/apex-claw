@@ -48,15 +48,6 @@ module Broadcastable
   # Broadcast agent status change to the "agents" Turbo Stream channel
   # so the agents index page updates live.
   def broadcast_agent_status(agent)
-    return unless agent&.user_id
-
-    # Broadcast to the user's agents stream for dashboard updates
-    Turbo::StreamsChannel.broadcast_action_to(
-      "agents:#{agent.user_id}",
-      action: :replace,
-      target: "agent_#{agent.id}",
-      partial: "agents/agent_card",
-      locals: { agent: agent }
-    )
+    Agent.broadcast_dashboard_update(agent)
   end
 end

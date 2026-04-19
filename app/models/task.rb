@@ -32,6 +32,7 @@ class Task < ApplicationRecord
   after_destroy_commit :broadcast_destroy
   after_create :record_creation_activity
   after_update :record_update_activities
+  after_commit :broadcast_related_agent_dashboards
 
   # Position management - acts_as_list functionality without the gem
   before_create :set_position
@@ -206,6 +207,22 @@ class Task < ApplicationRecord
       target: "column-#{column_status}-count",
       html: %(<span id="column-#{column_status}-count" style="font-size:11px;font-weight:600;color:#444;background:rgba(255,255,255,0.04);padding:0 7px;border-radius:5px;line-height:20px">#{count}</span>)
     )
+  end
+
+  def broadcast_related_agent_dashboards
+    agent_ids = [ claimed_by_agent_id, assigned_agent_id ]
+
+    if previous_changes["claimed_by_agent_id"]
+      agent_ids.concat(Array(previous_changes["claimed_by_agent_id"]))
+    end
+
+    if previous_changes["assigned_agent_id"]
+      agent_ids.concat(Array(previous_changes["assigned_agent_id"]))
+    end
+
+    Agent.where(user_id: user_id, id: agent_ids.compact.uniq).find_each do |agent|
+      Agent.broadcast_dashboard_update(agent)
+    end
   end
 
   def board_stream_name

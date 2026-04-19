@@ -9,12 +9,6 @@ class AgentsController < ApplicationController
   end
 
   def show
-    @commands = @agent.agent_commands.order(created_at: :desc).limit(20)
-    @total_assigned_count = @agent.assigned_tasks.count
-    @total_claimed_count = @agent.claimed_tasks.count
-    @tasks_assigned = @agent.assigned_tasks.includes(:board).order(updated_at: :desc).limit(10)
-    @tasks_claimed = @agent.claimed_tasks.includes(:board).order(updated_at: :desc).limit(10)
-    @recent_completed_tasks = @agent.claimed_tasks.done.includes(:board).order(completed_at: :desc).limit(10)
   end
 
   private
