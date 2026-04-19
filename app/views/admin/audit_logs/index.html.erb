@@ -1,0 +1,130 @@
+<% content_for :title, "Audit Logs - Admin - clawdeck" %>
+<% content_for :nav_center, "Audit Logs - Admin" %>
+
+<section id="admin-audit-logs" class="space-y-6">
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <div class="flex items-center gap-3 mb-2">
+        <%= link_to admin_root_path, class: "text-stone-600 dark:text-purple-100 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" do %>
+          ← Back to Dashboard
+        <% end %>
+      </div>
+      <h1 class="text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">Audit Logs</h1>
+      <p class="text-sm text-stone-600 dark:text-purple-100 mt-1">
+        Immutable admin-visible activity history for API and model-level events.
+      </p>
+    </div>
+
+    <div class="bg-stone-100 dark:bg-white/10 rounded-md px-4 py-3 min-w-[180px]">
+      <div class="text-xs uppercase tracking-wider text-stone-500 dark:text-purple-100/70 font-semibold">Matching entries</div>
+      <div class="text-2xl font-bold text-stone-900 dark:text-stone-100 mt-1"><%= @total_count %></div>
+    </div>
+  </div>
+
+  <div class="bg-stone-100 dark:bg-white/10 rounded-md p-4 space-y-4">
+    <div class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-purple-100/70">Filters</div>
+
+    <%= form_with url: admin_audit_logs_path, method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3" do |f| %>
+      <div>
+        <%= f.label :audit_action, "Action", class: "block text-xs font-medium text-stone-600 dark:text-purple-100 mb-1" %>
+        <%= f.select :audit_action, options_for_select([["All actions", ""]] + @available_actions.map { |value| [value.titleize, value] }, @filters["audit_action"]), {}, class: "w-full rounded-md bg-white dark:bg-white/5 border border-stone-300 dark:border-white/10 px-3 py-2 text-sm text-stone-900 dark:text-stone-100" %>
+      </div>
+
+      <div>
+        <%= f.label :actor_type, class: "block text-xs font-medium text-stone-600 dark:text-purple-100 mb-1" %>
+        <%= f.select :actor_type, options_for_select([["All actors", ""]] + @available_actor_types.map { |value| [value, value] }, @filters["actor_type"]), {}, class: "w-full rounded-md bg-white dark:bg-white/5 border border-stone-300 dark:border-white/10 px-3 py-2 text-sm text-stone-900 dark:text-stone-100" %>
+      </div>
+
+      <div>
+        <%= f.label :actor_id, class: "block text-xs font-medium text-stone-600 dark:text-purple-100 mb-1" %>
+        <%= f.number_field :actor_id, value: @filters["actor_id"], class: "w-full rounded-md bg-white dark:bg-white/5 border border-stone-300 dark:border-white/10 px-3 py-2 text-sm text-stone-900 dark:text-stone-100", placeholder: "Any" %>
+      </div>
+
+      <div>
+        <%= f.label :resource_type, class: "block text-xs font-medium text-stone-600 dark:text-purple-100 mb-1" %>
+        <%= f.select :resource_type, options_for_select([["All resources", ""]] + @available_resource_types.map { |value| [value, value] }, @filters["resource_type"]), {}, class: "w-full rounded-md bg-white dark:bg-white/5 border border-stone-300 dark:border-white/10 px-3 py-2 text-sm text-stone-900 dark:text-stone-100" %>
+      </div>
+
+      <div>
+        <%= f.label :resource_id, class: "block text-xs font-medium text-stone-600 dark:text-purple-100 mb-1" %>
+        <%= f.number_field :resource_id, value: @filters["resource_id"], class: "w-full rounded-md bg-white dark:bg-white/5 border border-stone-300 dark:border-white/10 px-3 py-2 text-sm text-stone-900 dark:text-stone-100", placeholder: "Any" %>
+      </div>
+
+      <div class="flex items-end gap-2">
+        <%= f.submit "Apply", class: "inline-flex items-center justify-center rounded-md bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 px-4 py-2 text-sm font-semibold cursor-pointer" %>
+        <%= link_to "Reset", admin_audit_logs_path, class: "inline-flex items-center justify-center rounded-md border border-stone-300 dark:border-white/10 px-4 py-2 text-sm font-semibold text-stone-700 dark:text-stone-100" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-stone-100 dark:bg-white/10 rounded-md overflow-hidden">
+    <% if @audit_logs.any? %>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-stone-200 dark:bg-white/20">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">When</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">Action</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">Actor</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">Resource</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">Changes</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">Metadata</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold tracking-tight text-stone-900 dark:text-stone-100">IP</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200 dark:divide-white/10">
+            <% @audit_logs.each do |audit_log| %>
+              <tr class="align-top hover:bg-stone-200 dark:hover:bg-white/10 transition-colors">
+                <td class="px-4 py-4 text-sm text-stone-700 dark:text-purple-100 whitespace-nowrap">
+                  <div class="font-medium text-stone-900 dark:text-stone-100"><%= audit_log.created_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
+                  <div class="text-xs text-stone-500 dark:text-purple-100/70"><%= time_ago_in_words(audit_log.created_at) %> ago</div>
+                </td>
+                <td class="px-4 py-4 text-sm whitespace-nowrap">
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold <%= audit_log_action_badge_class(audit_log.action) %>">
+                    <%= audit_log.action %>
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm text-stone-900 dark:text-stone-100 whitespace-nowrap"><%= audit_log_actor_label(audit_log) %></td>
+                <td class="px-4 py-4 text-sm text-stone-900 dark:text-stone-100 whitespace-nowrap"><%= audit_log_resource_label(audit_log) %></td>
+                <td class="px-4 py-4 text-xs text-stone-600 dark:text-purple-100/80 max-w-xs">
+                  <details>
+                    <summary class="cursor-pointer font-medium text-stone-700 dark:text-stone-100">View payload</summary>
+                    <pre class="mt-2 whitespace-pre-wrap break-words text-[11px]"><%= JSON.pretty_generate(audit_log.audit_changes) %></pre>
+                  </details>
+                </td>
+                <td class="px-4 py-4 text-xs text-stone-600 dark:text-purple-100/80 max-w-xs">
+                  <% if audit_log.metadata.present? %>
+                    <details>
+                      <summary class="cursor-pointer font-medium text-stone-700 dark:text-stone-100"><%= audit_log_payload_excerpt(audit_log.metadata) %></summary>
+                      <pre class="mt-2 whitespace-pre-wrap break-words text-[11px]"><%= JSON.pretty_generate(audit_log.metadata) %></pre>
+                    </details>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
+                <td class="px-4 py-4 text-sm text-stone-600 dark:text-purple-100 whitespace-nowrap"><%= audit_log.ip_address.presence || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <div class="px-6 py-12 text-center">
+        <div class="text-lg font-semibold text-stone-900 dark:text-stone-100">No audit logs found</div>
+        <div class="text-sm text-stone-600 dark:text-purple-100 mt-2">Try loosening the filters or come back after more activity lands.</div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex items-center justify-between text-sm text-stone-600 dark:text-purple-100">
+    <div>Page <%= @page %></div>
+    <div class="flex items-center gap-2">
+      <% if @page > 1 %>
+        <%= link_to "← Previous", admin_audit_logs_path(@filters.merge(page: @page - 1)), class: "px-3 py-1.5 rounded-md border border-stone-300 dark:border-white/10" %>
+      <% end %>
+      <% if @has_next_page %>
+        <%= link_to "Next →", admin_audit_logs_path(@filters.merge(page: @page + 1)), class: "px-3 py-1.5 rounded-md border border-stone-300 dark:border-white/10" %>
+      <% end %>
+    </div>
+  </div>
+</section>
