@@ -32,7 +32,7 @@ class Task < ApplicationRecord
   after_destroy_commit :broadcast_destroy
   after_create :record_creation_activity
   after_update :record_update_activities
-  after_commit :broadcast_related_agent_dashboards
+  after_commit :broadcast_related_agent_dashboards, on: [:create, :update]
 
   # Position management - acts_as_list functionality without the gem
   before_create :set_position

@@ -141,10 +141,12 @@ class Agent < ApplicationRecord
       .count
     claimed_counts = Task.unscoped
       .where(claimed_by_agent_id: agent_ids)
+      .where.not(status: Task.statuses[:done])
       .group(:claimed_by_agent_id)
       .count
     assigned_counts = Task.unscoped
       .where(assigned_agent_id: agent_ids)
+      .where.not(status: Task.statuses[:done])
       .group(:assigned_agent_id)
       .count
 

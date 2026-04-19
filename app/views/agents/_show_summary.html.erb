@@ -1,4 +1,3 @@
-<% health_stats ||= Agent.health_stats_for([agent])[agent.id] || {} %>
 <div id="agent_show_summary_<%= agent.id %>">
   <div class="flex items-start justify-between mb-8">
     <div class="flex items-center gap-4">
@@ -64,7 +63,7 @@
     </div>
 
     <div class="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Active Tasks</div>
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-2">Open Tasks</div>
       <div class="text-lg font-bold text-[#e0e0e0]">
         <%= health_stats.fetch(:claimed_count, agent.claimed_tasks.count) %> claimed
         <span class="text-[#555] font-normal">/ <%= health_stats.fetch(:assigned_count, agent.assigned_tasks.count) %> assigned</span>

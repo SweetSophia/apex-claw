@@ -255,6 +255,23 @@ class AgentTest < ActiveSupport::TestCase
         completed_at: 2.hours.ago
       )
 
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Assigned Open Task",
+        assigned_agent: first_agent,
+        status: :up_next,
+        completed: false
+      )
+      Task.create!(
+        user: @user,
+        board: board,
+        name: "Claimed Open Task",
+        claimed_by_agent: first_agent,
+        status: :in_progress,
+        completed: false
+      )
+
       first_agent.agent_commands.create!(kind: "restart", payload: {}, state: :completed, created_at: 4.hours.ago)
       first_agent.agent_commands.create!(kind: "drain", payload: {}, state: :failed, created_at: 3.hours.ago)
       first_agent.agent_commands.create!(kind: "resume", payload: {}, state: :pending, created_at: 2.days.ago)
@@ -268,7 +285,7 @@ class AgentTest < ActiveSupport::TestCase
         failed: 1,
         pending: 1,
         claimed_count: 1,
-        assigned_count: 0,
+        assigned_count: 1,
         error_rate: 50
       }, stats.fetch(first_agent.id))
       assert_equal({
@@ -276,7 +293,7 @@ class AgentTest < ActiveSupport::TestCase
         commands: 1,
         failed: 0,
         pending: 1,
-        claimed_count: 1,
+        claimed_count: 0,
         assigned_count: 0,
         error_rate: 0
       }, stats.fetch(second_agent.id))

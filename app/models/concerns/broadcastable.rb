@@ -48,6 +48,6 @@ module Broadcastable
   # Broadcast agent status change to the "agents" Turbo Stream channel
   # so the agents index page updates live.
   def broadcast_agent_status(agent)
-    Agent.broadcast_dashboard_update(agent)
+    Agent.broadcast_dashboard_update(agent, sections: [:card, :summary])
   end
 end
