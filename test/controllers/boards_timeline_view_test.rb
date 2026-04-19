@@ -5,7 +5,7 @@ class BoardsTimelineViewTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     @board = boards(:one)
     @task = tasks(:one)
-    @task.update!(due_date: Date.current + 2.days, status: :up_next, priority: :medium)
+    @task.update!(due_date: Date.current + 2.days, status: :up_next, priority: :medium, tags: ["ops"])
     sign_in_as(@user)
   end
 
@@ -24,5 +24,51 @@ class BoardsTimelineViewTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "Board", response.body
     assert_match "Add a card", response.body
+  end
+
+  test "timeline respects active tag filters and keeps timeline view on clear filter" do
+    other_task = @board.tasks.create!(
+      name: "Unrelated task",
+      user: @user,
+      status: :inbox,
+      priority: :none,
+      completed: false,
+      due_date: Date.current + 4.days,
+      tags: ["other"]
+    )
+
+    get board_path(@board, view: "timeline", tag: "ops")
+
+    assert_response :success
+    assert_match @task.name, response.body
+    assert_no_match other_task.name, response.body
+    assert_match board_path(@board, view: "timeline"), response.body
+  end
+
+  test "timeline expands to include the furthest due date" do
+    far_task = @board.tasks.create!(
+      name: "Far future task",
+      user: @user,
+      status: :in_progress,
+      priority: :high,
+      completed: false,
+      due_date: Date.current + 25.days
+    )
+
+    get board_path(@board, view: "timeline")
+
+    assert_response :success
+    assert_match far_task.name, response.body
+    assert_match far_task.due_date.strftime("%b %-d"), response.body
+    assert_match far_task.due_date.strftime("%-d"), response.body
+  end
+
+  test "timeline shows empty state when no tasks have due dates" do
+    @board.tasks.update_all(due_date: nil)
+
+    get board_path(@board, view: "timeline")
+
+    assert_response :success
+    assert_match "No scheduled tasks yet", response.body
   end
 end

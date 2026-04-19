@@ -17,12 +17,12 @@ class BoardsController < ApplicationController
     @board_page = true
     session[:last_board_id] = @board.id
     @view_mode = params[:view] == "timeline" ? "timeline" : "board"
+    @current_tag = params[:tag].presence
     @tasks = @board.tasks.includes(:user, :assigned_agent, :claimed_by_agent)
 
     # Filter by tag if specified
-    if params[:tag].present?
-      @tasks = @tasks.where("? = ANY(tags)", params[:tag])
-      @current_tag = params[:tag]
+    if @current_tag.present?
+      @tasks = @tasks.where("? = ANY(tasks.tags)", @current_tag)
     end
 
     # Group tasks by status
