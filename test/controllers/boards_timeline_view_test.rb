@@ -71,4 +71,33 @@ class BoardsTimelineViewTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "No scheduled tasks yet", response.body
   end
+
+
+  test "timeline caps the visible date window and shows a truncation note" do
+    far_task = @board.tasks.create!(
+      name: "Extremely far future task",
+      user: @user,
+      status: :in_progress,
+      priority: :high,
+      completed: false,
+      due_date: Date.current + 180.days
+    )
+
+    get board_path(@board, view: "timeline")
+
+    assert_response :success
+    assert_match far_task.name, response.body
+    assert_match "Showing the next 90 days", response.body
+    assert_match "grid-template-columns: repeat(90, minmax(40px, 1fr));", response.body
+  end
+
+  test "view toggle exposes tab semantics" do
+    get board_path(@board, view: "timeline")
+
+    assert_response :success
+    assert_match 'role="tablist"', response.body
+    assert_match 'aria-label="Board view modes"', response.body
+    assert_match 'role="tab"', response.body
+    assert_match 'aria-selected="true"', response.body
+  end
 end

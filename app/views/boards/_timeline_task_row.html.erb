@@ -38,7 +38,7 @@
 
   <div>
     <div class="relative h-8 overflow-hidden rounded-lg border border-white/[0.06] bg-bg-card">
-      <div class="absolute inset-y-0" style="left: <%= left_pct %>%; width: max(<%= width_pct.round(2) %>%, 14px); padding: 4px 0">
+      <div class="absolute inset-y-0" aria-label="<%= [task.name, "due #{task.due_date.strftime('%B %-d, %Y')}", task.status.humanize].join(', ') %>" style="left: <%= left_pct %>%; width: max(<%= width_pct.round(2) %>%, 14px); padding: 4px 0">
         <div class="h-full rounded-md px-2 text-[10px] font-semibold leading-5 text-black/80" style="background: <%= bar_color %>">
           <%= task.due_date.strftime('%a') %>
         </div>

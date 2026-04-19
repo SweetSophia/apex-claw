@@ -5,11 +5,13 @@
   ]
 %>
 
-<div class="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-bg-card p-1">
+<div class="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-bg-card p-1" role="tablist" aria-label="Board view modes">
   <% modes.each do |mode| %>
     <% active = @view_mode == mode[:key] %>
     <%= link_to board_path(@board, view: mode[:key], tag: @current_tag.presence),
-        class: "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors #{active ? 'bg-accent text-content' : 'text-content-secondary hover:bg-white/[0.04] hover:text-content'}" do %>
+        class: "inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors #{active ? 'bg-accent text-content' : 'text-content-secondary hover:bg-white/[0.04] hover:text-content'}",
+        role: "tab",
+        aria: { selected: active, controls: "board-view-panel" } do %>
       <span aria-hidden="true"><%= mode[:icon] %></span>
       <span><%= mode[:label] %></span>
     <% end %>

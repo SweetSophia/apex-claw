@@ -38,9 +38,15 @@ class BoardsController < ApplicationController
       .where.not(due_date: nil)
       .reorder(due_date: :asc, position: :asc)
 
+    minimum_timeline_days = 14
+    maximum_timeline_days = 90
+    furthest_due_date = @timeline_tasks.maximum(:due_date)
+
     @timeline_start = @timeline_tasks.minimum(:due_date) || Date.current
-    @timeline_end = [@timeline_tasks.maximum(:due_date) || Date.current, @timeline_start + 13.days].max
+    requested_timeline_end = [furthest_due_date || Date.current, @timeline_start + (minimum_timeline_days - 1).days].max
+    @timeline_end = [requested_timeline_end, @timeline_start + (maximum_timeline_days - 1).days].min
     @timeline_days = (@timeline_start..@timeline_end).to_a
+    @timeline_truncated = furthest_due_date.present? && furthest_due_date > @timeline_end
 
     # Get all unique tags for the sidebar filter
     @all_tags = @board.tasks.where.not(tags: []).pluck(:tags).flatten.uniq.sort

@@ -1,4 +1,4 @@
-<div class="flex-1 overflow-auto bg-bg-base">
+<div class="flex-1 overflow-auto bg-bg-base" id="board-view-panel">
   <div class="px-4 py-4">
     <% if @timeline_tasks.any? %>
       <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-bg-surface">
@@ -6,6 +6,9 @@
           <div>
             <h2 class="text-sm font-bold text-content">Timeline</h2>
             <p class="mt-1 text-xs text-content-muted">Tasks with due dates, ordered across the next timeline window.</p>
+            <% if @timeline_truncated %>
+              <p class="mt-1 text-xs text-content-muted">Showing the next <%= @timeline_days.length %> days. Later due dates stay listed but are compressed to the edge of the visible window.</p>
+            <% end %>
           </div>
           <div class="grid" style="grid-template-columns: repeat(<%= @timeline_days.length %>, minmax(40px, 1fr)); gap: 4px;">
             <% @timeline_days.each do |day| %>
