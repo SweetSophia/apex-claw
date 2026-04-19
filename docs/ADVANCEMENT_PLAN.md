@@ -1,6 +1,6 @@
 # ClawDeck Advancement Plan
 
-**Created**: 2026-04-16 | **Status**: In Progress
+**Created**: 2026-04-16 | **Status**: In Progress, updated after Sprint B merge
 **Repo**: SweetSophia/clawdeck (independently maintained)
 
 ## Overview
@@ -96,21 +96,21 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 
 ### 4.1 Dashboard Enhancements
 - [x] Agent health cards (uptime, task throughput, error rate)
-- [ ] Task timeline/Gantt view
+- [x] Task timeline/Gantt view
 - [ ] Real-time metrics via Turbo Streams
 - [ ] Command bar improvements (natural language task creation)
 
 ### 4.2 Documentation
 - [x] README — architecture, setup, screenshots
-- [ ] API reference (OpenAPI/Swagger)
+- [x] API reference (OpenAPI/Swagger)
 - [x] Deployment guide (Docker, bare metal)
-- [ ] Agent SDK docs (Go client library)
+- [x] Agent SDK docs (Go client library)
 
 ### 4.3 Integration Tests
 - [x] Full E2E cycle: register → heartbeat → get task → execute → complete
 - [x] Command flow: issue command → ack → complete
 - [x] Failure scenarios: token revocation/rejection, handoff rejection, artifact validation failures
-- [ ] Load test: concurrent agents with rate limiting
+- [x] Load test: concurrent agents with rate limiting
 
 ---
 
@@ -151,3 +151,5 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 | 2026-04-18 | 4.1 Agent Health Cards | ✅ | dashboard health badges/stats, tests green, commit 2edbe44 |
 | 2026-04-18 | 4.2 Docs refresh | ✅ | standalone positioning, honest quickstart/deploy docs, commits 54f7ebd/2bab8d5/550e647/948c7ca/c8ce2df |
 | 2026-04-18 | 4.3 Integration tests | ✅ | lifecycle, commands, token rotation/revocation, handoffs, artifacts, SSE payload assertion, commits 2ef45e4/e9d8b30/1b05696/5a486ee |
+| 2026-04-18 | Sprint A docs + load test | ✅ | OpenAPI reference, Go SDK docs, concurrent-agent smoke test, merged to main in daabb66/c792c39 |
+| 2026-04-19 | Sprint B timeline/Gantt | ✅ | board/timeline toggle, capped 90-day horizon, accessibility polish, merged to main in c6102e6 |

@@ -1,0 +1,7 @@
+<% health_stats ||= Agent.health_stats_for([agent])[agent.id] || {} %>
+<%= render "agents/show_summary", agent: agent, health_stats: health_stats %>
+<%= render "agents/show_recent_work", agent: agent %>
+<%= render "agents/show_tags", agent: agent %>
+<%= render "agents/show_metadata", agent: agent %>
+<%= render "agents/show_commands", agent: agent %>
+<%= render "agents/show_tasks", agent: agent %>

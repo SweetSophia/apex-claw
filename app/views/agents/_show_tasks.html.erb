@@ -1,0 +1,28 @@
+<% tasks_assigned = agent.assigned_tasks.includes(:board).order(updated_at: :desc).limit(10) %>
+<% tasks_claimed = agent.claimed_tasks.includes(:board).order(updated_at: :desc).limit(10) %>
+<% visible_tasks = agent_visible_tasks(agent, tasks_claimed: tasks_claimed, tasks_assigned: tasks_assigned) %>
+<div id="agent_show_tasks_<%= agent.id %>">
+  <% if visible_tasks.any? %>
+    <div>
+      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Tasks</div>
+      <div class="space-y-2">
+        <% visible_tasks.each do |task| %>
+          <%= link_to board_path(task.board), class: "block p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors" do %>
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm font-semibold text-[#e0e0e0]"><%= task.name %></div>
+                <div class="text-xs text-[#555] mt-0.5">
+                  <%= task.board.name %> · <%= task.status.humanize %>
+                  <% if task.claimed_by_agent_id == agent.id %>
+                    <span class="ml-2 text-yellow-400">Claimed</span>
+                  <% end %>
+                </div>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.06] text-[#666]"><%= task.status.humanize %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -100,4 +100,75 @@ class BroadcastableTest < ActionDispatch::IntegrationTest
     task.reload
     assert_equal agent.id, task.claimed_by_agent_id
   end
+
+  test "heartbeat broadcasts turbo updates for agent card and show dashboard" do
+    agent = Agent.create!(user: @user, name: "Realtime Agent")
+    _token, plaintext = AgentToken.issue!(agent: agent, name: "Test")
+    auth = { "Authorization" => "Bearer #{plaintext}" }
+    broadcasts = []
+    original = Turbo::StreamsChannel.method(:broadcast_action_to)
+
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to) do |stream, **kwargs|
+      broadcasts << [stream, kwargs]
+    end
+
+    post heartbeat_api_v1_agent_url(agent), params: { status: "online", metadata: { task_runner_active: true } }, headers: auth
+    assert_response :success
+
+    targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
+    assert_includes targets, "agent_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_tags_#{agent.id}"
+    refute_includes targets, "agent_show_commands_#{agent.id}"
+    refute_includes targets, "agent_show_tasks_#{agent.id}"
+  ensure
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
+  end
+
+  test "task completion broadcasts turbo refresh for related agent metrics" do
+    agent = Agent.create!(user: @user, name: "Metrics Agent")
+    task = Task.create!(user: @user, board: @board, name: "Realtime Task", claimed_by_agent: agent, status: :in_progress)
+    broadcasts = []
+    original = Turbo::StreamsChannel.method(:broadcast_action_to)
+
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to) do |stream, **kwargs|
+      broadcasts << [stream, kwargs]
+    end
+
+    patch complete_api_v1_task_url(task), headers: @auth_header
+    assert_response :success
+
+    targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
+    assert_includes targets, "agent_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_recent_work_#{agent.id}"
+    assert_includes targets, "agent_show_tasks_#{agent.id}"
+    refute_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_commands_#{agent.id}"
+  ensure
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
+  end
+
+  test "command enqueue broadcasts turbo refresh for agent metrics" do
+    agent = Agent.create!(user: @user, name: "Command Metrics Agent")
+    broadcasts = []
+    original = Turbo::StreamsChannel.method(:broadcast_action_to)
+
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to) do |stream, **kwargs|
+      broadcasts << [stream, kwargs]
+    end
+
+    post "/api/v1/agents/#{agent.id}/commands", headers: @auth_header, params: { kind: "restart" }
+    assert_response :created
+
+    targets = broadcasts.select { |stream, _| stream == "agents:#{@user.id}" }.map { |_, payload| payload[:target] }
+    assert_includes targets, "agent_#{agent.id}"
+    assert_includes targets, "agent_show_summary_#{agent.id}"
+    assert_includes targets, "agent_show_commands_#{agent.id}"
+    refute_includes targets, "agent_show_metadata_#{agent.id}"
+    refute_includes targets, "agent_show_tasks_#{agent.id}"
+  ensure
+    Turbo::StreamsChannel.define_singleton_method(:broadcast_action_to, original)
+  end
 end
