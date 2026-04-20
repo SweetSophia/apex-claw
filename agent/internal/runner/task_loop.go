@@ -68,8 +68,16 @@ func (t *TaskRunner) Run(ctx context.Context) error {
 func (t *TaskRunner) pollAndExecute(ctx context.Context) {
 	task, err := t.client.GetNextTask()
 	if err != nil {
-		logging.Global().Error("failed to get next task", map[string]any{"error": err.Error()})
-		return
+		for attempt := 1; err != nil; attempt++ {
+			backoff := t.retryConfig.BackoffDelay(attempt)
+			logging.Global().Error("failed to get next task", map[string]any{"error": err.Error(), "backoff": backoff.String(), "attempt": attempt})
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(backoff):
+			}
+			task, err = t.client.GetNextTask()
+		}
 	}
 
 	if task == nil {

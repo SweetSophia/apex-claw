@@ -76,10 +76,9 @@ func (c *Client) Heartbeat(agentID int64, status string, metadata map[string]any
 }
 
 func (c *Client) RotateToken(ctx context.Context) (string, error) {
-	_ = ctx
 	var resp RotateTokenResponse
 	path := fmt.Sprintf("/api/v1/agents/%d/rotate_token", c.agentID)
-	if err := c.doRequest("POST", path, nil, &resp, true); err != nil {
+	if err := c.doRequestWithContext(ctx, "POST", path, nil, &resp, true); err != nil {
 		return "", fmt.Errorf("rotate token: %w", err)
 	}
 

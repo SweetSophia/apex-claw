@@ -49,8 +49,16 @@ func (c *CommandRunner) Run(ctx context.Context) error {
 func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	cmd, err := c.client.GetNextCommand()
 	if err != nil {
-		logging.Global().Error("failed to get next command", map[string]any{"error": err.Error()})
-		return
+		for attempt := 1; err != nil; attempt++ {
+			backoff := DefaultRetryConfig().BackoffDelay(attempt)
+			logging.Global().Error("failed to get next command", map[string]any{"error": err.Error(), "backoff": backoff.String(), "attempt": attempt})
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(backoff):
+			}
+			cmd, err = c.client.GetNextCommand()
+		}
 	}
 	if cmd == nil {
 		return

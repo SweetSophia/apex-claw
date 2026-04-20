@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -104,20 +106,28 @@ func main() {
 
 	errChan := make(chan error, 3)
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
-		if err := heartbeatRunner.Run(sigCtx); err != nil && err != context.Canceled {
+		defer wg.Done()
+		if err := heartbeatRunner.Run(sigCtx); err != nil && !errors.Is(err, context.Canceled) {
 			errChan <- fmt.Errorf("heartbeat: %w", err)
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
-		if err := taskRunner.Run(sigCtx); err != nil && err != context.Canceled {
+		defer wg.Done()
+		if err := taskRunner.Run(sigCtx); err != nil && !errors.Is(err, context.Canceled) {
 			errChan <- fmt.Errorf("task: %w", err)
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
-		if err := commandRunner.Run(sigCtx); err != nil && err != context.Canceled {
+		defer wg.Done()
+		if err := commandRunner.Run(sigCtx); err != nil && !errors.Is(err, context.Canceled) {
 			errChan <- fmt.Errorf("command: %w", err)
 		}
 	}()
@@ -157,5 +167,21 @@ func main() {
 	}
 
 	cancel()
+	log.Printf("shutting down...")
+
+	// Wait for goroutines with timeout.
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Printf("all goroutines exited cleanly")
+	case <-time.After(10 * time.Second):
+		log.Printf("goroutine shutdown timed out")
+	}
+
 	log.Printf("graceful shutdown complete")
 }

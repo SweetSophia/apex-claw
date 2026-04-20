@@ -1,6 +1,7 @@
 package clawdeck
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -466,7 +467,7 @@ func TestClient_RotateToken(t *testing.T) {
 	client.SetToken("old-token")
 	client.SetAgentID(5)
 
-	newToken, err := client.RotateToken(nil)
+	newToken, err := client.RotateToken(context.Background())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

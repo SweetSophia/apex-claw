@@ -11,6 +11,8 @@ import (
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
+const maxScriptSize = 1 * 1024 * 1024 // 1MB
+
 // ScriptExecutor executes multi-line bash scripts from task descriptions.
 // Scripts are written to a temporary file, executed with /bin/bash, then cleaned up.
 type ScriptExecutor struct {
@@ -34,6 +36,13 @@ func (s *ScriptExecutor) Execute(ctx context.Context, task *clawdeck.Task) Execu
 		return ExecutionResult{
 			Completed: false,
 			Error:     fmt.Errorf("script executor: empty script"),
+		}
+	}
+
+	if len(script) > maxScriptSize {
+		return ExecutionResult{
+			Completed: false,
+			Error:     fmt.Errorf("script executor: script exceeds maximum size of %d bytes", maxScriptSize),
 		}
 	}
 
