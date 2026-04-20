@@ -2,25 +2,39 @@
 
 Mission control for AI agents, built with Rails and a Go agent runtime.
 
-This repository is **SweetSophia/clawdeck**, an independently maintained AI agent orchestration platform with agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and real-time updates.
+This repository is **SweetSophia/clawdeck**, an independently maintained AI agent orchestration platform with multi-board task management, agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and live dashboard updates.
 
 ## Current Status
 
-ClawDeck is under active development.
+As of **April 20, 2026**:
 
-Currently implemented in this codebase:
+- all four advancement phases are complete
+- Sprint A through Sprint E are complete
+- ops hardening is complete
+- the final planned backlog item, **configurable heartbeat interval**, is implemented in **PR #13** and awaiting merge
+- the remaining open work is now limited to two lower-priority follow-ups:
+  - real VPS deployment/runtime audit
+  - review of remaining non-deployment security cleanup items
+
+## Current Capabilities
+
+Implemented in this codebase today:
+
 - multi-board kanban task management
+- task timeline / Gantt view
+- server-seeded command palette with keyboard navigation and deep links
 - agent registration with join tokens
 - heartbeat-based agent presence and metadata
 - agent commands: drain, resume, restart, shell, config reload, health check, upgrade hooks
 - task claiming and assignment flows
-- task artifacts upload/download
+- task artifact upload and download
 - agent-to-agent task handoff flow
 - token rotation and revocation
 - per-agent API rate limiting
-- audit logging
+- audit logging plus admin audit log UI
 - Turbo Streams + SSE real-time updates
 - dashboard health metrics for agents
+- dedicated-user VPS deployment scripts with env-driven nginx and systemd templates
 
 ## Stack
 
@@ -35,18 +49,23 @@ Currently implemented in this codebase:
 
 - `app/` — Rails app
 - `agent/` — Go agent runtime and client
-- `docs/AGENT_INTEGRATION.md` — agent integration guide
-- `docs/api/OPENAPI_REFERENCE.md` — current API reference
+- `docs/ADVANCEMENT_PLAN.md` — roadmap, delivery history, remaining follow-ups
+- `docs/AGENT_INTEGRATION.md` — workflow-oriented agent integration guide
+- `docs/api/OPENAPI_REFERENCE.md` — API reference
 - `docs/sdk/GO_AGENT_SDK.md` — Go client / SDK guide
-- `docs/ADVANCEMENT_PLAN.md` — current roadmap and delivery phases
+- `docs/fleet/README.md` — control-plane / runtime architecture notes
+- `docs/fleet/SECURITY.md` — security notes for fleet and API behavior
+- `DEPLOYMENT.md` — current VPS deployment guide
+- `QUICKSTART.md` — fastest local setup path
 - `script/loadtest/agent_concurrency_smoke.rb` — concurrent-agent smoke load test
+- `script/playwright/command_bar_smoke.mjs` — lightweight browser smoke test
 - `docker-compose.yml` — local development stack
 
 ## Quick Start
 
 ### Option A: Docker development
 
-This is the easiest way to run the app locally.
+This is the easiest and most reliable way to run ClawDeck locally.
 
 ```bash
 git clone https://github.com/SweetSophia/clawdeck.git
@@ -62,7 +81,7 @@ Then open:
 Notes:
 - the app service mounts the repo into `/app`
 - gems are cached in the `bundle_cache` Docker volume
-- if gems drift after dependency changes, run:
+- after gem or image changes, the bundle cache may need a refresh:
 
 ```bash
 docker compose run --rm app bundle install
@@ -70,6 +89,8 @@ docker compose up -d app
 ```
 
 ### Option B: Native development
+
+Native setup works, but Docker is the smoother path for this repo.
 
 Requirements:
 - Ruby 4.0.3
@@ -86,7 +107,7 @@ bin/setup --skip-server
 bin/dev
 ```
 
-If you prefer manual setup:
+Manual alternative:
 
 ```bash
 bundle install
@@ -96,23 +117,32 @@ bin/dev
 
 ## Running Tests
 
-Main test commands used by CI:
+Main checks used by CI:
 
 ```bash
-bin/rails test
-bin/rails test:system
-bin/rubocop
-bin/brakeman --no-pager
-bin/bundler-audit
+bin/ci
 ```
 
-Docker-based test example:
+Individual commands:
+
+```bash
+bin/rubocop
+bin/bundler-audit
+bin/importmap audit
+bin/brakeman --no-pager
+bin/rails test
+bin/rails test:system
+```
+
+Docker-based examples:
 
 ```bash
 docker compose exec app bin/rails test
+docker compose run --rm app bin/bundler-audit
+docker compose run --rm app bin/brakeman --no-pager
 ```
 
-### Playwright smoke test
+## Playwright Smoke Test
 
 A lightweight browser smoke check for the command bar lives at `script/playwright/command_bar_smoke.mjs`.
 
@@ -123,10 +153,10 @@ node script/playwright/command_bar_smoke.mjs
 Environment variables:
 
 - `CLAWDECK_BASE_URL` — app URL (default `http://127.0.0.1:3000`)
-- `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials (defaults target local fixture-style dev users)
-- `CLAWDECK_BOARD_ID` — optional explicit board id override for the board-page inline-add leg of the smoke test
+- `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials
+- `CLAWDECK_BOARD_ID` — optional explicit board id override for the board-page inline-add leg
 - `CLAWDECK_HEADLESS=false` — run headed for debugging
-- `CLAWDECK_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when it is not resolvable as the standard `playwright` package
+- `CLAWDECK_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when `playwright` is not otherwise resolvable
 
 ## Core Product Flow
 
@@ -147,7 +177,7 @@ Key resources:
 - `boards`
 - `tasks`
 - `task_handoffs`
-- `task artifacts`
+- `task_artifacts`
 - `audit_logs`
 - `settings`
 - `events` (SSE/event stream support)
@@ -158,27 +188,26 @@ Useful references:
 - `docs/sdk/GO_AGENT_SDK.md`
 - `config/routes.rb`
 
-## Agent Platform Features
+## Deployment
 
-ClawDeck includes substantial agent-platform capabilities across the Rails control plane and Go runtime:
+- local development: `docker-compose.yml`
+- production-oriented path: bare-metal VPS scripts plus systemd/nginx
+- current deployment guide: `DEPLOYMENT.md`
 
-- pluggable Go executor framework
-- retry and backoff support
-- structured logging
-- graceful draining and shutdown behavior
-- richer heartbeat metadata including uptime and runner state
-- token lifecycle management
-- task artifacts
-- task handoffs between agents
-- stronger API hardening and security review fixes
-- richer dashboard health metrics
+There is no checked-in production Docker stack in this repo yet.
 
-## Development Notes
+## Documentation Map
 
-- default local app port: `3000`
-- default local postgres port: `5432`
-- Docker development uses `postgres://postgres:postgres@db:5432/clawdeck_development`
-- CI uses PostgreSQL 16 and runs Rails tests directly
+If you are orienting yourself quickly, start here:
+
+1. `README.md`
+2. `QUICKSTART.md`
+3. `docs/ADVANCEMENT_PLAN.md`
+4. `docs/AGENT_INTEGRATION.md`
+5. `docs/api/OPENAPI_REFERENCE.md`
+6. `docs/sdk/GO_AGENT_SDK.md`
+7. `docs/fleet/README.md`
+8. `docs/fleet/SECURITY.md`
 
 ## Contributing
 
@@ -188,8 +217,7 @@ Basic workflow:
 
 ```bash
 git checkout -b feature/your-change
-bin/rails test
-bin/rubocop
+bin/ci
 git commit -m "feat: describe your change"
 ```
 

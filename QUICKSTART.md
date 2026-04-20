@@ -20,8 +20,8 @@ Services started by `docker compose`:
 
 ### Common Docker recovery
 
-If the app container fails after gem changes, the persistent `bundle_cache` volume may be stale.
-Populate it again with:
+If the app container fails after gem changes or image rebuilds, the persistent `bundle_cache` volume may be stale.
+Refresh it with:
 
 ```bash
 docker compose run --rm app bundle install
@@ -39,6 +39,9 @@ docker compose logs -f app
 
 # run Rails tests
 docker compose exec app bin/rails test
+
+# run the full CI-style check set
+docker compose run --rm app bin/ci
 
 # stop everything
 docker compose down
@@ -94,8 +97,12 @@ bin/rails test
 bin/rails test:system
 ```
 
+If your host does not have the full Ruby/Bundler toolchain available, run these via Docker instead.
+
 ## Where to go next
 
-- API/agent integration: `docs/AGENT_INTEGRATION.md`
-- Roadmap and implementation phases: `docs/ADVANCEMENT_PLAN.md`
-- Deployment details: `DEPLOYMENT.md`
+- project overview: `README.md`
+- roadmap and implementation history: `docs/ADVANCEMENT_PLAN.md`
+- API / agent integration: `docs/AGENT_INTEGRATION.md`
+- deployment details: `DEPLOYMENT.md`
+- fleet architecture notes: `docs/fleet/README.md`

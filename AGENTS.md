@@ -4,7 +4,9 @@ This file provides guidance to Claude Code and other AI agents when working with
 
 ## Project Overview
 
-ClawDeck is a Rails 8.1 Kanban-style task management application with built-in AI agent integration. It serves as "personal mission control for your AI agent" - a visual interface where humans assign tasks and agents work on them via the REST API.
+ClawDeck is a Rails 8.1 AI agent orchestration platform with a Rails control plane and a Go agent runtime. It combines multi-board task management, agent registration, heartbeats, command delivery, artifacts, handoffs, audit logging, rate limiting, and live dashboard updates.
+
+As of April 20, 2026, all four advancement phases and Sprint A through Sprint E are complete. Ops hardening is merged. The last planned backlog item, configurable heartbeat interval, is implemented in PR #13 and awaiting merge.
 
 ## Development Commands
 
@@ -57,16 +59,20 @@ bin/importmap unpin <package>  # Unpin JavaScript package
 
 ### Deployment
 ```bash
-ssh root@YOUR_SERVER_IP  # SSH to production VPS for bootstrap/service management
-systemctl status puma         # Check Puma status
-systemctl status solid_queue  # Check Solid Queue status
-systemctl restart puma        # Restart web server
-systemctl restart solid_queue # Restart background jobs
-tail -f /var/log/clawdeck/puma.log  # View application logs
-tail -f /var/log/clawdeck/solid_queue.log  # View job logs
+# bootstrap / service installation is performed by a privileged operator
+bash script/setup_vps.sh
+bash script/install_services.sh
+
+# day-to-day runtime checks
+systemctl status puma
+systemctl status solid_queue
+systemctl restart puma
+systemctl restart solid_queue
+tail -f /var/log/clawdeck/puma.log
+tail -f /var/log/clawdeck/solid_queue.log
 ```
 
-Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow.
+Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow and required environment variables.
 
 ## Architecture
 

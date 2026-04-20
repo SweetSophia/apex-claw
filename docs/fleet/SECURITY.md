@@ -1,221 +1,94 @@
-# UberClawControl Security Documentation
+# ClawDeck Fleet Security Notes
 
-## Overview
+This document covers the current security posture of ClawDeck's agent and fleet surface.
 
-This document covers security considerations for the multi-agent orchestration system, including token management, access control, and operational security.
+## Current security model
 
-## Token Storage
+ClawDeck separates human and agent access clearly:
 
-### Token Types and Storage Strategy
+- **user API tokens** authenticate the owning user
+- **agent tokens** authenticate a specific registered agent
+- **join tokens** bootstrap one-time registration
 
-| Token Type | Storage | Lifetime | Use Case |
-|------------|---------|----------|----------|
-| Join Token | SHA-256 digest only | Single use, 24h expiry | Agent registration bootstrap |
-| Agent Token | SHA-256 digest only | Long-lived, manual revocation | Agent authentication |
-| API Token | Plaintext (legacy) | Long-lived | User API access |
+## Token storage and lifecycle
 
-### Why Digest-Only Storage
+### Token types
 
-Agent tokens and join tokens are stored as SHA-256 digests, never in plaintext:
+| Token type | Storage | Use |
+| --- | --- | --- |
+| Join token | SHA-256 digest only | Single-use agent registration bootstrap |
+| Agent token | SHA-256 digest only | Ongoing agent authentication |
+| API token | legacy user token path | User API access |
 
-```ruby
-# token_digest is computed during creation
-token = SecureRandom.hex(32)
-digest = Digest::SHA256.hexdigest(token)
-# Only the digest is stored; plaintext token is returned once to the caller
-```
+### Implemented protections
 
-This approach ensures:
-- Database compromise does not expose usable tokens
-- Tokens cannot be recovered from stored data
-- Constant-time comparison prevents timing attacks
+- join tokens are single-use
+- join tokens and agent tokens are stored as digests, not plaintext
+- token comparisons are designed for safe authentication paths
+- agent tokens track usage metadata
+- token rotation and revocation endpoints are implemented
 
-### Token Lifecycle
+## Access isolation
 
-1. **Join Token Creation**: Admin creates token via console or UI
-2. **Agent Registration**: Agent presents join token, receives agent token
-3. **Token Persistence**: Agent stores token locally (file with 0600 permissions)
-4. **Ongoing Auth**: Token digest comparison on each request
-5. **Revocation**: Admin can disable agent or revoke tokens
+The authenticated principal always scopes access:
 
-## Token Rotation Plan
+- user-token requests operate within `current_user`
+- agent-token requests operate within `current_agent` and that agent's owner scope
 
-### Current State
+This prevents cross-user access to:
+- tasks
+- agents
+- commands
+- handoffs
+- artifacts
 
-Token rotation requires manual intervention:
-1. Create new join token for user
-2. Register new agent (creates new agent token)
-3. Disable old agent
+## Command safety
 
-### Future Rotation Endpoint (Stub Design)
+Implemented command handling includes validation around known command kinds.
 
-```
-POST /api/v1/agents/:id/rotate_token
-```
+Current command surface includes:
+- `drain`
+- `resume`
+- `restart`
+- `upgrade`
+- `config_reload`
+- `shell`
+- `health_check`
 
-Response:
-```json
-{
-  "agent_token": "new_plaintext_token_returned_once",
-  "previous_token_revoked_at": "2026-02-22T12:00:00Z"
-}
-```
+Security review follow-ups already addressed in the codebase include:
+- shell injection hardening
+- filename sanitization
+- file size limits
+- race-condition fixes in command and artifact flows
 
-Rotation flow:
-1. Agent requests rotation (authenticated with current token)
-2. New token generated, old token invalidated
-3. New token returned once
-4. Agent must persist new token immediately
+## Auditability and rate limiting
 
-### Grace Period Design (Future)
+Implemented in the current codebase:
+- audit logging for important system changes
+- admin audit log UI
+- per-agent rate limiting with `429` responses and `Retry-After`
 
-For zero-downtime rotation:
-1. New token issued with old token still valid
-2. Both tokens work for configurable grace period (e.g., 5 minutes)
-3. After grace period, old token automatically revoked
-4. Agent must complete rotation within grace window
+## Concurrency safety
 
-## Command Allowlist Enforcement
+Task claim and scheduling flows use database-backed locking to reduce double-dispatch risk.
 
-### Supported Command Kinds
+Key protections:
+- atomic claim behavior
+- ownership validation
+- draining agents excluded from new task pickup
 
-| Command | Payload Fields | Agent Behavior |
-|---------|---------------|----------------|
-| `drain` | `reason` (optional) | Stop accepting new tasks |
-| `resume` | none | Resume accepting tasks |
-| `restart` | `delay_seconds` (optional) | Restart OpenClaw process |
-| `upgrade` | `version`, `force` | Upgrade to specified version |
-| `shell` | `command` | Execute shell command (restricted) |
+## Remaining lower-priority follow-ups
 
-### Validation
+The high-value fleet security work is done.
 
-Commands are validated at the controller level:
+What remains is narrower:
+- review remaining non-deployment security cleanup items outside the deployment path
+- validate deployment/runtime assumptions against a real VPS environment
 
-```ruby
-# app/controllers/api/v1/agent_commands_controller.rb
-VALID_KINDS = %w[drain resume restart upgrade shell].freeze
+## Related docs
 
-def enqueue
-  unless VALID_KINDS.include?(params[:kind])
-    render json: { error: "Invalid command kind" }, status: :unprocessable_entity
-    return
-  end
-  # ...
-end
-```
-
-### Shell Command Restrictions
-
-The `shell` command kind should be:
-- Disabled by default in production
-- Restricted to a configurable allowlist of commands
-- Logged with full audit trail
-
-Recommended configuration:
-
-```yaml
-# config/fleet.yml
-production:
-  shell_commands:
-    enabled: false
-    allowlist: []
-development:
-  shell_commands:
-    enabled: true
-    allowlist:
-      - "echo *"
-      - "date"
-      - "uptime"
-```
-
-## Cross-User Isolation
-
-### Data Access Boundaries
-
-Every API request is scoped to the authenticated principal:
-
-1. **User API Token**: Access limited to `current_user` resources
-2. **Agent Token**: Access limited to `current_agent.user` resources
-
-### Implementation
-
-```ruby
-# app/controllers/concerns/api/token_authentication.rb
-def authenticate_api_token
-  token = extract_token_from_header
-  agent_token = AgentToken.authenticate(token)
-
-  if agent_token
-    @current_agent = agent_token.agent
-    @current_user = @current_agent.user  # Agent acts within owner scope
-  else
-    @current_user = ApiToken.authenticate(token)
-  end
-end
-```
-
-### Ownership Checks
-
-**Tasks**: All queries use `current_user.tasks` scope
-
-```ruby
-# app/controllers/api/v1/tasks_controller.rb
-def set_task
-  @task = current_user.tasks.find(params[:id])  # Raises RecordNotFound if cross-user
-end
-```
-
-**Agents**: Only owner can view/manage
-
-```ruby
-# app/controllers/api/v1/agents_controller.rb
-def index
-  @agents = current_user.agents
-end
-```
-
-**Commands**: Agent can only ack/complete its own commands
-
-```ruby
-# app/controllers/api/v1/agent_commands_controller.rb
-def require_command_ownership!
-  return if current_agent.id == @agent_command.agent_id
-  render json: { error: "Forbidden" }, status: :forbidden
-end
-```
-
-### Concurrency Safety
-
-Race conditions are prevented via database-level locking:
-
-```ruby
-# app/controllers/api/v1/tasks_controller.rb
-Task.transaction do
-  @task = current_user.tasks
-    .eligible_for_agent(current_agent)
-    .lock("FOR UPDATE SKIP LOCKED")
-    .first
-
-  if @task
-    @task.update!(claimed_by_agent: current_agent, ...)
-  end
-end
-```
-
-This ensures:
-- Two agents cannot claim the same task
-- No double-dispatch under concurrent load
-- Atomic claim-and-return operation
-
-## Security Checklist
-
-- [x] Tokens stored as digests, never plaintext
-- [x] Constant-time token comparison
-- [x] Cross-user access blocked at model scope level
-- [x] Agent-to-agent isolation enforced
-- [x] Command kinds validated against allowlist
-- [x] Last used timestamp updated on each token use
-- [ ] Token rotation endpoint implemented (future)
-- [ ] Audit logging for sensitive operations (future)
-- [ ] Rate limiting per agent (future)
-- [ ] Token expiry for agent tokens (future)
+- `docs/fleet/README.md`
+- `docs/AGENT_INTEGRATION.md`
+- `docs/api/OPENAPI_REFERENCE.md`
+- `docs/sdk/GO_AGENT_SDK.md`
+- `docs/ADVANCEMENT_PLAN.md`

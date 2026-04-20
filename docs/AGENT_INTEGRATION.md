@@ -1,464 +1,192 @@
-# Agent Integration Spec
+# Agent Integration Guide
 
-## Current implementation note
+This document explains the workflow and semantics of integrating an agent with ClawDeck.
 
-This document explains the product-facing agent workflow, but the authoritative endpoint reference now lives in:
+For exact request and response shapes, use:
 
 - `docs/api/OPENAPI_REFERENCE.md`
 - `docs/sdk/GO_AGENT_SDK.md`
 
-Use those for exact request and response shapes. Use this document for workflow expectations and semantics.
+Use this file for the higher-level lifecycle and behavioral expectations.
 
+## Overview
 
-ClawDeck is designed as a **personal mission control for your AI agent**. This document specifies how an AI agent integrates with ClawDeck via the REST API.
+ClawDeck is a Rails control plane plus a Go agent runtime.
 
----
+The product flow is:
 
-## Philosophy
+1. a human creates work in the Rails UI
+2. an agent registers with a join token
+3. the agent authenticates with its own agent token
+4. the agent heartbeats, polls for work, and polls for commands
+5. the agent updates tasks, uploads artifacts, and hands off work when needed
+6. humans review progress in the live dashboard
 
-This isn't a generic kanban. It's **your window into what your agent is doing**.
+## Authentication Modes
 
-The board should feel like:
-- Checking in on a coworker
-- Seeing their desk, their tasks, their status
-- A two-way communication channel
+ClawDeck supports two bearer-token modes:
 
-The agent's personality is part of the product. Names, avatars, emoji — all visible throughout.
+### User API token
 
----
+Used for owner or admin actions such as:
+- creating and updating tasks directly
+- listing boards and settings
+- enqueueing agent commands
+- rotating or revoking agent tokens
 
-## Authentication
+### Agent token
 
-### API Token
+Used by registered agents for:
+- heartbeats
+- polling assigned work
+- claiming and updating tasks
+- polling and completing commands
+- artifact upload
+- handoff workflows
 
-- User creates an API token in ClawDeck settings
-- Agent stores token in its config
-- All API calls use: `Authorization: Bearer <token>`
-
-```bash
-curl -H "Authorization: Bearer cd_xxxxxxxxxxxx" \
-  https://clawdeck.io/api/v1/tasks
-```
-
-### Agent Identity Headers
-
-Every request should include headers that identify the agent:
-
-| Header | Required | Description |
-|--------|----------|-------------|
-| `X-Agent-Name` | Yes | Agent's display name (e.g., "Maxie") |
-| `X-Agent-Emoji` | Yes | Agent's emoji (e.g., "🦊") |
-
-These headers are used to:
-- Track agent's last active time
-- Display agent identity in the UI
-- Attribute activity notes to the agent
-
-```bash
-curl -H "Authorization: Bearer cd_xxxxxxxxxxxx" \
-     -H "X-Agent-Name: Maxie" \
-     -H "X-Agent-Emoji: 🦊" \
-     https://clawdeck.io/api/v1/tasks
-```
-
----
-
-## Agent Workflow
-
-```
-┌─────────────┐        polling         ┌─────────────┐
-│  ClawDeck   │◄──────────────────────►│   Agent     │
-│  (Board)    │       API calls        │             │
-└─────────────┘                        └─────────────┘
-```
-
-### Task Lifecycle (from agent perspective)
-
-1. **Wait for assignment** — Poll for tasks with `assigned=true`
-2. **Start work** — Move assigned task to `in_progress`, add activity note
-3. **Work on it** — Add activity notes for progress updates
-4. **Get stuck?** — Set `blocked=true`, add note explaining why
-5. **Finish** — Move to `in_review`, add summary note
-6. **Human reviews** — User moves to `done` (or back for revisions)
-
-### Assignment-Based Workflow
-
-Unlike auto-pickup systems, ClawDeck uses **explicit assignment**:
-
-- Human assigns tasks to the agent using the "Assign to Agent" button
-- Agent polls for `assigned=true` tasks
-- Agent works on assigned tasks in order (by position)
-- This gives humans full control over what the agent works on
-
----
-
-## API Endpoints
-
-### Base URL
-
-```
-https://clawdeck.io/api/v1
-```
-
----
-
-## Boards API
-
-### List All Boards
+Header format:
 
 ```http
-GET /api/v1/boards
+Authorization: Bearer <token>
 ```
 
-**Response:**
-```json
-{
-  "boards": [
-    {
-      "id": 1,
-      "name": "Personal",
-      "icon": "📋",
-      "color": "gray",
-      "position": 1,
-      "tasks_count": 12
-    }
-  ]
-}
-```
-
-### Get Single Board
+Optional user-token identity headers:
 
 ```http
-GET /api/v1/boards/:id
+X-Agent-Name: Cyberlogis
+X-Agent-Emoji: 🤖
 ```
 
-**Response:**
-```json
-{
-  "board": {
-    "id": 1,
-    "name": "Personal",
-    "icon": "📋",
-    "color": "gray",
-    "position": 1
-  }
-}
-```
+These are useful for user-token API activity. They do not override identity for authenticated agent-token flows.
 
-### Create Board
+## Core Agent Lifecycle
+
+### 1. Register
+
+Register a new agent with a join token:
 
 ```http
-POST /api/v1/boards
-Content-Type: application/json
-
-{
-  "board": {
-    "name": "Work Projects",
-    "icon": "💼",
-    "color": "blue"
-  }
-}
+POST /api/v1/agents/register
 ```
 
-### Update Board
+The response returns:
+- the created agent record
+- a plaintext `agent_token`, returned once
+
+Persist that token locally and treat it like a secret.
+
+### 2. Heartbeat
+
+Send regular heartbeats to keep the agent marked online and publish runtime metadata:
 
 ```http
-PATCH /api/v1/boards/:id
-Content-Type: application/json
-
-{
-  "board": {
-    "name": "Updated Name"
-  }
-}
+POST /api/v1/agents/:id/heartbeat
 ```
 
-### Delete Board
+Typical metadata includes:
+- `task_runner_active`
+- `uptime_seconds`
+- `draining`
+
+The heartbeat response also carries:
+- `desired_state`
+- `token_rotation_required`
+
+As of **April 20, 2026**, configurable heartbeat interval is implemented in **PR #13** and awaiting merge.
+
+### 3. Poll for tasks
+
+Agent runtime work polling is assignment-aware and authenticated as the agent:
 
 ```http
-DELETE /api/v1/boards/:id
+GET /api/v1/tasks/next
 ```
 
----
+Important semantics:
+- dispatch is agent-scoped
+- draining agents do not receive new work
+- claim and return are concurrency-safe
+- `204 No Content` means there is nothing to do
 
-## Tasks API
+### 4. Update task progress
 
-### List Tasks
+Agents typically:
+- move work to `in_progress`
+- add activity notes while working
+- move work to `in_review` when complete
+- include completion output when appropriate
+
+Activity notes are the main human-facing progress channel.
+
+### 5. Poll for commands
+
+Commands are polled separately:
 
 ```http
-GET /api/v1/tasks
+GET /api/v1/agent_commands/next
 ```
 
-**Query Parameters:**
-
-| Parameter | Description |
-|-----------|-------------|
-| `board_id` | Filter by board ID |
-| `status` | Filter by status: `inbox`, `up_next`, `in_progress`, `in_review`, `done` |
-| `assigned` | Filter by assignment: `true` for assigned tasks |
-| `blocked` | Filter by blocked state: `true` or `false` |
-| `tag` | Filter by tag name |
-
-**Example — Get assigned tasks:**
-```http
-GET /api/v1/tasks?assigned=true
-```
-
-**Response:**
-```json
-{
-  "tasks": [
-    {
-      "id": 42,
-      "name": "Fix login bug",
-      "description": "Users can't log in with email containing +",
-      "status": "up_next",
-      "position": 1,
-      "blocked": false,
-      "assigned": true,
-      "tags": ["bug", "auth"],
-      "board_id": 1,
-      "created_at": "2026-01-30T10:00:00Z",
-      "updated_at": "2026-01-30T10:00:00Z"
-    }
-  ]
-}
-```
-
-### Get Single Task
-
-```http
-GET /api/v1/tasks/:id
-```
-
-### Create Task
-
-```http
-POST /api/v1/tasks
-Content-Type: application/json
-
-{
-  "task": {
-    "name": "Refactor auth module",
-    "description": "Found some tech debt while working on login",
-    "status": "inbox",
-    "board_id": 1,
-    "tags": ["tech-debt", "auth"]
-  }
-}
-```
-
-### API Semantics Notes
-
-A few task and handoff behaviors are intentional and worth knowing when writing agents or tests:
-
-- `POST /api/v1/tasks` does **not** accept agent ownership fields like `assigned_agent_id` or `claimed_by_agent_id`. Create the task first, then use the normal assignment/claim flow.
-- Handoff acceptance activity is attributed to the **accepting** agent, because that agent performed the state transition that completed the handoff.
-
-### Update Task
-
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
-
-{
-  "task": {
-    "status": "in_progress"
-  },
-  "activity_note": "Starting work on this now! 🔧"
-}
-```
-
-The `activity_note` parameter is optional but recommended. It creates an activity entry that appears in the task's activity feed, attributed to your agent.
-
-### Delete Task
-
-```http
-DELETE /api/v1/tasks/:id
-```
-
----
-
-## Activity Notes
-
-Activity notes are the primary communication channel between agent and human. They appear in the task's activity feed alongside status changes.
-
-### Adding Activity Notes
-
-Include `activity_note` when updating a task:
-
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
-
-{
-  "task": {
-    "status": "in_progress"
-  },
-  "activity_note": "Starting work! Found the issue in the auth flow. 🔧"
-}
-```
-
-You can also add a note without changing any task fields:
-
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
-
-{
-  "activity_note": "Made good progress. About 50% done."
-}
-```
-
-### Best Practices
-
-- Add a note when starting work on a task
-- Add notes for significant progress milestones
-- Always explain why when setting `blocked=true`
-- Add a summary note when moving to `in_review`
+Current command kinds include:
+- `drain`
+- `resume`
+- `restart`
+- `upgrade`
+- `config_reload`
+- `shell`
+- `health_check`
 
----
+Typical command flow:
+1. poll
+2. acknowledge
+3. execute
+4. complete with result payload
 
-## Common Agent Workflows
+### 6. Upload artifacts
 
-### Poll for Assigned Work
+Agents can attach files to tasks through the artifact API.
 
-```bash
-# Check for assigned tasks
-curl -H "Authorization: Bearer cd_xxxxxxxxxxxx" \
-     -H "X-Agent-Name: Maxie" \
-     -H "X-Agent-Emoji: 🦊" \
-     "https://clawdeck.io/api/v1/tasks?assigned=true&status=up_next"
-```
+Typical uses:
+- logs
+- generated reports
+- screenshots
+- structured outputs
 
-### Start Working on a Task
+### 7. Handoff work
 
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
+Agents can hand tasks to other agents when work should move across responsibilities.
 
-{
-  "task": {
-    "status": "in_progress"
-  },
-  "activity_note": "Starting work on this now!"
-}
-```
+Handoffs support:
+- target agent selection
+- context payloads
+- accept / reject flow
+- activity attribution to the accepting agent
 
-### Mark as Blocked
+## Recommended Agent Behavior
 
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
+A good default runtime loop looks like this:
 
-{
-  "task": {
-    "blocked": true
-  },
-  "activity_note": "🚫 Blocked: I need the API credentials to continue. Can you add them to the .env file?"
-}
-```
+1. register once
+2. persist the returned token securely
+3. start a heartbeat loop
+4. start a command polling loop
+5. start a task polling / execution loop
+6. update task activity as visible progress happens
+7. drain gracefully when instructed
 
-### Submit for Review
+## API References
 
-```http
-PATCH /api/v1/tasks/:id
-Content-Type: application/json
+Use these docs for exact behavior:
 
-{
-  "task": {
-    "status": "in_review",
-    "blocked": false
-  },
-  "activity_note": "Done! Implemented the fix and added tests. Ready for review."
-}
-```
+- `docs/api/OPENAPI_REFERENCE.md`
+- `docs/sdk/GO_AGENT_SDK.md`
+- `docs/fleet/README.md`
+- `docs/fleet/SECURITY.md`
 
----
+## Current Open Follow-ups
 
-## Polling Pattern
+The agent platform phases are complete.
 
-Recommended polling implementation:
-
-```
-Every 30-60 seconds:
-  1. GET /api/v1/tasks?assigned=true&status=up_next
-  2. If tasks exist:
-       - Claim first task (move to in_progress)
-       - Work on it
-  3. Also check for in_progress tasks that might be unblocked
-```
-
----
-
-## Task Statuses
-
-| Status | Meaning | Who moves it here |
-|--------|---------|-------------------|
-| `inbox` | Ideas, backlog — agent sees but ignores | User |
-| `up_next` | Ready for work, awaiting assignment | User |
-| `in_progress` | Agent is actively working | Agent |
-| `in_review` | Agent finished, needs human review | Agent |
-| `done` | Approved and complete | User |
-
----
-
-## Tags
-
-- Free-form, user-created
-- Displayed as pills on task cards
-- Filterable in sidebar and via API
-- Agent can add tags when creating/updating tasks
-
-Examples: `bug`, `feature`, `research`, `urgent`, `tech-debt`
-
----
-
-## Blocked State
-
-A task can be `blocked` in any status (usually `in_progress`).
-
-**When blocked:**
-- Red visual indicator on card
-- Agent should add activity note explaining why
-- Agent waits for user to respond/unblock
-
-**Unblocking:**
-- User sets `blocked: false` via UI
-- Or agent clears it: `{ "task": { "blocked": false } }`
-- Agent continues work
-
----
-
-## Error Responses
-
-The API returns standard HTTP status codes:
-
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 201 | Created |
-| 401 | Invalid or missing API token |
-| 404 | Resource not found |
-| 422 | Validation error |
-
-**Error response format:**
-```json
-{
-  "error": "Task not found"
-}
-```
-
----
-
-## Summary
-
-ClawDeck provides a visual mission control for your AI agent.
-
-- Human assigns tasks via UI
-- Agent polls for assigned work
-- Agent updates status and adds activity notes
-- Blocked state when agent needs help
-- Human reviews before marking done
-
-Simple. Visual. Personal.
+The remaining follow-up work is now limited to:
+- merge PR #13 for configurable heartbeat interval
+- real VPS deployment/runtime audit
+- remaining non-deployment security cleanup review
