@@ -112,6 +112,22 @@ Docker-based test example:
 docker compose exec app bin/rails test
 ```
 
+### Playwright smoke test
+
+A lightweight browser smoke check for the command bar lives at `script/playwright/command_bar_smoke.mjs`.
+
+```bash
+node script/playwright/command_bar_smoke.mjs
+```
+
+Environment variables:
+
+- `CLAWDECK_BASE_URL` — app URL (default `http://127.0.0.1:3000`)
+- `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials (defaults target local fixture-style dev users)
+- `CLAWDECK_BOARD_ID` — optional explicit board id override
+- `CLAWDECK_HEADLESS=false` — run headed for debugging
+- `CLAWDECK_PLAYWRIGHT_MODULE` — path to Playwright's `index.js` if not using the local default
+
 ## Core Product Flow
 
 1. Create boards and tasks in the Rails UI
