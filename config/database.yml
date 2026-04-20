@@ -47,6 +47,7 @@ test:
 
 # Production database configuration
 # Supports single-url deploys via DATABASE_URL and split-role URLs for VPS installs.
+# DATABASE_URL must always be set in production, even when CACHE/QUEUE/CABLE URLs are omitted.
 production:
   primary:
     <<: *default

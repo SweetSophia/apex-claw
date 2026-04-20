@@ -57,6 +57,7 @@ if [[ -n "$APP_DOMAIN_ALIASES" ]]; then
   echo "==> Additional certificate/server aliases: $APP_DOMAIN_ALIASES"
 fi
 install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
+chown -R "$APP_USER:$APP_GROUP" /var/log/clawdeck
 install -d /var/www/certbot
 
 echo "==> Rendering systemd units..."
