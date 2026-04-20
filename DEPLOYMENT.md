@@ -1,11 +1,12 @@
 # ClawDeck Deployment Guide
 
-This repository currently ships two operational paths:
+This repository currently ships three operational paths:
 
 1. **Local Docker development**, which works well for development
-2. **Bare-metal VPS deployment scripts**, which are the checked-in production-oriented path
+2. **Bare-metal VPS deployment scripts**, which are the primary checked-in production-oriented path
+3. **Production Docker Compose**, for straightforward single-host internal/Tailscale deployments
 
-There is **not** a production Docker stack in this repository yet, and there is **not** an auto-deploy workflow for VPS releases. GitHub Actions cover CI and tagged releases, not server deployment.
+There is still **not** an auto-deploy workflow for VPS releases. GitHub Actions cover CI and tagged releases, not server deployment.
 
 ## What exists today
 
@@ -15,6 +16,7 @@ Checked into the repo:
 - `config/systemd/puma.service` — template rendered during install
 - `config/systemd/solid_queue.service` — template rendered during install
 - `config/nginx/clawdeck.conf` — nginx bootstrap template rendered during install
+- `docker-compose.prod.yml` — production Docker Compose for a single-host deployment
 - `.env.production.example`
 
 ## Important caveats before deploying
@@ -35,7 +37,79 @@ You can override the important values with environment variables when running th
 
 ## Recommended production path right now
 
-Use the included **bare-metal + systemd + nginx** deployment flow, but treat it as infra bootstrap, not one-click magic.
+Use one of these depending on your target:
+
+- **bare-metal + systemd + nginx** for a conventional internet-facing VPS
+- **production Docker Compose** for a single host, internal-only, or Tailscale-only deployment
+
+## Production Docker Compose
+
+This repo now includes `docker-compose.prod.yml` for a straightforward production container deployment.
+
+Use it when you want:
+- a single host deployment
+- no public reverse proxy yet
+- internal or Tailscale-only access
+- a faster bootstrap than the full nginx/systemd path
+
+### 1. Set required environment variables
+
+At minimum:
+
+```bash
+export CLAWDECK_SECRET_KEY_BASE="$(openssl rand -hex 64)"
+export CLAWDECK_DB_PASSWORD='choose-a-strong-password'
+```
+
+Optional overrides depend on your host and desired bindings:
+- `APP_HOST`
+- `APP_ALLOWED_HOSTS`
+- custom Docker port bindings in `docker-compose.prod.yml`
+
+### 2. Build and start
+
+```bash
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Notes:
+- the production container startup runs `db:create db:migrate && assets:precompile` before booting Rails
+- the first boot after a rebuild can take a little longer because Propshaft/Tailwind assets are compiled there
+- if you change app code or asset inputs, rebuild the image before restarting
+
+### 3. Verify the app
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f app
+curl -I http://127.0.0.1:3000/up
+```
+
+If you expose the app on a Tailscale IP or another bind address, also verify that host directly.
+
+### 4. Create an admin user
+
+Example:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app bin/rails runner '
+user = User.create!(
+  email_address: "admin@example.com",
+  password: "change-me-now",
+  password_confirmation: "change-me-now",
+  admin: true
+)
+Board.create_onboarding_for(user)
+puts user.email_address
+'
+```
+
+### 5. Important caveats
+
+- `docker-compose.prod.yml` is currently aimed at **single-host** deployments, not a full public internet edge stack
+- if you are serving plain HTTP internally or over Tailscale, review host allowlists carefully
+- if you later place nginx/caddy in front, you may want to tighten binds back to localhost only
+- if you rebuild from scratch, remember that Propshaft production assets must exist in `public/assets`; this is why the production startup path runs `assets:precompile`
 
 ## Bare-metal VPS deployment
 
@@ -192,7 +266,9 @@ There is currently no repo-managed VPS deploy workflow.
 
 ## Development Docker vs production
 
-`docker-compose.yml` in this repo is a development stack. It is useful for local work, but it is not yet a production deployment specification.
+- `docker-compose.yml` is the local development stack
+- `docker-compose.prod.yml` is the single-host production container stack
+- the bare-metal scripts remain the more complete path when you want nginx, certbot, and systemd-managed services
 
 ## Troubleshooting
 
@@ -201,6 +277,24 @@ There is currently no repo-managed VPS deploy workflow.
 ```bash
 docker compose run --rm app bundle install
 docker compose up -d app
+```
+
+### Production layout is broken or styles are missing
+
+This usually means production assets were not precompiled.
+
+Rebuild and restart the production stack so startup can regenerate the asset manifest:
+
+```bash
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+If needed, manually precompile once inside the running container:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app bin/rails assets:precompile
+docker compose -f docker-compose.prod.yml restart app
 ```
 
 ### Check Puma logs

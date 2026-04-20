@@ -99,6 +99,22 @@ bin/rails test:system
 
 If your host does not have the full Ruby/Bundler toolchain available, run these via Docker instead.
 
+## Production Docker note
+
+If you run the production Docker stack, Propshaft assets must be precompiled. The checked-in production compose does that on container startup. Use:
+
+```bash
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+If the production UI comes up unstyled, rebuild and restart the stack or run:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app bin/rails assets:precompile
+docker compose -f docker-compose.prod.yml restart app
+```
+
 ## Where to go next
 
 - project overview: `README.md`
