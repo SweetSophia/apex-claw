@@ -37,6 +37,27 @@ func TestHeartbeatRunner_DrainingDefault(t *testing.T) {
 	}
 }
 
+func TestHeartbeatRunner_NormalizeInterval(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    time.Duration
+		expected time.Duration
+	}{
+		{name: "default when zero", input: 0, expected: defaultHeartbeatInterval},
+		{name: "clamp low", input: 2 * time.Second, expected: minHeartbeatInterval},
+		{name: "clamp high", input: 10 * time.Minute, expected: maxHeartbeatInterval},
+		{name: "keep valid", input: 45 * time.Second, expected: 45 * time.Second},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := normalizeHeartbeatInterval(tc.input); got != tc.expected {
+				t.Fatalf("expected %s, got %s", tc.expected, got)
+			}
+		})
+	}
+}
+
 func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := clawdeck.HeartbeatResponse{
@@ -54,12 +75,10 @@ func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		hr.sendHeartbeat(context.Background()) // sendHeartbeat accepts context but handles nil gracefully
-		// Actually sendHeartbeat takes context.Context; use background
+		hr.sendHeartbeat(context.Background())
 		close(done)
 	}()
 
-	// Wait for heartbeat to process
 	time.Sleep(200 * time.Millisecond)
 
 	if !hr.Draining() {
@@ -124,7 +143,6 @@ func TestHeartbeatRunner_DesiredStateRestart(t *testing.T) {
 func TestHeartbeatRunner_MetadataEnrichment(t *testing.T) {
 	hr := NewHeartbeatRunner(nil, 1, 0)
 
-	// Without taskActiveFunc
 	meta := hr.collectMetadata()
 	if _, ok := meta["task_runner_active"]; !ok {
 		t.Fatal("expected task_runner_active in metadata")
@@ -139,14 +157,12 @@ func TestHeartbeatRunner_MetadataEnrichment(t *testing.T) {
 		t.Fatal("expected draining=false")
 	}
 
-	// With taskActiveFunc returning true
 	hr.SetTaskActiveFunc(func() bool { return true })
 	meta = hr.collectMetadata()
 	if !meta["task_runner_active"].(bool) {
 		t.Fatal("expected task_runner_active=true")
 	}
 
-	// After setting draining
 	hr.SetDraining(true)
 	meta = hr.collectMetadata()
 	if !meta["draining"].(bool) {
@@ -185,5 +201,28 @@ func TestHeartbeatRunner_LogsTokenRotationRequirement(t *testing.T) {
 	case <-hr.ShutdownCh:
 		t.Fatal("did not expect shutdown request")
 	default:
+	}
+}
+
+func TestHeartbeatRunner_UpdatesIntervalFromServer(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := clawdeck.HeartbeatResponse{
+			Agent:                    clawdeck.Agent{ID: 1, Status: "online"},
+			DesiredState:             clawdeck.DesiredState{Action: "none"},
+			HeartbeatIntervalSeconds: 90,
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	client := clawdeck.NewClient(srv.URL)
+	client.SetToken("test-token")
+	client.SetAgentID(1)
+	hr := NewHeartbeatRunner(client, 1, 30*time.Second)
+
+	hr.sendHeartbeat(context.Background())
+
+	if got := hr.Interval(); got != 90*time.Second {
+		t.Fatalf("expected interval 90s, got %s", got)
 	}
 }

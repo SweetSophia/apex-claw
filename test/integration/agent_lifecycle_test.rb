@@ -52,6 +52,7 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     heartbeat_body = response.parsed_body
     assert_equal "none", heartbeat_body.dig("desired_state", "action")
     assert_equal false, heartbeat_body.fetch("token_rotation_required")
+    assert_equal 30, heartbeat_body.fetch("heartbeat_interval_seconds")
 
     agent.reload
     assert_equal "online", agent.status
