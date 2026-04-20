@@ -126,7 +126,7 @@ Environment variables:
 - `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials (defaults target local fixture-style dev users)
 - `CLAWDECK_BOARD_ID` — optional explicit board id override
 - `CLAWDECK_HEADLESS=false` — run headed for debugging
-- `CLAWDECK_PLAYWRIGHT_MODULE` — path to Playwright's `index.js` if not using the local default
+- `CLAWDECK_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when it is not resolvable as the standard `playwright` package
 
 ## Core Product Flow
 

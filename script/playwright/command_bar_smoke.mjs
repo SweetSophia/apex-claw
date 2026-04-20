@@ -1,8 +1,24 @@
 import { pathToFileURL } from 'node:url'
 
-const playwrightModulePath = process.env.CLAWDECK_PLAYWRIGHT_MODULE || '/home/niya/playwright/node_modules/playwright/index.js'
-const playwrightPkg = await import(pathToFileURL(playwrightModulePath).href)
-const { chromium } = playwrightPkg.default
+async function loadPlaywright() {
+  const explicitModulePath = process.env.CLAWDECK_PLAYWRIGHT_MODULE
+
+  if (explicitModulePath) {
+    const module = await import(pathToFileURL(explicitModulePath).href)
+    return module.default ?? module
+  }
+
+  try {
+    const module = await import('playwright')
+    return module.default ?? module
+  } catch (error) {
+    throw new Error(
+      'Could not load Playwright. Install it in the normal Node resolution path or set CLAWDECK_PLAYWRIGHT_MODULE to Playwright\'s index.js path.'
+    )
+  }
+}
+
+const { chromium } = await loadPlaywright()
 
 const baseUrl = (process.env.CLAWDECK_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const email = process.env.CLAWDECK_EMAIL || 'one@example.com'
@@ -93,10 +109,12 @@ async function run() {
     const boardUrlBefore = page.url()
     await openCommandBar(page)
     await chooseNewTask(page)
-    await page.waitForTimeout(600)
+
+    const inlineAddTextarea = page.locator(selectors.inlineAddTextarea).first()
+    await inlineAddTextarea.waitFor({ state: 'visible', timeout: 5000 })
 
     const boardUrlAfter = page.url()
-    const inlineAddVisible = await page.locator(selectors.inlineAddTextarea).first().isVisible().catch(() => false)
+    const inlineAddVisible = await inlineAddTextarea.isVisible().catch(() => false)
 
     await page.goto(homeUrl, { waitUntil: 'networkidle' })
     await openCommandBar(page)
