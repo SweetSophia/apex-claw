@@ -93,9 +93,10 @@ type HeartbeatRequest struct {
 }
 
 type HeartbeatResponse struct {
-	Agent                 Agent        `json:"agent"`
-	DesiredState          DesiredState `json:"desired_state"`
-	TokenRotationRequired bool         `json:"token_rotation_required"`
+	Agent                    Agent        `json:"agent"`
+	DesiredState             DesiredState `json:"desired_state"`
+	TokenRotationRequired    bool         `json:"token_rotation_required"`
+	HeartbeatIntervalSeconds int          `json:"heartbeat_interval_seconds"`
 }
 
 type RotateTokenResponse struct {

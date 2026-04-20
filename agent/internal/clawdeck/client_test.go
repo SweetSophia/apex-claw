@@ -103,8 +103,9 @@ func TestClient_Heartbeat(t *testing.T) {
 		receivedStatus = req.Status
 
 		resp := HeartbeatResponse{
-			Agent:        Agent{ID: 5, Status: req.Status},
-			DesiredState: DesiredState{Action: "none"},
+			Agent:                    Agent{ID: 5, Status: req.Status},
+			DesiredState:             DesiredState{Action: "none"},
+			HeartbeatIntervalSeconds: 45,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
@@ -123,6 +124,9 @@ func TestClient_Heartbeat(t *testing.T) {
 	}
 	if resp.DesiredState.Action != "none" {
 		t.Errorf("expected desired_state action none, got %s", resp.DesiredState.Action)
+	}
+	if resp.HeartbeatIntervalSeconds != 45 {
+		t.Errorf("expected heartbeat interval 45, got %d", resp.HeartbeatIntervalSeconds)
 	}
 }
 

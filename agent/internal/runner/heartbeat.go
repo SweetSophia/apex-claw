@@ -10,6 +10,12 @@ import (
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
 )
 
+const (
+	defaultHeartbeatInterval = 30 * time.Second
+	minHeartbeatInterval     = 5 * time.Second
+	maxHeartbeatInterval     = 5 * time.Minute
+)
+
 // ShutdownRequest is emitted via the ShutdownCh channel when the server
 // requests a restart or shutdown.
 type ShutdownRequest struct {
@@ -39,12 +45,9 @@ type HeartbeatRunner struct {
 }
 
 func NewHeartbeatRunner(client *clawdeck.Client, agentID int64, interval time.Duration) *HeartbeatRunner {
-	if interval == 0 {
-		interval = 30 * time.Second
-	}
 	return &HeartbeatRunner{
 		client:     client,
-		interval:   interval,
+		interval:   normalizeHeartbeatInterval(interval),
 		agentID:    agentID,
 		startTime:  time.Now(),
 		ShutdownCh: make(chan ShutdownRequest, 1),
@@ -71,18 +74,57 @@ func (h *HeartbeatRunner) SetDraining(v bool) {
 	h.draining = v
 }
 
-func (h *HeartbeatRunner) Run(ctx context.Context) error {
-	ticker := time.NewTicker(h.interval)
-	defer ticker.Stop()
+func (h *HeartbeatRunner) Interval() time.Duration {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.interval
+}
 
+func (h *HeartbeatRunner) setIntervalFromServer(seconds int) {
+	if seconds <= 0 {
+		return
+	}
+
+	newInterval := normalizeHeartbeatInterval(time.Duration(seconds) * time.Second)
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.interval == newInterval {
+		return
+	}
+
+	log.Printf("heartbeat interval updated from server: %s -> %s", h.interval, newInterval)
+	h.interval = newInterval
+}
+
+func normalizeHeartbeatInterval(interval time.Duration) time.Duration {
+	if interval <= 0 {
+		interval = defaultHeartbeatInterval
+	}
+	if interval < minHeartbeatInterval {
+		return minHeartbeatInterval
+	}
+	if interval > maxHeartbeatInterval {
+		return maxHeartbeatInterval
+	}
+	return interval
+}
+
+func (h *HeartbeatRunner) Run(ctx context.Context) error {
 	h.sendHeartbeat(ctx)
 
 	for {
+		wait := h.Interval()
+		timer := time.NewTimer(wait)
+
 		select {
 		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
 			log.Printf("heartbeat runner stopping: %v", ctx.Err())
 			return ctx.Err()
-		case <-ticker.C:
+		case <-timer.C:
 			h.sendHeartbeat(ctx)
 		}
 	}
@@ -105,6 +147,9 @@ func (h *HeartbeatRunner) sendHeartbeat(ctx context.Context) {
 		resp.Agent.Status, resp.DesiredState.Action)
 	if resp.TokenRotationRequired {
 		log.Printf("heartbeat warning: token rotation required for agent %d", h.agentID)
+	}
+	if resp.HeartbeatIntervalSeconds > 0 {
+		h.setIntervalFromServer(resp.HeartbeatIntervalSeconds)
 	}
 
 	h.handleDesiredState(resp.DesiredState.Action)

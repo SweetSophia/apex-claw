@@ -36,7 +36,8 @@ module Api
         render json: {
           agent: agent_json(@agent),
           desired_state: { action: "none" },
-          token_rotation_required: current_agent_token&.expires_soon? || false
+          token_rotation_required: current_agent_token&.expires_soon? || false,
+          heartbeat_interval_seconds: heartbeat_interval_seconds
         }
       end
 
@@ -121,6 +122,10 @@ module Api
       def update_params
         params.fetch(:agent, ActionController::Parameters.new)
           .permit(:name, :status, tags: [], metadata: {})
+      end
+
+      def heartbeat_interval_seconds
+        ENV.fetch("CLAWDECK_HEARTBEAT_INTERVAL_SECONDS", 30).to_i.clamp(5, 300)
       end
 
       def agent_json(agent)

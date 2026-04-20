@@ -92,6 +92,31 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert @agent.last_heartbeat_at.present?
     assert_equal "none", response.parsed_body.dig("desired_state", "action")
     assert_equal false, response.parsed_body["token_rotation_required"]
+    assert_equal 30, response.parsed_body["heartbeat_interval_seconds"]
+  end
+
+  test "heartbeat can override interval via env" do
+    previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "45"
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal 45, response.parsed_body["heartbeat_interval_seconds"]
+  ensure
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
+  end
+
+  test "heartbeat clamps interval env to safe bounds" do
+    previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "1"
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal 5, response.parsed_body["heartbeat_interval_seconds"]
+  ensure
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
   end
 
   test "heartbeat flags token rotation when token expires soon" do
