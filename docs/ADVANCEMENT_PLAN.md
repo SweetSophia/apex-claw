@@ -1,6 +1,6 @@
 # ClawDeck Advancement Plan
 
-**Created**: 2026-04-16 | **Status**: In Progress, updated after Sprint B merge
+**Created**: 2026-04-16 | **Status**: In Progress, updated after ops hardening kickoff
 **Repo**: SweetSophia/clawdeck (independently maintained)
 
 ## Overview
@@ -52,7 +52,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [x] `AuditLog` model: actor_type, actor_id, action, resource, changes, ip
 - [x] Concern: `Auditable` — auto-logs CRUD on included models
 - [x] API endpoint: `GET /api/v1/audit_logs` (admin only)
-- [ ] UI: Admin audit log viewer (deferred to Phase 4)
+- [x] UI: Admin audit log viewer (completed in Sprint D)
 
 ### 2.3 Per-Agent Rate Limiting ✅ (commit `86f94ca`)
 - [x] `RateLimit` model: agent_id, window_seconds, max_requests
@@ -97,8 +97,8 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 ### 4.1 Dashboard Enhancements
 - [x] Agent health cards (uptime, task throughput, error rate)
 - [x] Task timeline/Gantt view
-- [ ] Real-time metrics via Turbo Streams
-- [ ] Command bar improvements (natural language task creation)
+- [x] Real-time metrics via Turbo Streams (Sprint C)
+- [x] Command bar improvements (Sprint E command palette overhaul)
 
 ### 4.2 Documentation
 - [x] README — architecture, setup, screenshots
@@ -111,6 +111,24 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [x] Command flow: issue command → ack → complete
 - [x] Failure scenarios: token revocation/rejection, handoff rejection, artifact validation failures
 - [x] Load test: concurrent agents with rate limiting
+
+---
+
+## Post-Phase Backlog
+
+### Product backlog
+- [ ] Configurable heartbeat interval via API response
+
+### Ops hardening
+- [x] Remove root-owned app service defaults from checked-in systemd units
+- [x] Make VPS bootstrap create and use a dedicated app runtime user
+- [x] Replace hardcoded nginx/certbot domains with env-driven install-time rendering
+- [x] Align production env example, Action Mailer, and host authorization around env-driven host settings
+- [x] Align production database wiring with split `CACHE_DATABASE_URL` / `QUEUE_DATABASE_URL` / `CABLE_DATABASE_URL` fallbacks
+
+### Lower-priority follow-up
+- [ ] Audit remaining deployment/runtime assumptions on a real VPS
+- [ ] Review remaining security cleanup items outside the deployment path
 
 ---
 
@@ -153,3 +171,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 | 2026-04-18 | 4.3 Integration tests | ✅ | lifecycle, commands, token rotation/revocation, handoffs, artifacts, SSE payload assertion, commits 2ef45e4/e9d8b30/1b05696/5a486ee |
 | 2026-04-18 | Sprint A docs + load test | ✅ | OpenAPI reference, Go SDK docs, concurrent-agent smoke test, merged to main in daabb66/c792c39 |
 | 2026-04-19 | Sprint B timeline/Gantt | ✅ | board/timeline toggle, capped 90-day horizon, accessibility polish, merged to main in c6102e6 |
+| 2026-04-19 | Sprint C real-time metrics | ✅ | section-specific Turbo Stream dashboard metrics, merged to main in c3974b0 |
+| 2026-04-19 | Sprint D admin audit log UI | ✅ | admin audit log UI and RoutingError guard, merged to main in 93b4c0d |
+| 2026-04-19 | Sprint E command palette | ✅ | server-seeded fuzzy command palette, keyboard nav, deep links, merged across PR #9/#10/#11 |
+| 2026-04-20 | Ops hardening | ✅ | dedicated app user runtime, env-driven nginx/systemd templates, split DB URL support, commit 817658f |
