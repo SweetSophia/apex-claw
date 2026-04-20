@@ -29,7 +29,7 @@ Defaults if you do not override them:
 - PostgreSQL running locally
 - nginx terminating TLS
 - primary hostname: `clawdeck.io`
-- alias hostname: `www.clawdeck.io`
+- alias hostname: none by default (set `APP_DOMAIN_ALIASES` if you want extras such as `www.clawdeck.io`)
 
 You can override the important values with environment variables when running the scripts.
 
@@ -62,7 +62,7 @@ Before running the service installer:
 
 ```bash
 export APP_DOMAIN='clawdeck.io'
-export APP_DOMAIN_ALIASES='www.clawdeck.io'
+export APP_DOMAIN_ALIASES='www.clawdeck.io'   # optional, comma-separated; leave unset for no aliases
 export CERTBOT_EMAIL='you@example.com'
 export APP_PORT='3000'                     # optional override
 ```
@@ -82,6 +82,7 @@ What this script does:
 - installs rbenv and Ruby for that app user
 - creates the production databases
 - prepares the app root and log directories with app-user ownership
+- re-owns existing writable runtime directories (`tmp`, `storage`, `log`) for safer upgrades from older root-owned installs
 
 ### 4. Clone the repository on the server
 
