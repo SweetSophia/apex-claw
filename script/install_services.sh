@@ -1,42 +1,92 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "==> Installing ClawDeck Services"
+if [[ ${EUID} -ne 0 ]]; then
+  echo "This script must be run as root." >&2
+  exit 1
+fi
 
-# Create log directory
-mkdir -p /var/log/clawdeck
+APP_USER=${APP_USER:-clawdeck}
+APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
+APP_DOMAIN=${APP_DOMAIN:-clawdeck.io}
+APP_DOMAIN_ALIASES=${APP_DOMAIN_ALIASES:-www.${APP_DOMAIN}}
+APP_PORT=${APP_PORT:-3000}
+CERTBOT_EMAIL=${CERTBOT_EMAIL:-}
+NGINX_SITE_NAME=${NGINX_SITE_NAME:-clawdeck}
 
-# Install systemd services
-echo "==> Installing systemd services..."
-cp /var/www/clawdeck/config/systemd/puma.service /etc/systemd/system/
-cp /var/www/clawdeck/config/systemd/solid_queue.service /etc/systemd/system/
+if [[ -z "$CERTBOT_EMAIL" ]]; then
+  echo "CERTBOT_EMAIL must be set before running this script." >&2
+  exit 1
+fi
 
-# Reload systemd
+if ! id -u "$APP_USER" >/dev/null 2>&1; then
+  echo "App user '$APP_USER' does not exist. Run script/setup_vps.sh first." >&2
+  exit 1
+fi
+
+APP_HOME=$(getent passwd "$APP_USER" | cut -d: -f6)
+APP_GROUP=$(id -gn "$APP_USER")
+SERVER_NAMES="$APP_DOMAIN"
+for alias in ${APP_DOMAIN_ALIASES//,/ }; do
+  if [[ -n "$alias" && "$alias" != "$APP_DOMAIN" ]]; then
+    SERVER_NAMES+=" $alias"
+  fi
+done
+
+escape_sed() {
+  printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
+}
+
+render_template() {
+  local template_path=$1
+  local destination_path=$2
+
+  sed \
+    -e "s|__APP_USER__|$(escape_sed "$APP_USER")|g" \
+    -e "s|__APP_GROUP__|$(escape_sed "$APP_GROUP")|g" \
+    -e "s|__APP_HOME__|$(escape_sed "$APP_HOME")|g" \
+    -e "s|__APP_ROOT__|$(escape_sed "$APP_ROOT")|g" \
+    -e "s|__APP_PORT__|$(escape_sed "$APP_PORT")|g" \
+    -e "s|__APP_DOMAIN__|$(escape_sed "$APP_DOMAIN")|g" \
+    -e "s|__SERVER_NAMES__|$(escape_sed "$SERVER_NAMES")|g" \
+    "$template_path" > "$destination_path"
+}
+
+echo "==> Installing ClawDeck services for $APP_DOMAIN"
+install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
+install -d /var/www/certbot
+
+echo "==> Rendering systemd units..."
+render_template "$APP_ROOT/config/systemd/puma.service" /etc/systemd/system/puma.service
+render_template "$APP_ROOT/config/systemd/solid_queue.service" /etc/systemd/system/solid_queue.service
+
 systemctl daemon-reload
+systemctl enable puma solid_queue
 
-# Enable services to start on boot
-systemctl enable puma
-systemctl enable solid_queue
-
-# Install Nginx configuration
-echo "==> Installing Nginx configuration..."
-cp /var/www/clawdeck/config/nginx/clawdeck.conf /etc/nginx/sites-available/clawdeck
-ln -sf /etc/nginx/sites-available/clawdeck /etc/nginx/sites-enabled/clawdeck
+echo "==> Installing nginx bootstrap config..."
+render_template "$APP_ROOT/config/nginx/clawdeck.conf" "/etc/nginx/sites-available/$NGINX_SITE_NAME"
+ln -sf "/etc/nginx/sites-available/$NGINX_SITE_NAME" "/etc/nginx/sites-enabled/$NGINX_SITE_NAME"
 rm -f /etc/nginx/sites-enabled/default
 
-# Test Nginx configuration
 nginx -t
-
-# Setup SSL with Let's Encrypt
-echo "==> Setting up SSL..."
-mkdir -p /var/www/certbot
-certbot --nginx -d clawdeck.so -d www.clawdeck.so --non-interactive --agree-tos --email ${CERTBOT_EMAIL:-admin@clawdeck.so}
-
-# Restart Nginx
-systemctl restart nginx
 systemctl enable nginx
+systemctl restart nginx
 
-echo "==> Services installed successfully!"
-echo "==> To start the application, run:"
-echo "    systemctl start puma"
-echo "    systemctl start solid_queue"
+echo "==> Requesting Let's Encrypt certificates..."
+CERTBOT_DOMAINS=("-d" "$APP_DOMAIN")
+for alias in ${APP_DOMAIN_ALIASES//,/ }; do
+  if [[ -n "$alias" && "$alias" != "$APP_DOMAIN" ]]; then
+    CERTBOT_DOMAINS+=("-d" "$alias")
+  fi
+done
+
+certbot --nginx --redirect --non-interactive --agree-tos --email "$CERTBOT_EMAIL" "${CERTBOT_DOMAINS[@]}"
+
+nginx -t
+systemctl restart nginx
+
+echo "==> Services installed successfully."
+echo "==> Start the app services with:"
+echo "    systemctl start puma solid_queue"
+echo "==> Check status with:"
+echo "    systemctl status puma solid_queue nginx --no-pager"
