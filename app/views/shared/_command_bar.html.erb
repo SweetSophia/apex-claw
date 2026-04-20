@@ -7,6 +7,7 @@
 <div data-controller="command-bar"
      data-command-bar-open-value="false"
      data-command-bar-mode-value="search"
+     <% if defined?(@board) && @board %>data-command-bar-current-board-id-value="<%= @board.id %>"<% end %>
      data-command-bar-search-items-value="<%= json_escape(command_bar_items.to_json) %>">
   <div data-command-bar-target="backdrop"
        data-action="click->command-bar#close"
@@ -43,7 +44,11 @@
                 class="hidden cursor-pointer"
                 style="font-size:10px;font-weight:600;color:#555;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:3px 8px;border-radius:5px">Back</button>
 
-        <span style="font-size:10px;font-weight:600;color:#333;background:rgba(255,255,255,0.03);padding:3px 7px;border-radius:5px">esc</span>
+        <button type="button"
+                data-action="click->command-bar#close"
+                class="cursor-pointer"
+                style="font-size:10px;font-weight:600;color:#555;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:3px 8px;border-radius:5px"
+                aria-label="Close command bar">Esc</button>
       </div>
 
       <div data-command-bar-target="body" class="flex-1 overflow-y-auto" style="padding:6px 0">

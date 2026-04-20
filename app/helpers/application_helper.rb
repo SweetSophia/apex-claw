@@ -66,13 +66,16 @@ module ApplicationHelper
   def command_bar_search_items(user, current_board: nil, tasks_scope: nil)
     return [] unless user
 
-    default_board = current_board || user.boards.first
+    boards = user.boards.select(:id, :name, :icon, :color).limit(12).to_a
+    done_status = command_bar_done_status
+    default_board = current_board || boards.first
     items = []
 
     if default_board
       items << {
         kind: "action",
         actionType: "new_task",
+        boardId: default_board.id,
         title: "New task",
         subtitle: "Create in #{default_board.name}",
         href: board_path(default_board, new_task: 1),
@@ -120,8 +123,14 @@ module ApplicationHelper
       items << { kind: "nav", title: "Audit Logs", subtitle: "Admin activity trail", href: admin_audit_logs_path, icon: "🧾", keywords: ["admin", "audit", "logs"], featured: true }
     end
 
-    open_counts = user.tasks.unscoped.where(user_id: user.id).where.not(status: Task.statuses[:done]).group(:board_id).count
-    user.boards.limit(12).each do |board|
+    board_ids = boards.map(&:id)
+    open_counts = if board_ids.any?
+      user.tasks.unscoped.where(user_id: user.id, board_id: board_ids).where.not(status: done_status).group(:board_id).count
+    else
+      {}
+    end
+
+    boards.each do |board|
       items << {
         kind: "board",
         title: board.name,
@@ -133,7 +142,7 @@ module ApplicationHelper
       }
     end
 
-    task_order = Arel.sql("CASE WHEN status = #{Task.statuses[:done]} THEN 1 ELSE 0 END ASC, updated_at DESC")
+    task_order = Arel.sql("CASE WHEN status = #{done_status} THEN 1 ELSE 0 END ASC, updated_at DESC")
     task_source = if tasks_scope
       tasks_scope.includes(:board).reorder(task_order)
     else
@@ -174,4 +183,9 @@ module ApplicationHelper
     }[status.to_s] || "•"
   end
 
+  private
+
+  def command_bar_done_status
+    Integer(Task.statuses.fetch("done"))
+  end
 end

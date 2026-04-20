@@ -18,6 +18,13 @@ class CommandBarExperienceTest < ActionDispatch::IntegrationTest
     assert_match "What should I focus on?", response.body
   end
 
+  test "board layout seeds current board id for inline add fallback" do
+    get board_path(@board)
+
+    assert_response :success
+    assert_match %(data-command-bar-current-board-id-value="#{@board.id}"), response.body
+  end
+
   test "board show preloads a selected task panel from command bar deep link" do
     get board_path(@board, task_id: @task.id)
 

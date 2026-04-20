@@ -5,6 +5,7 @@ export default class extends Controller {
   static values = {
     mode: { type: String, default: "search" },
     open: { type: Boolean, default: false },
+    currentBoardId: Number,
     searchItems: Array,
   }
 
@@ -300,6 +301,10 @@ export default class extends Controller {
     const item = this.results[index]
     if (!item) return
 
+    if (item.actionType === "new_task" && this.openInlineAdd(item)) {
+      return
+    }
+
     if (item.actionType === "agent") {
       this.switchToAgent()
       return
@@ -318,7 +323,27 @@ export default class extends Controller {
 
   navigate(href) {
     this.close()
-    window.location.assign(href)
+    if (window.Turbo?.visit) {
+      window.Turbo.visit(href)
+    } else {
+      window.location.assign(href)
+    }
+  }
+
+  openInlineAdd(item) {
+    const boardId = Number(item.boardId || 0)
+    if (!boardId || !this.hasCurrentBoardIdValue || boardId !== this.currentBoardIdValue) {
+      return false
+    }
+
+    const addButton = document.querySelector("[data-controller~='inline-add'] [data-action='click->inline-add#show']")
+    if (!addButton) {
+      return false
+    }
+
+    this.close()
+    addButton.click()
+    return true
   }
 
   switchToAgent(e) {
