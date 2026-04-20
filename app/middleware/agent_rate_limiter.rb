@@ -2,7 +2,6 @@ class AgentRateLimiter
   DEFAULT_WINDOW_SECONDS = 60
   DEFAULT_MAX_REQUESTS = 120
   CACHE_KEY_PREFIX = "agent_rate_limit"
-  CACHE_MUTEX = Mutex.new
 
   def initialize(app)
     @app = app
@@ -50,12 +49,29 @@ class AgentRateLimiter
   end
 
   def increment_counter(key, expires_in:)
-    CACHE_MUTEX.synchronize do
-      current_count = Rails.cache.read(key).to_i
-      new_count = current_count + 1
-      Rails.cache.write(key, new_count, expires_in: expires_in)
-      new_count
-    end
+    now = Time.current.to_i
+    expires_at_value = now + expires_in.to_i
+
+    # Single atomic upsert with expiry-aware reset:
+    # - If row doesn't exist: INSERT with count=1
+    # - If row exists and NOT expired: increment count
+    # - If row exists and IS expired: reset count to 1 and update expiry
+    result = ActiveRecord::Base.connection.exec_query(
+      "INSERT INTO counters (key, count, expires_at, created_at, updated_at)
+       VALUES ($1, 1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) DO UPDATE SET
+         count = CASE WHEN counters.expires_at <= $3 THEN 1 ELSE counters.count + 1 END,
+         expires_at = CASE WHEN counters.expires_at <= $3 THEN $2 ELSE counters.expires_at END,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING count",
+      "Rate Limit Increment",
+      [ [ nil, key ], [ nil, expires_at_value ], [ nil, now ] ]
+    )
+    row = result.first
+    row ? row["count"].to_i : 1
+  rescue ActiveRecord::StatementInvalid
+    # Fallback for DB errors - allow request through
+    1
   end
 
   def rate_limit_headers(limit:, remaining:, reset_at:)
