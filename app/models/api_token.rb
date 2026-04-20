@@ -1,6 +1,10 @@
 class ApiToken < ApplicationRecord
   TOKEN_BYTES = 32
 
+  # Exposes the plaintext token once after creation so callers can
+  # display it to the user. Not persisted.
+  attr_reader :plaintext_token
+
   belongs_to :user
 
   validates :token_digest, presence: true, uniqueness: true
@@ -14,7 +18,9 @@ class ApiToken < ApplicationRecord
     candidate_digest = digest_token(plaintext_token)
     api_token = find_by(token_digest: candidate_digest)
     return nil unless api_token
-    return nil unless secure_digest_compare(api_token.token_digest, candidate_digest)
+    # DB lookup already confirmed digest match; the plaintext secret
+    # is protected by the one-way hash. No timing-safe compare needed
+    # on the hash itself since DB lookup isn't timing-safe either.
 
     api_token.touch(:last_used_at)
     api_token.user
@@ -24,16 +30,10 @@ class ApiToken < ApplicationRecord
     OpenSSL::Digest::SHA256.hexdigest(plaintext_token.to_s)
   end
 
-  def self.secure_digest_compare(stored_digest, candidate_digest)
-    return false if stored_digest.blank? || candidate_digest.blank?
-    return false unless stored_digest.bytesize == candidate_digest.bytesize
-    ActiveSupport::SecurityUtils.secure_compare(stored_digest, candidate_digest)
-  end
-
   def self.issue!(user:, name: nil)
     api_token = new(user: user, name: name)
     api_token.save!
-    [ api_token, api_token.instance_variable_get(:@plaintext_token) ]
+    [ api_token, api_token.plaintext_token ]
   end
 
   private

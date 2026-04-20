@@ -52,28 +52,26 @@ class AgentRateLimiter
     now = Time.current.to_i
     expires_at_value = now + expires_in.to_i
 
-    result = ActiveRecord::Base.connection.execute(sanitize_sql([
+    # Single atomic upsert with expiry-aware reset:
+    # - If row doesn't exist: INSERT with count=1
+    # - If row exists and NOT expired: increment count
+    # - If row exists and IS expired: reset count to 1 and update expiry
+    result = ActiveRecord::Base.connection.exec_query(
       "INSERT INTO counters (key, count, expires_at, created_at, updated_at)
-       VALUES (?, 1, ?, NOW(), NOW())
+       VALUES ($1, 1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
        ON CONFLICT (key) DO UPDATE SET
-         count = counters.count + 1,
-         updated_at = NOW()
-       WHERE counters.expires_at > ?",
-      key, expires_at_value, now
-    ]))
-
-    # Read back the current count
-    row = ActiveRecord::Base.connection.execute(
-      sanitize_sql(["SELECT count FROM counters WHERE key = ?", key])
-    ).first
+         count = CASE WHEN counters.expires_at <= $3 THEN 1 ELSE counters.count + 1 END,
+         expires_at = CASE WHEN counters.expires_at <= $3 THEN $2 ELSE counters.expires_at END,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING count",
+      "Rate Limit Increment",
+      [ [ nil, key ], [ nil, expires_at_value ], [ nil, now ] ]
+    )
+    row = result.first
     row ? row["count"].to_i : 1
   rescue ActiveRecord::StatementInvalid
-    # Fallback for DB errors - allow request
+    # Fallback for DB errors - allow request through
     1
-  end
-
-  def sanitize_sql(sql)
-    ActiveRecord::Base.send(:sanitize_sql_array, sql)
   end
 
   def rate_limit_headers(limit:, remaining:, reset_at:)
