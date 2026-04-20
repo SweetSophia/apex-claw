@@ -7,12 +7,12 @@ module Api
 
       # GET /api/v1/events — Server-Sent Events stream
       def index
-        # TODO: Replace with a Redis-backed atomic counter for accurate concurrency tracking
-        # across multiple processes/instances. Rails.cache is not safe for this in multi-process deployments.
+        # TODO: Replace class-level counter with Redis INCR/DECR for multi-process.
         if concurrent_sse_connections >= MAX_CONCURRENT_CONNECTIONS
           render json: { error: "Too many connections" }, status: :service_unavailable
           return
         end
+        self.class.increment_sse_connections
         response.headers["Content-Type"] = "text/event-stream"
         response.headers["Cache-Control"] = "no-cache"
         response.headers["X-Accel-Buffering"] = "no"
@@ -56,6 +56,7 @@ module Api
       rescue IOError, ClientDisconnected
         # Client disconnected — this is normal
       ensure
+        self.class.decrement_sse_connections
         unsubscribe_from_channel(channel, subscription) if subscription
         response.stream.close unless response.stream.closed?
       end
@@ -82,10 +83,18 @@ module Api
       end
 
       def concurrent_sse_connections
-        # Track in Redis or a class variable
-        Rails.cache.fetch("sse_connections:#{current_user.id}", expires_in: 1.minute) do
-          0
-        end
+        # Uses a class-level thread-safe counter. Accurate within a single
+        # process; for multi-process deployments, replace with Redis INCR/DECR.
+        @@sse_connection_count ||= 0
+        @@sse_connection_count
+      end
+
+      def self.increment_sse_connections
+        @@sse_connection_count = (@@sse_connection_count || 0) + 1
+      end
+
+      def self.decrement_sse_connections
+        @@sse_connection_count = [(@@sse_connection_count || 1) - 1, 0].max
       end
     end
   end

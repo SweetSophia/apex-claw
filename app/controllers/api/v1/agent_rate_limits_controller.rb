@@ -19,13 +19,20 @@ module Api
       private
 
       def require_owner_token!
-        return if current_user  # Allow user token
-        return if current_agent && %w[show].include?(action_name)  # Allow agents to READ their own limits
+        return if current_user  # Allow user token — user owns all their agents
+        return if current_agent && %w[show].include?(action_name)  # Allow agents to READ only
         render json: { error: "Forbidden" }, status: :forbidden
       end
 
       def set_agent
-        @agent = current_user.agents.find(params[:agent_id])
+        # Scope to current_user's agents for user auth, or use current_agent for agent auth
+        if current_user
+          @agent = current_user.agents.find(params[:agent_id])
+        elsif current_agent
+          @agent = current_agent
+        else
+          raise ActiveRecord::RecordNotFound
+        end
       end
 
       def rate_limit
