@@ -88,13 +88,15 @@ func (h *HeartbeatRunner) setIntervalFromServer(seconds int) {
 	newInterval := normalizeHeartbeatInterval(time.Duration(seconds) * time.Second)
 
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.interval == newInterval {
+	oldInterval := h.interval
+	if oldInterval == newInterval {
+		h.mu.Unlock()
 		return
 	}
-
-	log.Printf("heartbeat interval updated from server: %s -> %s", h.interval, newInterval)
 	h.interval = newInterval
+	h.mu.Unlock()
+
+	log.Printf("heartbeat interval updated from server: %s -> %s", oldInterval, newInterval)
 }
 
 func normalizeHeartbeatInterval(interval time.Duration) time.Duration {

@@ -119,6 +119,18 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
   end
 
+  test "heartbeat clamps interval env to upper bound" do
+    previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "1000"
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal 300, response.parsed_body["heartbeat_interval_seconds"]
+  ensure
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
+  end
+
   test "heartbeat flags token rotation when token expires soon" do
     @agent_token.update!(expires_at: 12.hours.from_now)
 

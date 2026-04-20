@@ -1,6 +1,9 @@
 module Api
   module V1
     class AgentsController < BaseController
+      MIN_HEARTBEAT_INTERVAL = 5
+      MAX_HEARTBEAT_INTERVAL = 300
+
       skip_before_action :authenticate_api_token, only: :register
       before_action :set_agent, only: [ :show, :update, :rotate_token, :revoke_token ]
       before_action :set_agent_for_heartbeat, only: [ :heartbeat ]
@@ -125,7 +128,7 @@ module Api
       end
 
       def heartbeat_interval_seconds
-        ENV.fetch("CLAWDECK_HEARTBEAT_INTERVAL_SECONDS", 30).to_i.clamp(5, 300)
+        ENV.fetch("CLAWDECK_HEARTBEAT_INTERVAL_SECONDS", 30).to_i.clamp(MIN_HEARTBEAT_INTERVAL, MAX_HEARTBEAT_INTERVAL)
       end
 
       def agent_json(agent)
