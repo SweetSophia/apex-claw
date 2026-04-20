@@ -142,11 +142,15 @@ module ApplicationHelper
       }
     end
 
-    task_order = Arel.sql("CASE WHEN status = #{done_status} THEN 1 ELSE 0 END ASC, updated_at DESC")
+    task_table = Task.arel_table
+    task_order = Arel::Nodes::Case.new
+      .when(task_table[:status].eq(done_status)).then(1)
+      .else(0)
+
     task_source = if tasks_scope
-      tasks_scope.includes(:board).reorder(task_order)
+      tasks_scope.includes(:board).reorder(task_order.asc, updated_at: :desc)
     else
-      user.tasks.unscoped.where(user_id: user.id).includes(:board).reorder(task_order)
+      user.tasks.unscoped.where(user_id: user.id).includes(:board).reorder(task_order.asc, updated_at: :desc)
     end
 
     task_source.limit(150).each do |task|
