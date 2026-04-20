@@ -4,8 +4,7 @@
 <li id="task_<%= task.id %>"
     class="group cursor-grab transition-all duration-150 <%= 'opacity-50' if is_done %>"
     style="padding:12px 14px;background:rgba(255,255,255,0.035);border-radius:10px;border:1px solid rgba(255,255,255,0.05)"
-    onmouseenter="this.style.borderColor='rgba(255,255,255,0.08)'"
-    onmouseleave="this.style.borderColor='rgba(255,255,255,0.05)'"
+
     <% if has_current_user %>
       data-controller="dropdown delete-confirm"
       data-action="contextmenu->dropdown#openAtCursor"

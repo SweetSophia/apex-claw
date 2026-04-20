@@ -20,6 +20,15 @@ export default class extends Controller {
     this.results = []
     this.activeIndex = -1
     this.previousFocus = null
+
+    this.inputTarget.setAttribute('role', 'combobox')
+    this.inputTarget.setAttribute('aria-autocomplete', 'list')
+    this.inputTarget.setAttribute('aria-expanded', 'false')
+    this.inputTarget.setAttribute('aria-haspopup', 'listbox')
+
+    // Link input to results container for assistive tech
+    this.searchResultsTarget.id = 'command-bar-results'
+    this.inputTarget.setAttribute('aria-controls', 'command-bar-results')
   }
 
   disconnect() {
@@ -63,6 +72,7 @@ export default class extends Controller {
     requestAnimationFrame(() => {
       this.inputTarget.value = ""
       this.inputTarget.focus()
+      this.inputTarget.setAttribute('aria-expanded', 'true')
     })
   }
 
@@ -76,6 +86,8 @@ export default class extends Controller {
     this.results = []
     this.activeIndex = -1
     this.modeValue = "search"
+
+    this.inputTarget.setAttribute('aria-expanded', 'false')
 
     if (this.previousFocus && typeof this.previousFocus.focus === "function") {
       this.previousFocus.focus()

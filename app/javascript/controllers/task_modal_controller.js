@@ -41,6 +41,15 @@ export default class extends Controller {
     setTimeout(() => {
       this.modalTarget.classList.remove("translate-x-full")
     }, 10)
+
+    // Set ARIA modal attributes
+    this.modalTarget.setAttribute('role', 'dialog')
+    this.modalTarget.setAttribute('aria-modal', 'true')
+    this.modalTarget.setAttribute('aria-labelledby', 'task-modal-title')
+
+    // Move focus into the modal for keyboard/screen reader users
+    this.modalTarget.setAttribute('tabindex', '-1')
+    setTimeout(() => { this.modalTarget.focus() }, 20)
   }
 
   close() {

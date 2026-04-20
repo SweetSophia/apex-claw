@@ -63,3 +63,19 @@ body.overflow-hidden {
 .task-flash {
   animation: task-flash 1.2s ease-out;
 }
+
+/* Task card hover effects */
+.task-card:hover,
+li[data-task-id]:hover {
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+.task-card:hover .task-card__actions,
+.task-card:focus-within .task-card__actions {
+  opacity: 1;
+}
+
+/* Add-card button hover */
+[data-inline-add-target="button"] button:hover {
+  color: #666 !important;
+}
