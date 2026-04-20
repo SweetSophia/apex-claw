@@ -4,6 +4,10 @@
 # See the Securing Rails Applications Guide for more information:
 # https://guides.rubyonrails.org/security.html#content-security-policy-header
 
+ssl_enabled = ActiveModel::Type::Boolean.new.cast(
+  ENV.fetch("APP_FORCE_SSL", ENV.fetch("APP_PROTOCOL", "https") == "https" ? "true" : "false")
+)
+
 Rails.application.config.content_security_policy do |policy|
   # Default-src
   policy.default_src :self
@@ -30,8 +34,8 @@ Rails.application.config.content_security_policy do |policy|
   # Form action
   policy.form_action :self
 
-  # Upgrade insecure requests in production
-  policy.upgrade_insecure_requests :always if Rails.env.production?
+  # Upgrade insecure requests only for real HTTPS deployments.
+  policy.upgrade_insecure_requests :always if Rails.env.production? && ssl_enabled
 end
 
 Rails.application.config.content_security_policy_nonce_generator = -> request { SecureRandom.base64(16) }

@@ -6,6 +6,9 @@ Rails.application.configure do
 
   app_host = ENV.fetch("APP_HOST", "clawdeck.io")
   app_protocol = ENV.fetch("APP_PROTOCOL", "https")
+  ssl_enabled = ActiveModel::Type::Boolean.new.cast(
+    ENV.fetch("APP_FORCE_SSL", (app_protocol == "https").to_s)
+  )
 
   default_hosts = [ app_host ]
   default_hosts << "www.#{app_host}" unless app_host.start_with?("www.")
@@ -38,11 +41,11 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
+  # Only assume/force SSL when this deployment is actually running behind HTTPS.
+  config.assume_ssl = ssl_enabled
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # Force all access to the app over SSL only when explicitly enabled.
+  config.force_ssl = ssl_enabled
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }

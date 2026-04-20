@@ -106,6 +106,7 @@ If you run the production Docker stack, Propshaft assets must be precompiled. Th
 ```bash
 cp .env.production.example .env.production
 # then set at least SECRET_KEY_BASE and CLAWDECK_DB_PASSWORD in .env.production
+# for internal/Tailscale-only HTTP deploys also set APP_PROTOCOL=http and APP_FORCE_SSL=false
 
 docker compose --env-file .env.production -f docker-compose.prod.yml build
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d

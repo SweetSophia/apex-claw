@@ -65,13 +65,17 @@ Then set real values for at least:
 ```bash
 SECRET_KEY_BASE="$(openssl rand -hex 64)"
 CLAWDECK_DB_PASSWORD='choose-a-strong-password'
-APP_HOST='clawdeck.local'
-APP_ALLOWED_HOSTS='clawdeck.local,100.111.85.48,127.0.0.1,::1'
+APP_HOST='100.111.85.48:3000'
+APP_PROTOCOL='http'
+APP_FORCE_SSL='false'
+APP_ALLOWED_HOSTS='100.111.85.48,127.0.0.1,::1'
 ```
 
 Optional overrides depend on your host and desired bindings:
 - `DATABASE_URL`
 - `APP_HOST`
+- `APP_PROTOCOL`
+- `APP_FORCE_SSL`
 - `APP_ALLOWED_HOSTS`
 - custom Docker port bindings in `docker-compose.prod.yml`
 
@@ -116,7 +120,8 @@ puts user.email_address
 ### 5. Important caveats
 
 - `docker-compose.prod.yml` is currently aimed at **single-host** deployments, not a full public internet edge stack
-- if you are serving plain HTTP internally or over Tailscale, review host allowlists carefully
+- if you are serving plain HTTP internally or over Tailscale, set `APP_PROTOCOL=http` and `APP_FORCE_SSL=false`
+- review host allowlists carefully
 - if you later place nginx/caddy in front, you may want to tighten binds back to localhost only
 - if you rebuild from scratch, remember that Propshaft production assets must exist in `public/assets`; this is why the production startup path runs `assets:precompile`
 

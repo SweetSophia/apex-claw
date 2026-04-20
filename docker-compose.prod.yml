@@ -39,8 +39,10 @@ services:
       RAILS_SERVE_STATIC_FILES: "true"
       RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
       GOOD_JOB_EXECUTION_MODE: async
-      APP_HOST: ${APP_HOST:-clawdeck.local}
-      APP_ALLOWED_HOSTS: ${APP_ALLOWED_HOSTS:-clawdeck.local,100.111.85.48,127.0.0.1,::1}
+      APP_HOST: ${APP_HOST:-100.111.85.48:3000}
+      APP_PROTOCOL: ${APP_PROTOCOL:-http}
+      APP_FORCE_SSL: ${APP_FORCE_SSL:-false}
+      APP_ALLOWED_HOSTS: ${APP_ALLOWED_HOSTS:-100.111.85.48,127.0.0.1,::1}
     depends_on:
       db:
         condition: service_healthy
