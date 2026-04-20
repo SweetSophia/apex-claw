@@ -25,6 +25,12 @@ RUN bundle install
 # Copy application code
 COPY . .
 
+# Precompile assets at build time so they are baked into the image.
+# This makes first container start much faster and ensures assets exist
+# even if the DB isn't ready at startup. Startup precompile in
+# docker-compose.prod.yml is a fallback that runs after DB is healthy.
+RUN SECRET_KEY_BASE=dummy RAILS_SERVE_STATIC_FILES=1 bundle exec rails assets:precompile || true
+
 # Expose port
 EXPOSE 3000
 
