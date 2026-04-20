@@ -9,7 +9,7 @@ Rails.application.config.content_security_policy do |policy|
   policy.default_src :self
 
   # Rails defaults
-  policy.connect_src :self, :https, mode: :crawl
+  policy.connect_src :self, :https
 
   # Asset hosting (CDN or asset pipeline)
   policy.asset_src :self
@@ -17,11 +17,12 @@ Rails.application.config.content_security_policy do |policy|
   # Images
   policy.img_src :self, :data, :https
 
-  # Scripts — only from self and any CDN pinned in importmap
-  policy.script_src :self, :unsafe_inline  # needed for Stimulus inline handlers
+  # Scripts — nonces auto-applied via content_security_policy_nonce_generator
+  # Stimulus controllers loaded via importmap use nonces, no unsafe-inline needed
+  policy.script_src :self
 
-  # Styles — only from self (Tailwind uses self)
-  policy.style_src :self, :unsafe_inline  # needed for Stimulus inline styles
+  # Styles — Tailwind via asset pipeline uses self, inline styles use nonces
+  policy.style_src :self
 
   # Frames — none
   policy.frame_src :none
