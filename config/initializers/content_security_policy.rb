@@ -11,8 +11,8 @@ Rails.application.config.content_security_policy do |policy|
   # Rails defaults
   policy.connect_src :self, :https
 
-  # Asset hosting (CDN or asset pipeline)
-  policy.asset_src :self
+  # Fonts
+  policy.font_src :self
 
   # Images
   policy.img_src :self, :data, :https

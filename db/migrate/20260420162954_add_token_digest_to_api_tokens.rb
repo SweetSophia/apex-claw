@@ -1,5 +1,7 @@
 class AddTokenDigestToApiTokens < ActiveRecord::Migration[8.0]
   def up
+    enable_extension 'pgcrypto' unless extension_enabled?('pgcrypto')
+
     add_column :api_tokens, :token_digest, :string, null: true
 
     # Backfill using raw SQL to avoid dependency on model class methods
