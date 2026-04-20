@@ -30,15 +30,17 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
       - "100.111.85.48:3000:3000"
+    env_file:
+      - .env.production
     environment:
-      DATABASE_URL: postgres://clawdeck:${CLAWDECK_DB_PASSWORD:-clawdeck_prod_2026}@db:5432/clawdeck_production
+      DATABASE_URL: ${DATABASE_URL:-postgres://clawdeck:${CLAWDECK_DB_PASSWORD:-clawdeck_prod_2026}@db:5432/clawdeck_production}
       RAILS_ENV: production
-      SECRET_KEY_BASE: ${CLAWDECK_SECRET_KEY_BASE}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       RAILS_SERVE_STATIC_FILES: "true"
-      RAILS_LOG_LEVEL: info
+      RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
       GOOD_JOB_EXECUTION_MODE: async
-      APP_HOST: clawdeck.local
-      APP_ALLOWED_HOSTS: "clawdeck.local,100.111.85.48,127.0.0.1,::1"
+      APP_HOST: ${APP_HOST:-clawdeck.local}
+      APP_ALLOWED_HOSTS: ${APP_ALLOWED_HOSTS:-clawdeck.local,100.111.85.48,127.0.0.1,::1}
     depends_on:
       db:
         condition: service_healthy

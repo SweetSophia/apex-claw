@@ -104,15 +104,18 @@ If your host does not have the full Ruby/Bundler toolchain available, run these 
 If you run the production Docker stack, Propshaft assets must be precompiled. The checked-in production compose does that on container startup. Use:
 
 ```bash
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
+cp .env.production.example .env.production
+# then set at least SECRET_KEY_BASE and CLAWDECK_DB_PASSWORD in .env.production
+
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 If the production UI comes up unstyled, rebuild and restart the stack or run:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app bin/rails assets:precompile
-docker compose -f docker-compose.prod.yml restart app
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app bin/rails assets:precompile
+docker compose --env-file .env.production -f docker-compose.prod.yml restart app
 ```
 
 ## Where to go next

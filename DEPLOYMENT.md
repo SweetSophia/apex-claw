@@ -52,16 +52,25 @@ Use it when you want:
 - internal or Tailscale-only access
 - a faster bootstrap than the full nginx/systemd path
 
-### 1. Set required environment variables
+### 1. Create the production env file
 
 At minimum:
 
 ```bash
-export CLAWDECK_SECRET_KEY_BASE="$(openssl rand -hex 64)"
-export CLAWDECK_DB_PASSWORD='choose-a-strong-password'
+cp .env.production.example .env.production
+```
+
+Then set real values for at least:
+
+```bash
+SECRET_KEY_BASE="$(openssl rand -hex 64)"
+CLAWDECK_DB_PASSWORD='choose-a-strong-password'
+APP_HOST='clawdeck.local'
+APP_ALLOWED_HOSTS='clawdeck.local,100.111.85.48,127.0.0.1,::1'
 ```
 
 Optional overrides depend on your host and desired bindings:
+- `DATABASE_URL`
 - `APP_HOST`
 - `APP_ALLOWED_HOSTS`
 - custom Docker port bindings in `docker-compose.prod.yml`
@@ -69,8 +78,8 @@ Optional overrides depend on your host and desired bindings:
 ### 2. Build and start
 
 ```bash
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 Notes:
@@ -81,7 +90,7 @@ Notes:
 ### 3. Verify the app
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f app
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app
 curl -I http://127.0.0.1:3000/up
 ```
 
@@ -92,7 +101,7 @@ If you expose the app on a Tailscale IP or another bind address, also verify tha
 Example:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app bin/rails runner '
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app bin/rails runner '
 user = User.create!(
   email_address: "admin@example.com",
   password: "change-me-now",
@@ -178,7 +187,7 @@ cp .env.production.example .env.production
 Fill in real values for at least:
 - `RAILS_MASTER_KEY`
 - `SECRET_KEY_BASE`
-- `DATABASE_URL`
+- `CLAWDECK_DB_PASSWORD` or `DATABASE_URL`
 - `APP_HOST`
 - `APP_ALLOWED_HOSTS`
 - `MAILER_FROM`
@@ -286,15 +295,15 @@ This usually means production assets were not precompiled.
 Rebuild and restart the production stack so startup can regenerate the asset manifest:
 
 ```bash
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 If needed, manually precompile once inside the running container:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec app bin/rails assets:precompile
-docker compose -f docker-compose.prod.yml restart app
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app bin/rails assets:precompile
+docker compose --env-file .env.production -f docker-compose.prod.yml restart app
 ```
 
 ### Check Puma logs
