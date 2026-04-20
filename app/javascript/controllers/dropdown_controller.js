@@ -11,6 +11,8 @@ export default class extends Controller {
 
     // Listen for close-all event from other dropdowns
     document.addEventListener("dropdown:close-all", this.handleCloseAll)
+
+    this.menuTarget.setAttribute('role', 'menu')
   }
 
   disconnect() {

@@ -24,7 +24,7 @@
   <div class="flex items-center gap-2" style="padding:6px 8px 10px">
     <div class="rounded-full" style="width:7px;height:7px;background:<%= column_dot_colors[status] %>"></div>
     <span style="font-size:13px;font-weight:700;color:#bbb"><%= column_labels[status] %></span>
-    <span id="column-<%= status %>-count" style="font-size:11px;font-weight:600;color:#444;background:rgba(255,255,255,0.04);padding:0 7px;border-radius:5px;line-height:20px"><%= tasks.count %></span>
+    <span id="column-<%= status %>-count" class="column__task-count" aria-live="polite" style="font-size:11px;font-weight:600;color:#444;background:rgba(255,255,255,0.04);padding:0 7px;border-radius:5px;line-height:20px"><%= tasks.count %></span>
   </div>
 
   <%# Tasks List %>
@@ -70,9 +70,7 @@
     <button type="button"
             data-action="click->inline-add#show"
             class="w-full flex items-center gap-1.5 rounded-lg cursor-pointer border-none bg-transparent transition-colors"
-            style="padding:8px 10px;font-size:12px;font-weight:500;color:#333"
-            onmouseenter="this.style.color='#666'"
-            onmouseleave="this.style.color='#333'">
+            style="padding:8px 10px;font-size:12px;font-weight:500;color:#333">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8H2M8 2V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Add a card
     </button>
