@@ -3,7 +3,6 @@ package runner
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
@@ -50,26 +49,15 @@ func (c *CommandRunner) Run(ctx context.Context) error {
 func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	cmd, err := c.client.GetNextCommand()
 	if err != nil {
-		backoff := 1 * time.Second
-		maxBackoff := 30 * time.Second
-		for {
-			logging.Global().Error("failed to get next command", map[string]any{"error": err.Error(), "backoff": backoff.String()})
+		for attempt := 1; err != nil; attempt++ {
+			backoff := DefaultRetryConfig().BackoffDelay(attempt)
+			logging.Global().Error("failed to get next command", map[string]any{"error": err.Error(), "backoff": backoff.String(), "attempt": attempt})
 			select {
 			case <-ctx.Done():
 				return
 			case <-time.After(backoff):
 			}
 			cmd, err = c.client.GetNextCommand()
-			if err == nil {
-				break
-			}
-			backoff *= 2
-			if backoff > maxBackoff {
-				backoff = maxBackoff
-			}
-			// Add jitter ±20%
-			jitter := time.Duration(rand.Int63n(int64(backoff / 5)))
-			backoff += jitter
 		}
 	}
 	if cmd == nil {
