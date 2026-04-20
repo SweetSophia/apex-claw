@@ -120,19 +120,21 @@ async function run() {
     await openCommandBar(page)
     await chooseNewTask(page)
     await page.waitForLoadState('networkidle')
-    await page.waitForURL(new RegExp(`/boards/${boardId}\\?new_task=1`), { timeout: 10000 })
+    await page.waitForURL(/\/boards\/\d+\?new_task=1$/, { timeout: 10000 })
 
     const homeNavigateUrl = page.url()
+    const homeNavigateBoardId = parseBoardId(homeNavigateUrl)
     const modalVisible = await page.locator(selectors.newTaskTitleInput).first().isVisible().catch(() => false)
 
     const result = {
-      ok: boardUrlAfter === boardUrlBefore && inlineAddVisible && modalVisible,
+      ok: boardUrlAfter === boardUrlBefore && inlineAddVisible && modalVisible && Boolean(homeNavigateBoardId),
       baseUrl,
       boardId,
+      homeNavigateBoardId,
       checks: {
         boardInlineAddStayedOnBoardUrl: boardUrlAfter === boardUrlBefore,
         boardInlineAddVisible: inlineAddVisible,
-        homeNewTaskNavigatedToModalUrl: new RegExp(`/boards/${boardId}\\?new_task=1`).test(homeNavigateUrl),
+        homeNewTaskNavigatedToModalUrl: /\/boards\/\d+\?new_task=1$/.test(homeNavigateUrl),
         homeNewTaskModalVisible: modalVisible,
       },
       urls: {

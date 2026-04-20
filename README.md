@@ -124,7 +124,7 @@ Environment variables:
 
 - `CLAWDECK_BASE_URL` — app URL (default `http://127.0.0.1:3000`)
 - `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials (defaults target local fixture-style dev users)
-- `CLAWDECK_BOARD_ID` — optional explicit board id override
+- `CLAWDECK_BOARD_ID` — optional explicit board id override for the board-page inline-add leg of the smoke test
 - `CLAWDECK_HEADLESS=false` — run headed for debugging
 - `CLAWDECK_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when it is not resolvable as the standard `playwright` package
 
