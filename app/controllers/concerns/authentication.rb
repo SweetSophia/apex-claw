@@ -65,9 +65,15 @@ module Authentication
           value: session.id,
           httponly: true,
           same_site: :lax,
-          secure: Rails.env.production?
+          secure: ssl_session_cookie?
         }
       end
+    end
+
+    def ssl_session_cookie?
+      ActiveModel::Type::Boolean.new.cast(
+        ENV.fetch("APP_FORCE_SSL", ENV.fetch("APP_PROTOCOL", Rails.env.production? ? "https" : "http") == "https" ? "true" : "false")
+      )
     end
 
     def terminate_session
