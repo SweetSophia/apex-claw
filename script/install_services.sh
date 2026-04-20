@@ -9,7 +9,7 @@ fi
 APP_USER=${APP_USER:-clawdeck}
 APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
 APP_DOMAIN=${APP_DOMAIN:-clawdeck.io}
-APP_DOMAIN_ALIASES=${APP_DOMAIN_ALIASES:-www.${APP_DOMAIN}}
+APP_DOMAIN_ALIASES=${APP_DOMAIN_ALIASES:-}
 APP_PORT=${APP_PORT:-3000}
 CERTBOT_EMAIL=${CERTBOT_EMAIL:-}
 NGINX_SITE_NAME=${NGINX_SITE_NAME:-clawdeck}
@@ -53,6 +53,9 @@ render_template() {
 }
 
 echo "==> Installing ClawDeck services for $APP_DOMAIN"
+if [[ -n "$APP_DOMAIN_ALIASES" ]]; then
+  echo "==> Additional certificate/server aliases: $APP_DOMAIN_ALIASES"
+fi
 install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
 install -d /var/www/certbot
 

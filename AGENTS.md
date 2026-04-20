@@ -66,7 +66,7 @@ tail -f /var/log/clawdeck/puma.log  # View application logs
 tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 ```
 
-Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. See `DEPLOYMENT.md` for the current env-driven install flow.
+Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow.
 
 ## Architecture
 

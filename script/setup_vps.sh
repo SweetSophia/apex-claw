@@ -67,6 +67,14 @@ install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT"
 install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
 install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT/shared"
 
+if [[ -d "$APP_ROOT" ]]; then
+  for writable_path in tmp storage log; do
+    if [[ -e "$APP_ROOT/$writable_path" ]]; then
+      chown -R "$APP_USER:$APP_GROUP" "$APP_ROOT/$writable_path"
+    fi
+  done
+fi
+
 echo "==> Configuring PostgreSQL..."
 DB_PASSWORD_SQL=${DB_PASSWORD//\'/\'\'}
 runuser -u postgres -- psql <<SQL
