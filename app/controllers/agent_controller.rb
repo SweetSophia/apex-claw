@@ -1,4 +1,13 @@
 class AgentController < ApplicationController
+  # CSRF skip: chat endpoint receives XHR from authenticated browser sessions
+  # with CSRF token in headers (Turbo/JS auto-attaches). The skip is needed
+  # because some agent-driven POST requests may not include the token.
+  # TODO: Verify all chat callers send X-CSRF-Token and remove this skip.
+  skip_before_action :verify_authenticity_token, only: :chat
+
+  rate_limit to: 30, within: 1.minute, by: -> { current_user&.id || request.remote_ip },
+    with: -> { render json: { error: "Rate limit exceeded" }, status: :too_many_requests }
+
   def chat
     response = case params[:message_type]
     when "focus"
