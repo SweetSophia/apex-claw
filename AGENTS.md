@@ -180,4 +180,117 @@ Agents should include these headers:
 /api/v1/tasks/next        # Get next assigned task
 /api/v1/tasks/pending_attention  # Tasks needing attention
 /api/v1/agents            # Agent management
+/api/v1/agent_commands    # Command queue for agents
+/api/v1/audit_logs        # Audit log access
+/api/v1/events            # SSE events stream
+/api/v1/settings          # User settings
 ```
+
+### CI Pipeline
+GitHub Actions runs on PR and push to main:
+1. **scan_ruby**: Brakeman (security) + bundler-audit (gem vulnerabilities)
+2. **scan_js**: importmap audit (JS vulnerabilities)
+3. **lint**: RuboCop style check
+4. **test**: Rails unit/integration tests with PostgreSQL service
+5. **system-test**: System tests with PostgreSQL service (screenshots on failure)
+
+Local CI command (`bin/ci`) runs:
+1. Setup (dependencies + database)
+2. RuboCop style check
+3. Security audits (bundler-audit, importmap audit, brakeman)
+4. Unit/integration tests
+5. System tests
+6. Database seed test
+
+### Testing Configuration
+- Test parallelization enabled (uses all processor cores)
+- Fixtures loaded from test/fixtures/*.yml
+- Custom test helper: `test/test_helpers/session_test_helper.rb`
+- System tests use Capybara + Selenium WebDriver
+- GitHub Actions uses PostgreSQL 16 service container
+
+## Agent Integration
+
+### Overview
+ClawDeck is designed for human-agent collaboration:
+1. Human assigns tasks to agent via UI
+2. Agent polls for assigned work via API
+3. Agent updates task status and adds activity notes
+4. Human reviews before marking done
+
+### Agent Workflow
+```
+1. Wait for assignment → Poll for tasks with assigned=true
+2. Start work → Move to in_progress, add activity note
+3. Work on it → Add activity notes for progress
+4. Get stuck? → Set blocked=true, add note
+5. Finish → Move to in_review, add summary
+6. Human reviews → User moves to done (or back for revisions)
+```
+
+### Polling Pattern
+```
+Every 30-60 seconds:
+  1. GET /api/v1/tasks?assigned=true&status=up_next
+  2. If tasks exist:
+       - Claim first task (move to in_progress)
+       - Work on it
+```
+
+## Frontend Architecture
+
+### Stimulus Controllers
+Located in `app/javascript/controllers/`:
+- **board_controller.js** - Main board interactions
+- **task_board_controller.js** - Task drag-drop
+- **task_modal_controller.js** - Task detail panel
+- **sortable_controller.js** - Drag-drop ordering
+- **dropdown_controller.js** - Reusable dropdown menus
+- **flash_controller.js** - Toast notifications
+- **delete_confirm_controller.js** - Delete confirmations
+- **agent_presence_controller.js** - Agent online status
+- **command_bar_controller.js** - ⌘K command palette
+- **clipboard_controller.js** - Copy to clipboard
+- **datepicker_controller.js** - Due date picker
+
+### Turbo Streams
+Used for real-time updates:
+- Task CRUD operations return turbo_stream responses
+- Task broadcasts to board stream on changes
+- Activity feed updates in real-time
+- Column counts update on task changes
+
+## UI Design System
+
+Before making UI changes, read:
+- `docs/design/DESIGN_SYSTEM.md` - Design tokens, colors, spacing
+- `docs/design/UI_MIGRATION.md` - Migration plan from current to design system
+- `docs/design/clawdeck-board-v3.jsx` and `clawdeck-home-v4.jsx` - Visual reference (ERB patterns, not React)
+
+Key design tokens:
+- Background: `#0c0c0f` (base), `#161619` (board), `#1e1e22` (card)
+- Text: `#e0e0e0`
+- Accent: Amber/gold (`#fbbf24`)
+- Selection: `::selection { background: #fbbf24; color: #161619; }`
+
+## Development Guidelines
+
+### Conventions
+- Never default to regular JS if Turbo/Hotwire can accomplish the same thing
+- Always follow Rails conventions and use DRY principles
+- Use Turbo Streams for real-time UI updates
+- Agents communicate via REST API, not WebSockets
+- Activity tracking should be declarative (see `Task` callbacks)
+
+### Gotchas
+- `Task` broadcasts skip when `activity_source == "web"` (UI handles it)
+- `AgentToken` uses `revoked_at` for soft-delete, not hard delete
+- `Task.status` drives `Task.completed` via `before_save` callback
+- Position is scoped to board+status, not global
+- API v1 uses `Api::TokenAuthentication` concern, not web auth
+
+### Deployment
+- Project deployed via GitHub Actions by pushing to main branch
+- Backup all 4 databases before migrations
+- Rollback migration on failure
+- Required env vars: `RAILS_MASTER_KEY`, `DATABASE_URL`, `APP_HOST`, `RESEND_API_KEY`

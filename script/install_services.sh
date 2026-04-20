@@ -34,7 +34,7 @@ for alias in ${APP_DOMAIN_ALIASES//,/ }; do
 done
 
 escape_sed() {
-  printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
+  printf '%s' "$1" | sed -e 's/[\/&|\\]/\\&/g'
 }
 
 render_template() {
