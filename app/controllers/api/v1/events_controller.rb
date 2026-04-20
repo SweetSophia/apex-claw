@@ -3,8 +3,16 @@ module Api
     class EventsController < BaseController
       include ActionController::Live
 
+      MAX_CONCURRENT_CONNECTIONS = 5
+
       # GET /api/v1/events — Server-Sent Events stream
       def index
+        # TODO: Replace with a Redis-backed atomic counter for accurate concurrency tracking
+        # across multiple processes/instances. Rails.cache is not safe for this in multi-process deployments.
+        if concurrent_sse_connections >= MAX_CONCURRENT_CONNECTIONS
+          render json: { error: "Too many connections" }, status: :service_unavailable
+          return
+        end
         response.headers["Content-Type"] = "text/event-stream"
         response.headers["Cache-Control"] = "no-cache"
         response.headers["X-Accel-Buffering"] = "no"
@@ -25,9 +33,19 @@ module Api
         heartbeat_interval = 15
         last_heartbeat = Time.current
 
+        # Configurable max connection duration to prevent resource exhaustion
+        max_connection_time = ENV.fetch("SSE_MAX_CONNECTION_SECONDS", 1800).to_i  # 30 min default
+        connection_start = Time.current
+
         # Block until client disconnects
         loop do
           sleep 0.5
+
+          # Force disconnect after max connection time
+          if Time.current - connection_start >= max_connection_time
+            sse_write({ type: "connection.timeout", data: {}, timestamp: Time.current.utc.iso8601 })
+            break
+          end
 
           # Send heartbeat every 15 seconds
           if Time.current - last_heartbeat >= heartbeat_interval
@@ -61,6 +79,13 @@ module Api
         response.stream.write("data: #{json}\n\n")
       rescue IOError
         # Stream already closed — client disconnected
+      end
+
+      def concurrent_sse_connections
+        # Track in Redis or a class variable
+        Rails.cache.fetch("sse_connections:#{current_user.id}", expires_in: 1.minute) do
+          0
+        end
       end
     end
   end

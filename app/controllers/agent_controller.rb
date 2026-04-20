@@ -1,4 +1,9 @@
 class AgentController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: :chat
+
+  rate_limit to: 30, within: 1.minute, by: -> { current_user&.id || request.remote_ip },
+    with: -> { render json: { error: "Rate limit exceeded" }, status: :too_many_requests }
+
   def chat
     response = case params[:message_type]
     when "focus"

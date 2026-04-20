@@ -1,7 +1,7 @@
 module Api
   module V1
     class AgentRateLimitsController < BaseController
-      before_action :require_user_token!
+      before_action :require_owner_token!
       before_action :set_agent
 
       def show
@@ -18,9 +18,9 @@ module Api
 
       private
 
-      def require_user_token!
-        return unless current_agent
-
+      def require_owner_token!
+        return if current_user  # Allow user token
+        return if current_agent && %w[show].include?(action_name)  # Allow agents to READ their own limits
         render json: { error: "Forbidden" }, status: :forbidden
       end
 
