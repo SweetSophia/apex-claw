@@ -2,7 +2,6 @@ class AgentRateLimiter
   DEFAULT_WINDOW_SECONDS = 60
   DEFAULT_MAX_REQUESTS = 120
   CACHE_KEY_PREFIX = "agent_rate_limit"
-  CACHE_MUTEX = Mutex.new
 
   def initialize(app)
     @app = app
@@ -50,12 +49,31 @@ class AgentRateLimiter
   end
 
   def increment_counter(key, expires_in:)
-    CACHE_MUTEX.synchronize do
-      current_count = Rails.cache.read(key).to_i
-      new_count = current_count + 1
-      Rails.cache.write(key, new_count, expires_in: expires_in)
-      new_count
-    end
+    now = Time.current.to_i
+    expires_at_value = now + expires_in.to_i
+
+    result = ActiveRecord::Base.connection.execute(sanitize_sql([
+      "INSERT INTO counters (key, count, expires_at, created_at, updated_at)
+       VALUES (?, 1, ?, NOW(), NOW())
+       ON CONFLICT (key) DO UPDATE SET
+         count = counters.count + 1,
+         updated_at = NOW()
+       WHERE counters.expires_at > ?",
+      key, expires_at_value, now
+    ]))
+
+    # Read back the current count
+    row = ActiveRecord::Base.connection.execute(
+      sanitize_sql(["SELECT count FROM counters WHERE key = ?", key])
+    ).first
+    row ? row["count"].to_i : 1
+  rescue ActiveRecord::StatementInvalid
+    # Fallback for DB errors - allow request
+    1
+  end
+
+  def sanitize_sql(sql)
+    ActiveRecord::Base.send(:sanitize_sql_array, sql)
   end
 
   def rate_limit_headers(limit:, remaining:, reset_at:)
