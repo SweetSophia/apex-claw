@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"math/rand"
 	"sync/atomic"
 	"time"
 
@@ -68,8 +69,27 @@ func (t *TaskRunner) Run(ctx context.Context) error {
 func (t *TaskRunner) pollAndExecute(ctx context.Context) {
 	task, err := t.client.GetNextTask()
 	if err != nil {
-		logging.Global().Error("failed to get next task", map[string]any{"error": err.Error()})
-		return
+		backoff := 1 * time.Second
+		maxBackoff := 30 * time.Second
+		for {
+			logging.Global().Error("failed to get next task", map[string]any{"error": err.Error(), "backoff": backoff.String()})
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(backoff):
+			}
+			task, err = t.client.GetNextTask()
+			if err == nil {
+				break
+			}
+			backoff *= 2
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
+			// Add jitter ±20%
+			jitter := time.Duration(rand.Int63n(int64(backoff / 5)))
+			backoff += jitter
+		}
 	}
 
 	if task == nil {
