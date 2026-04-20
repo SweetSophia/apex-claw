@@ -1,44 +1,41 @@
 # ClawDeck Deployment Guide
 
-This repository currently ships two different operational stories:
+This repository currently ships two operational paths:
 
 1. **Local Docker development**, which works well for development
-2. **Bare-metal VPS deployment scripts**, which are the only production-oriented path currently checked into the repo
+2. **Bare-metal VPS deployment scripts**, which are the checked-in production-oriented path
 
-There is **not** a ready-made production Docker stack in this repository yet, and there is **not** an auto-deploy workflow for VPS releases. The included GitHub Actions cover CI and tagged GitHub releases, not server deployment.
+There is **not** a production Docker stack in this repository yet, and there is **not** an auto-deploy workflow for VPS releases. GitHub Actions cover CI and tagged releases, not server deployment.
 
 ## What exists today
 
 Checked into the repo:
-- `script/setup_vps.sh` — installs system packages, PostgreSQL, rbenv, Ruby, and initial DBs
-- `script/install_services.sh` — installs systemd services and nginx config
-- `config/systemd/puma.service`
-- `config/systemd/solid_queue.service`
-- `config/nginx/clawdeck.conf`
+- `script/setup_vps.sh` — installs system packages, PostgreSQL, nginx, certbot, a dedicated app user, rbenv, and Ruby
+- `script/install_services.sh` — renders systemd/nginx templates, enables services, and provisions TLS with certbot
+- `config/systemd/puma.service` — template rendered during install
+- `config/systemd/solid_queue.service` — template rendered during install
+- `config/nginx/clawdeck.conf` — nginx bootstrap template rendered during install
 - `.env.production.example`
 
 ## Important caveats before deploying
 
-The current VPS scripts are usable, but opinionated. Review them before production use.
+The VPS scripts are intentionally opinionated, but they are no longer tied to root-owned app services or a single hardcoded domain.
 
-They currently assume:
+Defaults if you do not override them:
 - Ubuntu VPS
 - deployment path: `/var/www/clawdeck`
-- `root`-owned services
-- rbenv installed under `/root/.rbenv`
+- dedicated runtime user: `clawdeck`
+- rbenv installed under `/home/clawdeck/.rbenv`
 - PostgreSQL running locally
 - nginx terminating TLS
-- hostname/domain values hardcoded to `clawdeck.so` and `www.clawdeck.so`
+- primary hostname: `clawdeck.io`
+- alias hostname: none by default (set `APP_DOMAIN_ALIASES` if you want extras such as `www.clawdeck.io`)
 
-You will almost certainly want to adjust at least:
-- `config/nginx/clawdeck.conf`
-- `script/install_services.sh`
-- `.env.production`
-- TLS email/domain values for certbot
+You can override the important values with environment variables when running the scripts.
 
 ## Recommended production path right now
 
-Use the included **bare-metal + systemd + nginx** deployment flow, but treat the scripts as a starting point, not a one-click generic installer.
+Use the included **bare-metal + systemd + nginx** deployment flow, but treat it as infra bootstrap, not one-click magic.
 
 ## Bare-metal VPS deployment
 
@@ -48,7 +45,7 @@ Recommended baseline:
 - Ubuntu 24.04
 - 1 GB RAM or more
 - DNS pointed at your server
-- SSH access as root or sudo-capable operator
+- SSH access as root or a sudo-capable operator
 
 ### 2. Set required shell variables
 
@@ -56,7 +53,18 @@ Before running the setup script:
 
 ```bash
 export DB_PASSWORD='choose-a-strong-password'
+export APP_USER='clawdeck'                 # optional override
+export APP_ROOT='/var/www/clawdeck'        # optional override
+export DATABASE_USER='clawdeck'            # optional override
+```
+
+Before running the service installer:
+
+```bash
+export APP_DOMAIN='clawdeck.io'
+export APP_DOMAIN_ALIASES='www.clawdeck.io'   # optional, comma-separated; leave unset for no aliases
 export CERTBOT_EMAIL='you@example.com'
+export APP_PORT='3000'                     # optional override
 ```
 
 ### 3. Run the server bootstrap
@@ -70,19 +78,24 @@ bash script/setup_vps.sh
 What this script does:
 - updates packages
 - installs PostgreSQL, nginx, certbot, build deps
-- installs rbenv and Ruby
+- creates a dedicated app user if missing
+- installs rbenv and Ruby for that app user
 - creates the production databases
-- prepares `/var/www/clawdeck`
+- prepares the app root and log directories with app-user ownership
+- re-owns existing writable runtime directories (`tmp`, `storage`, `log`) for safer upgrades from older root-owned installs
 
 ### 4. Clone the repository on the server
 
+Clone as the app user into the app root:
+
 ```bash
-cd /var/www
-git clone https://github.com/SweetSophia/clawdeck.git
-cd clawdeck
+runuser -u "$APP_USER" -- git clone https://github.com/SweetSophia/clawdeck.git "$APP_ROOT"
+cd "$APP_ROOT"
 ```
 
-### 5. Create production env file
+If the directory already exists and you are deploying updates, just pull the latest code as the app user.
+
+### 5. Create the production env file
 
 ```bash
 cp .env.production.example .env.production
@@ -91,69 +104,83 @@ cp .env.production.example .env.production
 Fill in real values for at least:
 - `RAILS_MASTER_KEY`
 - `SECRET_KEY_BASE`
-- `DATABASE_PASSWORD`
+- `DATABASE_URL`
+- `APP_HOST`
+- `APP_ALLOWED_HOSTS`
+- `MAILER_FROM`
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET` if using GitHub OAuth
 
-Current example file also exposes these knobs:
-- `RAILS_MAX_THREADS`
-- `WEB_CONCURRENCY`
-- `PORT`
-- `DATABASE_HOST`
-- `DATABASE_PORT`
-- `DB_POOL`
+If you want separate databases for queue/cache/cable on a VPS, also set:
+- `CACHE_DATABASE_URL`
+- `QUEUE_DATABASE_URL`
+- `CABLE_DATABASE_URL`
+
+If you leave those unset, Rails falls back to `DATABASE_URL`.
 
 ### 6. Install gems and prepare the app
 
-The current service files expect Bundler from rbenv under `/root/.rbenv`.
+Run app setup as the dedicated app user:
 
 ```bash
-export PATH="/root/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-bundle install --deployment --without development test
-RAILS_ENV=production bundle exec rails db:prepare
-RAILS_ENV=production bundle exec rails assets:precompile
+runuser -u "$APP_USER" -- bash -lc '
+  export RBENV_ROOT="$HOME/.rbenv"
+  export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
+  eval "$(rbenv init - bash)"
+  cd "$APP_ROOT"
+  bundle install --deployment --without development test
+  RAILS_ENV=production bundle exec rails db:prepare
+  RAILS_ENV=production bundle exec rails assets:precompile
+'
 ```
 
-### 7. Review domain-specific config before enabling nginx
-
-Before installing services, edit these files if you are not deploying to `clawdeck.so`:
-- `config/nginx/clawdeck.conf`
-- `script/install_services.sh`
-
-Things to update:
-- server names
-- certbot domains
-- contact email defaults
-- any path assumptions specific to your host
-
-### 8. Install systemd services and nginx config
+### 7. Install systemd services and nginx config
 
 ```bash
 bash script/install_services.sh
 ```
 
-This installs:
-- `puma.service`
-- `solid_queue.service`
-- nginx site config
-- certbot-managed TLS for the configured domains
+This step:
+- renders the systemd unit templates with `APP_USER`, `APP_ROOT`, and the app-user home directory
+- renders the nginx bootstrap config with your domain names and app port
+- enables `puma`, `solid_queue`, and `nginx`
+- runs certbot with `--nginx --redirect` to provision TLS and rewrite the nginx site in place
 
-### 9. Start and verify services
+### 8. Start and verify services
 
 ```bash
-systemctl start puma solid_queue nginx
+systemctl start puma solid_queue
 systemctl status puma solid_queue nginx --no-pager
 curl -I http://127.0.0.1:3000/up
 ```
 
 ## Operational notes
 
-Current checked-in production units run as `root`:
-- `config/systemd/puma.service`
-- `config/systemd/solid_queue.service`
+### Runtime user model
 
-That works with the shipped scripts, but it is not the only valid approach. If you want a dedicated deploy user, you will need to adjust the unit files and filesystem ownership.
+The checked-in production units now run as a **dedicated app user**, not as `root`.
+
+That gives you a safer default:
+- app code owned by the app user
+- rbenv isolated under the app user's home directory
+- systemd services execute with reduced privilege
+- certbot/nginx setup still happens from a root-operated install step
+
+### Host and mailer config
+
+Production host configuration is env-driven:
+- `APP_HOST` — canonical app host used by Rails and mailers
+- `APP_PROTOCOL` — default `https`
+- `APP_ALLOWED_HOSTS` — comma-separated host allowlist for Rails host authorization
+- `MAILER_FROM` — Action Mailer sender address
+
+### Database wiring
+
+Production supports both:
+- **single-URL deploys** via `DATABASE_URL`
+- **split database deploys** via `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL`, and `CABLE_DATABASE_URL`
+
+That keeps the checked-in VPS bootstrap aligned with Rails production config.
 
 ## GitHub Actions status
 

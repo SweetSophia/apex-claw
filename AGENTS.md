@@ -57,7 +57,7 @@ bin/importmap unpin <package>  # Unpin JavaScript package
 
 ### Deployment
 ```bash
-ssh root@YOUR_SERVER_IP  # SSH to production VPS
+ssh root@YOUR_SERVER_IP  # SSH to production VPS for bootstrap/service management
 systemctl status puma         # Check Puma status
 systemctl status solid_queue  # Check Solid Queue status
 systemctl restart puma        # Restart web server
@@ -65,6 +65,8 @@ systemctl restart solid_queue # Restart background jobs
 tail -f /var/log/clawdeck/puma.log  # View application logs
 tail -f /var/log/clawdeck/solid_queue.log  # View job logs
 ```
+
+Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow.
 
 ## Architecture
 
@@ -291,4 +293,4 @@ Key design tokens:
 - Project deployed via GitHub Actions by pushing to main branch
 - Backup all 4 databases before migrations
 - Rollback migration on failure
-- Required env vars: `RAILS_MASTER_KEY`, `DATABASE_PASSWORD`, `DATABASE_USERNAME`, `RESEND_API_KEY`
+- Required env vars: `RAILS_MASTER_KEY`, `DATABASE_URL`, `APP_HOST`, `RESEND_API_KEY`

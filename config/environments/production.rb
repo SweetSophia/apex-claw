@@ -1,7 +1,21 @@
 require "active_support/core_ext/integer/time"
+require "ipaddr"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
+
+  app_host = ENV.fetch("APP_HOST", "clawdeck.io")
+  app_protocol = ENV.fetch("APP_PROTOCOL", "https")
+
+  default_hosts = [ app_host ]
+  default_hosts << "www.#{app_host}" unless app_host.start_with?("www.")
+  default_hosts.concat([ "clawdeck.onrender.com", "app.clawdeck.io", ".clawdeck.io", "127.0.0.1", "::1" ])
+
+  configured_hosts = ENV.fetch("APP_ALLOWED_HOSTS", default_hosts.join(","))
+    .split(",")
+    .map(&:strip)
+    .reject(&:empty?)
+    .uniq
 
   # Code is not reloaded between requests.
   config.enable_reloading = false
@@ -35,7 +49,7 @@ Rails.application.configure do
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
@@ -56,9 +70,7 @@ Rails.application.configure do
   # Configure Action Mailer
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.delivery_method = :smtp
-
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "clawdeck.io" }
+  config.action_mailer.default_url_options = { host: app_host, protocol: app_protocol }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -71,18 +83,13 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Enable DNS rebinding protection and other `Host` header attacks.
-  config.hosts = [
-    "clawdeck.io",           # Production domain
-    "www.clawdeck.io",       # WWW subdomain
-    "104.236.193.0",      # Server IP for direct access
-    IPAddr.new("127.0.0.1"),  # Localhost
-    IPAddr.new("::1")         # IPv6 localhost
-  ]
-
-  # Allow Render and custom domain hosts
-  config.hosts << "clawdeck.onrender.com"
-  config.hosts << "app.clawdeck.io"
-  config.hosts << ".clawdeck.io"  # Allow all subdomains
+  config.hosts = configured_hosts.map do |entry|
+    begin
+      IPAddr.new(entry)
+    rescue IPAddr::InvalidAddressError
+      entry
+    end
+  end
 
   # Skip DNS rebinding protection for the default health check endpoint.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }

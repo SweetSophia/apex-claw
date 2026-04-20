@@ -1,80 +1,129 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "This script must be run as root." >&2
+  exit 1
+fi
+
+APP_USER=${APP_USER:-clawdeck}
+APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
+RUBY_VERSION=${RUBY_VERSION:-4.0.3}
+DATABASE_USER=${DATABASE_USER:-clawdeck}
+: "${DB_PASSWORD:?DB_PASSWORD must be set before running this script}"
+
+if [[ ! ${APP_USER} =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+  echo "APP_USER must be a safe unix username." >&2
+  exit 1
+fi
+
+if [[ ! ${DATABASE_USER} =~ ^[a-z_][a-z0-9_]*$ ]]; then
+  echo "DATABASE_USER must contain only lowercase letters, numbers, and underscores." >&2
+  exit 1
+fi
 
 echo "==> ClawDeck VPS Setup Script"
-echo "==> This will install: Ruby, PostgreSQL, Nginx, and configure the server"
+echo "==> Installing Ruby, PostgreSQL, nginx, and a dedicated app runtime user"
 
-# Update system
 echo "==> Updating system packages..."
 apt-get update
 apt-get upgrade -y
 
-# Install dependencies
 echo "==> Installing dependencies..."
 apt-get install -y curl git build-essential libssl-dev libyaml-dev libreadline-dev \
   zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev libpq-dev nginx certbot \
-  python3-certbot-nginx
+  python3-certbot-nginx postgresql postgresql-contrib
 
-# Install PostgreSQL
-echo "==> Installing PostgreSQL..."
-apt-get install -y postgresql postgresql-contrib
-systemctl start postgresql
-systemctl enable postgresql
+echo "==> Ensuring PostgreSQL is running..."
+systemctl enable --now postgresql
 
-# Install rbenv and ruby-build
-echo "==> Installing rbenv..."
-if [ ! -d "/root/.rbenv" ]; then
-  git clone https://github.com/rbenv/rbenv.git /root/.rbenv
-  echo 'export PATH="/root/.rbenv/bin:$PATH"' >> /root/.bashrc
-  echo 'eval "$(rbenv init -)"' >> /root/.bashrc
-  git clone https://github.com/rbenv/ruby-build.git /root/.rbenv/plugins/ruby-build
+echo "==> Ensuring app user exists..."
+if ! id -u "$APP_USER" >/dev/null 2>&1; then
+  useradd --create-home --shell /bin/bash "$APP_USER"
 fi
 
-export PATH="/root/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
+APP_HOME=$(getent passwd "$APP_USER" | cut -d: -f6)
+APP_GROUP=$(id -gn "$APP_USER")
+RBENV_ROOT="$APP_HOME/.rbenv"
 
-# Install Ruby 4.0.3
-echo "==> Installing Ruby 4.0.3..."
-if ! rbenv versions | grep -q "4.0.3"; then
-  rbenv install 4.0.3
+echo "==> Installing rbenv and Ruby ${RUBY_VERSION} for ${APP_USER}..."
+runuser -u "$APP_USER" -- bash <<EOF
+set -euo pipefail
+export HOME="$APP_HOME"
+if [ ! -d "$RBENV_ROOT" ]; then
+  git clone https://github.com/rbenv/rbenv.git "$RBENV_ROOT"
+  git clone https://github.com/rbenv/ruby-build.git "$RBENV_ROOT/plugins/ruby-build"
 fi
-rbenv global 4.0.3
-
-# Install bundler
-echo "==> Installing bundler..."
+export RBENV_ROOT="$RBENV_ROOT"
+export PATH="$RBENV_ROOT/bin:$PATH"
+eval "\$(rbenv init - bash)"
+rbenv install -s "$RUBY_VERSION"
+rbenv global "$RUBY_VERSION"
 gem install bundler --no-document
+EOF
 
-# Create deployment directory
-echo "==> Creating deployment directory..."
-mkdir -p /var/www/clawdeck
-chown -R root:root /var/www/clawdeck
+echo "==> Creating deployment directories..."
+install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT"
+install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
+install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT/shared"
 
-# Configure PostgreSQL
+if [[ -d "$APP_ROOT" ]]; then
+  for writable_path in tmp storage log; do
+    if [[ -e "$APP_ROOT/$writable_path" ]]; then
+      chown -R "$APP_USER:$APP_GROUP" "$APP_ROOT/$writable_path"
+    fi
+  done
+fi
+
 echo "==> Configuring PostgreSQL..."
-sudo -u postgres psql -c "CREATE USER clawdeck WITH PASSWORD '${DB_PASSWORD}';" || echo "User already exists"
-sudo -u postgres psql -c "ALTER USER clawdeck CREATEDB;" || echo "Already has CREATEDB"
-sudo -u postgres psql -c "CREATE DATABASE clawdeck_production OWNER clawdeck;" || echo "Database already exists"
-sudo -u postgres psql -c "CREATE DATABASE clawdeck_cache_production OWNER clawdeck;" || echo "Cache DB already exists"
-sudo -u postgres psql -c "CREATE DATABASE clawdeck_queue_production OWNER clawdeck;" || echo "Queue DB already exists"
-sudo -u postgres psql -c "CREATE DATABASE clawdeck_cable_production OWNER clawdeck;" || echo "Cable DB already exists"
+DB_PASSWORD_SQL=${DB_PASSWORD//\'/\'\'}
+runuser -u postgres -- psql <<SQL
+DO \
+\$\$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${DATABASE_USER}') THEN
+    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', '${DATABASE_USER}', '${DB_PASSWORD_SQL}');
+  ELSE
+    EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', '${DATABASE_USER}', '${DB_PASSWORD_SQL}');
+  END IF;
+END
+\$\$;
+ALTER ROLE ${DATABASE_USER} CREATEDB;
+SQL
 
-# Optimize PostgreSQL for low memory
-echo "==> Optimizing PostgreSQL for low memory..."
-PG_CONF=$(sudo -u postgres psql -t -P format=unaligned -c 'SHOW config_file;')
-cat >> "$PG_CONF" <<EOF
+for database_name in \
+  clawdeck_production \
+  clawdeck_cache_production \
+  clawdeck_queue_production \
+  clawdeck_cable_production
+  do
+    if ! runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='${database_name}'" | grep -q 1; then
+      runuser -u postgres -- createdb -O "$DATABASE_USER" "$database_name"
+    fi
+  done
 
-# Optimizations for 512MB-1GB RAM server
+echo "==> Optimizing PostgreSQL for a small VPS..."
+PG_CONF=$(runuser -u postgres -- psql -t -P format=unaligned -c 'SHOW config_file;')
+if ! grep -q "# ClawDeck low-memory tuning" "$PG_CONF"; then
+  cat >> "$PG_CONF" <<'EOF'
+
+# ClawDeck low-memory tuning
 shared_buffers = 128MB
 effective_cache_size = 256MB
 maintenance_work_mem = 32MB
 work_mem = 4MB
 max_connections = 20
 EOF
+fi
 
 systemctl restart postgresql
 
 echo "==> VPS setup complete!"
+echo "==> App user: $APP_USER"
+echo "==> App root: $APP_ROOT"
+echo "==> Ruby root: $RBENV_ROOT"
 echo "==> Next steps:"
-echo "    1. Clone your repository to /var/www/clawdeck"
-echo "    2. Create /var/www/clawdeck/.env.production with your secrets"
-echo "    3. Run systemd service setup"
+echo "    1. Clone the repository into $APP_ROOT as $APP_USER"
+echo "    2. Create $APP_ROOT/.env.production with DATABASE_URL / *_DATABASE_URL values"
+echo "    3. Set APP_HOST, APP_ALLOWED_HOSTS, and MAILER_FROM in .env.production"
+echo "    4. Run APP_USER=$APP_USER APP_ROOT=$APP_ROOT APP_DOMAIN=your-domain.example CERTBOT_EMAIL=you@example.com bash script/install_services.sh"
