@@ -51,6 +51,9 @@ Rails.application.configure do
   config.log_tags = [ :request_id ]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
 
+  # Add request ID to responses for tracing
+  config.action_dispatch.request_id_header = "X-Request-Id"
+
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 

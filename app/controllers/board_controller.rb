@@ -27,7 +27,9 @@ class BoardController < ApplicationController
     if params[:task_ids].present?
       params[:task_ids].each_with_index do |task_id, index|
         task = current_user.tasks.find(task_id)
-        task.update_columns(position: index + 1)
+        task.with_lock do
+          task.update!(position: index + 1)
+        end
       end
     end
 
