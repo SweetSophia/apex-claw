@@ -1,2 +1,2 @@
 # Admin configuration
-Rails.application.config.admin_email = "max@mx.works"
+Rails.application.config.admin_email = ENV.fetch("ADMIN_EMAIL", "admin@clawdeck.io")

@@ -25,9 +25,10 @@ class BoardController < ApplicationController
   def update_task_status
     # Update positions for all tasks in the column
     if params[:task_ids].present?
-      params[:task_ids].each_with_index do |task_id, index|
-        task = current_user.tasks.find(task_id)
-        task.update_columns(position: index + 1)
+      current_user.tasks.transaction do
+        params[:task_ids].each_with_index do |task_id, index|
+          current_user.tasks.find(task_id).update!(position: index + 1)
+        end
       end
     end
 
