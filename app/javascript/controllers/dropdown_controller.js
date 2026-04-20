@@ -13,6 +13,12 @@ export default class extends Controller {
     document.addEventListener("dropdown:close-all", this.handleCloseAll)
 
     this.menuTarget.setAttribute('role', 'menu')
+    this.menuTarget.setAttribute('aria-orientation', 'vertical')
+
+    // Add menuitem role to immediate children for screen reader compatibility
+    Array.from(this.menuTarget.children).forEach(child => {
+      if (!child.getAttribute('role')) child.setAttribute('role', 'menuitem')
+    })
   }
 
   disconnect() {

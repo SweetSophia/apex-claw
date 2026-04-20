@@ -46,6 +46,10 @@ export default class extends Controller {
     this.modalTarget.setAttribute('role', 'dialog')
     this.modalTarget.setAttribute('aria-modal', 'true')
     this.modalTarget.setAttribute('aria-labelledby', 'task-modal-title')
+
+    // Move focus into the modal for keyboard/screen reader users
+    this.modalTarget.setAttribute('tabindex', '-1')
+    setTimeout(() => { this.modalTarget.focus() }, 20)
   }
 
   close() {

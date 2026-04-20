@@ -25,6 +25,10 @@ export default class extends Controller {
     this.inputTarget.setAttribute('aria-autocomplete', 'list')
     this.inputTarget.setAttribute('aria-expanded', 'false')
     this.inputTarget.setAttribute('aria-haspopup', 'listbox')
+
+    // Link input to results container for assistive tech
+    this.searchResultsTarget.id = 'command-bar-results'
+    this.inputTarget.setAttribute('aria-controls', 'command-bar-results')
   }
 
   disconnect() {
