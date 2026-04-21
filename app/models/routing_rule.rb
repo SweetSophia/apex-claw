@@ -7,12 +7,12 @@ class RoutingRule < ApplicationRecord
   belongs_to :agent
 
   validates :name, presence: true
-  validates :conditions, presence: true
+  validates :conditions, presence: true, allow_blank: true
   validate :conditions_schema
   validate :agent_belongs_to_user
 
   scope :active, -> { where(active: true) }
-  scope :by_priority, -> { order(priority: :desc) }
+  scope :by_priority, -> { order(priority: :desc, id: :asc) }
 
   def matches?(task)
     return false unless active?

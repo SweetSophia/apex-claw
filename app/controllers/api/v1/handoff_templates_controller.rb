@@ -2,6 +2,7 @@ module Api
   module V1
     class HandoffTemplatesController < BaseController
       before_action :set_template, only: [ :show, :update, :destroy ]
+      before_action :require_user_token!, only: [ :create, :update, :destroy ]
 
       def index
         templates = current_user.handoff_templates.includes(:agent).recent
@@ -42,6 +43,11 @@ module Api
 
       def template_params
         params.require(:handoff_template).permit(:name, :context_template, :agent_id, :auto_suggest)
+      end
+
+      def require_user_token!
+        return unless current_agent_token
+        render json: { error: "Forbidden" }, status: :forbidden
       end
 
       def template_json(template)

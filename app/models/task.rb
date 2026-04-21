@@ -19,7 +19,7 @@ class Task < ApplicationRecord
   validates :priority, inclusion: { in: priorities.keys }
   validates :status, inclusion: { in: statuses.keys }
 
-  scope :with_skills, ->(*skill_names) { where.overlap(required_skills: skill_names) }
+  scope :with_skills, ->(*skill_names) { where("required_skills && ARRAY[?]::varchar[]", Array(skill_names).flatten) }
 
   # Activity tracking - must be declared before callbacks that use it
   attr_accessor :activity_source, :actor_name, :actor_emoji, :activity_note, :actor_user, :actor_agent

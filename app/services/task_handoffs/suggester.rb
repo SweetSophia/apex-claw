@@ -143,11 +143,24 @@ module TaskHandoffs
         if agent_ids.empty?
           {}
         else
-          Task.unscoped
+          # Count tasks where agent is assigned OR claimed, excluding done tasks
+          assigned_counts = Task.unscoped
             .where(user_id: task.user_id, assigned_agent_id: agent_ids)
             .where.not(status: Task.statuses[:done])
             .group(:assigned_agent_id)
             .count
+
+          claimed_counts = Task.unscoped
+            .where(user_id: task.user_id, claimed_by_agent_id: agent_ids)
+            .where.not(status: Task.statuses[:done])
+            .where.not(assigned_agent_id: agent_ids)
+            .group(:claimed_by_agent_id)
+            .count
+
+          # Merge both counts (claimed tasks not already counted as assigned)
+          agent_ids.each_with_object({}) do |aid, counts|
+            counts[aid] = assigned_counts[aid].to_i + claimed_counts[aid].to_i
+          end
         end
       end
     end
