@@ -9,13 +9,15 @@
         <span class="text-sm text-[#e0e0e0]"><%= agent.status.humanize %></span>
         <% if agent.status == "online" %>
           <%= button_to "Drain",
-                api_v1_agent_path(agent, agent: { status: :draining }),
+                update_settings_agent_path(agent, agent: { status: :draining }),
                 method: :patch,
+                form: { data: { turbo_submit: true, turbo_method: :patch } },
                 class: "px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors" %>
         <% elsif agent.status == "draining" %>
           <%= button_to "Resume",
-                api_v1_agent_path(agent, agent: { status: :online }),
+                update_settings_agent_path(agent, agent: { status: :online }),
                 method: :patch,
+                form: { data: { turbo_submit: true, turbo_method: :patch } },
                 class: "px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors" %>
         <% end %>
       </div>
@@ -31,16 +33,16 @@
             <%= time_ago_in_words(agent.archived_at) %> ago
           </span>
           <%= button_to "Restore Agent",
-                url_for(controller: "agents", action: "restore", id: agent),
-                method: :post,
-                form: { data: { turbo_submit: true, turbo_method: :post } },
+                restore_agent_path(agent),
+                method: :patch,
+                form: { data: { turbo_submit: true, turbo_method: :patch } },
                 class: "px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors" %>
         </div>
       <% else %>
         <%= button_to "Archive Agent",
-              url_for(controller: "agents", action: "archive", id: agent),
-              method: :post,
-              form: { data: { turbo_submit: true, turbo_method: :post, turbo_confirm: "Archive this agent? It will no longer receive new tasks." } },
+              archive_agent_path(agent),
+              method: :patch,
+              form: { data: { turbo_submit: true, turbo_method: :patch, turbo_confirm: "Archive this agent? It will no longer receive new tasks." } },
               class: "px-3 py-1.5 text-xs font-medium rounded-md border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors" %>
       <% end %>
     </div>

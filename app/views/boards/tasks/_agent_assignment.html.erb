@@ -1,10 +1,11 @@
 <%# Agent assignment dropdown for task panel %>
-<% user_agents = current_user.agents.to_a %>
+<% user_agents = current_user.agents.active.where(status: :online).to_a %>
+<% assignment_controls_visible = user_agents.any? || task.assigned_to_agent? || task.assigned_agent_id.present? %>
 
 <div id="task_<%= task.id %>_agent_assignment" class="flex items-center justify-between pb-4 -mt-2">
   <span class="text-sm text-content-muted">Agent</span>
 
-  <% if user_agents.any? %>
+  <% if assignment_controls_visible %>
     <div data-controller="dropdown" class="relative">
       <button type="button"
               data-action="click->dropdown#toggle"

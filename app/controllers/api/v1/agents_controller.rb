@@ -116,7 +116,11 @@ module Api
       end
 
       def index
-        agents = current_user.agents.order(created_at: :desc)
+        agents = if params[:include_archived] == "true"
+          current_user.agents
+        else
+          current_user.agents.active
+        end.order(created_at: :desc)
         render json: agents.map { |agent| agent_json(agent) }
       end
 
@@ -163,14 +167,14 @@ module Api
         else
           return if @agent.user_id == current_user.id
         end
-        render json: { error: "Unauthorized" }, status: :unauthorized
+        render json: { error: "Forbidden" }, status: :forbidden
       end
 
       # Restricts the action to user-token auth only (blocks agent tokens).
       def require_user_token!
         return if current_agent_token.nil?
 
-        render json: { error: "Unauthorized" }, status: :unauthorized
+        render json: { error: "Forbidden" }, status: :forbidden
       end
 
       def register_join_token

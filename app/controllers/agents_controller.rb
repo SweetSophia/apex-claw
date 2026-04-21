@@ -133,7 +133,7 @@ class AgentsController < ApplicationController
   end
 
   def settings_params
-    params.require(:agent).permit(:max_tokens, :temperature, :top_p, :llm_api_key)
+    params.require(:agent).permit(:status)
   end
 
   def parse_config_json(attrs)
