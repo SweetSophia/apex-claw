@@ -149,7 +149,8 @@ export default class extends Controller {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    this.gridTarget.innerHTML = ""
+    // Use DocumentFragment to batch DOM updates for performance
+    const fragment = document.createDocumentFragment()
 
     // Previous month days
     const prevMonth = new Date(year, month, 0)
@@ -164,7 +165,7 @@ export default class extends Controller {
       button.dataset.year = year
       button.className = "h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs"
       button.textContent = day
-      this.gridTarget.appendChild(button)
+      fragment.appendChild(button)
     }
 
     // Current month days
@@ -193,7 +194,7 @@ export default class extends Controller {
       button.dataset.year = year
       button.className = classes
       button.textContent = day
-      this.gridTarget.appendChild(button)
+      fragment.appendChild(button)
     }
 
     // Next month days
@@ -208,7 +209,11 @@ export default class extends Controller {
       button.dataset.year = year
       button.className = "h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs"
       button.textContent = day
-      this.gridTarget.appendChild(button)
+      fragment.appendChild(button)
     }
+
+    // Append all buttons at once
+    this.gridTarget.innerHTML = ""
+    this.gridTarget.appendChild(fragment)
   }
 }

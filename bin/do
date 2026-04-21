@@ -170,27 +170,27 @@ def show_logs
   choice = gets.chomp
 
   case choice
-  when "1"
-    exec "ssh #{REMOTE_USER}@#{REMOTE_HOST} 'journalctl -u puma -f'"
-  when "2"
-    exec "ssh #{REMOTE_USER}@#{REMOTE_HOST} 'journalctl -u solid_queue -f'"
-  when "3"
-    exec "ssh #{REMOTE_USER}@#{REMOTE_HOST} 'tail -f #{APP_DIR}/log/production.log'"
-  when "all"
-    exec "ssh #{REMOTE_USER}@#{REMOTE_HOST} 'tail -f #{APP_DIR}/log/production.log & journalctl -u puma -u solid_queue -f'"
-  else
-    error "Invalid choice"
+when "1"
+  exec "ssh", "#{REMOTE_USER}@#{REMOTE_HOST}", "journalctl -u puma -f"
+when "2"
+  exec "ssh", "#{REMOTE_USER}@#{REMOTE_HOST}", "journalctl -u solid_queue -f"
+when "3"
+  exec "ssh", "#{REMOTE_USER}@#{REMOTE_HOST}", "tail -f #{APP_DIR}/log/production.log"
+when "all"
+  exec "ssh", "#{REMOTE_USER}@#{REMOTE_HOST}", "tail -f #{APP_DIR}/log/production.log & journalctl -u puma -u solid_queue -f"
+else
+  error "Invalid choice"
   end
 end
 
 def ssh_connect
   log "Connecting to production server..."
-  exec "ssh #{REMOTE_USER}@#{REMOTE_HOST}"
+  exec "ssh", "#{REMOTE_USER}@#{REMOTE_HOST}"
 end
 
 def app_shell
   log "Opening shell in application directory..."
-  exec "ssh -t #{REMOTE_USER}@#{REMOTE_HOST} 'cd #{APP_DIR} && bash'"
+  exec "ssh", "-t", "#{REMOTE_USER}@#{REMOTE_HOST}", "cd #{APP_DIR} && bash"
 end
 
 def restart_app

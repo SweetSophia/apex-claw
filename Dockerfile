@@ -16,15 +16,20 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
+# Create non-root user with writable bundle path
 RUN adduser --system --home /app --shell /bin/bash --group --disabled-password appuser && \
     mkdir -p /app && chown -R appuser:appuser /app
+
+# Set bundle and gem paths to user-writable locations under /app
+ENV BUNDLE_PATH=/app/vendor/bundle \
+    GEM_HOME=/app/vendor/bundle \
+    GEM_PATH=/app/vendor/bundle
 
 WORKDIR /app
 
 # Copy Gemfiles first for better caching
-USER appuser
 COPY --chown=appuser:appuser Gemfile Gemfile.lock ./
+USER appuser
 RUN bundle install
 
 # Copy application code

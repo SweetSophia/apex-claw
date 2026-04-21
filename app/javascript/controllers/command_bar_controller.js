@@ -308,50 +308,6 @@ export default class extends Controller {
     ].filter(section => section.items.length > 0)
   }
 
-  renderSections(sections, { emptyState }) {
-    let index = 0
-
-    const content = sections.map(section => {
-      const itemsHtml = section.items.map(item => {
-        const currentIndex = index
-        index += 1
-        return this.renderItem(item, currentIndex)
-      }).join("")
-
-      return `
-        <section class="px-2 py-1">
-          <div class="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#444]">${this.escapeHtml(section.label)}</div>
-          <div class="flex flex-col gap-1">${itemsHtml}</div>
-        </section>`
-    }).join("")
-
-    if (emptyState) {
-      return `${content}
-        <div class="px-4 pt-3 pb-4 text-[10px] font-medium text-[#444] border-t border-white/[0.05] mt-2 flex items-center justify-between">
-          <span>Use ↑ ↓ to move, ↵ to open</span>
-          <span>Esc to close</span>
-        </div>`
-    }
-
-    return content
-  }
-
-  renderItem(item, index) {
-    return `
-      <button type="button"
-              data-command-bar-result-index="${index}"
-              data-action="click->command-bar#clickResult mouseenter->command-bar#hoverResult"
-              class="command-bar-result flex items-center gap-3 w-full rounded-lg border border-transparent bg-transparent px-2.5 py-[9px] text-left transition-colors hover:bg-white/[0.04] focus:outline-none"
-              aria-selected="false">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.05] bg-white/[0.04] text-[13px] flex-shrink-0">${this.escapeHtml(item.icon || "•")}</div>
-        <div class="min-w-0 flex-1">
-          <div class="truncate text-[13px] font-semibold text-[#ddd]">${this.escapeHtml(item.title)}</div>
-          <div class="truncate text-[11px] font-medium text-[#555]">${this.escapeHtml(item.subtitle || "")}</div>
-        </div>
-        <div class="text-[10px] font-medium uppercase tracking-[0.06em] text-[#444]">${this.escapeHtml(item.kind)}</div>
-      </button>`
-  }
-
   clickResult(e) {
     const index = Number.parseInt(e.currentTarget.dataset.commandBarResultIndex, 10)
     this.selectResult(index)
@@ -693,10 +649,5 @@ export default class extends Controller {
       el.setAttribute(key, value)
     }
     return el
-  }
-
-  clearAndAppend(target, element) {
-    target.innerHTML = ""
-    target.appendChild(element)
   }
 }
