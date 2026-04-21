@@ -149,14 +149,22 @@ export default class extends Controller {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    let html = ''
+    this.gridTarget.innerHTML = ""
 
     // Previous month days
     const prevMonth = new Date(year, month, 0)
     const prevMonthDays = prevMonth.getDate()
     for (let i = startDay - 1; i >= 0; i--) {
       const day = prevMonthDays - i
-      html += `<button type="button" data-action="click->datepicker#selectDate" data-day="${day}" data-month="${month - 1}" data-year="${year}" class="h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs">${day}</button>`
+      const button = document.createElement("button")
+      button.type = "button"
+      button.dataset.action = "click->datepicker#selectDate"
+      button.dataset.day = day
+      button.dataset.month = month - 1
+      button.dataset.year = year
+      button.className = "h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs"
+      button.textContent = day
+      this.gridTarget.appendChild(button)
     }
 
     // Current month days
@@ -177,16 +185,30 @@ export default class extends Controller {
         classes += 'text-content-secondary hover:bg-bg-elevated'
       }
 
-      html += `<button type="button" data-action="click->datepicker#selectDate" data-day="${day}" data-month="${month}" data-year="${year}" class="${classes}">${day}</button>`
+      const button = document.createElement("button")
+      button.type = "button"
+      button.dataset.action = "click->datepicker#selectDate"
+      button.dataset.day = day
+      button.dataset.month = month
+      button.dataset.year = year
+      button.className = classes
+      button.textContent = day
+      this.gridTarget.appendChild(button)
     }
 
     // Next month days
     const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7
     const nextMonthDays = totalCells - startDay - daysInMonth
     for (let day = 1; day <= nextMonthDays; day++) {
-      html += `<button type="button" data-action="click->datepicker#selectDate" data-day="${day}" data-month="${month + 1}" data-year="${year}" class="h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs">${day}</button>`
+      const button = document.createElement("button")
+      button.type = "button"
+      button.dataset.action = "click->datepicker#selectDate"
+      button.dataset.day = day
+      button.dataset.month = month + 1
+      button.dataset.year = year
+      button.className = "h-8 w-8 rounded-md text-content-muted hover:bg-bg-elevated transition-colors text-xs"
+      button.textContent = day
+      this.gridTarget.appendChild(button)
     }
-
-    this.gridTarget.innerHTML = html
   }
 }

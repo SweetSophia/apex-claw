@@ -19,6 +19,8 @@ class Task < ApplicationRecord
   validates :priority, inclusion: { in: priorities.keys }
   validates :status, inclusion: { in: statuses.keys }
 
+  scope :with_skills, ->(*skill_names) { where("required_skills && ARRAY[?]::varchar[]", Array(skill_names).flatten) }
+
   # Activity tracking - must be declared before callbacks that use it
   attr_accessor :activity_source, :actor_name, :actor_emoji, :activity_note, :actor_user, :actor_agent
 
@@ -33,6 +35,7 @@ class Task < ApplicationRecord
   after_create :record_creation_activity
   after_update :record_update_activities
   after_commit :broadcast_related_agent_dashboards, on: [:create, :update]
+  after_create_commit :evaluate_routing_rules
 
   # Position management - acts_as_list functionality without the gem
   before_create :set_position
@@ -236,5 +239,12 @@ class Task < ApplicationRecord
 
   def broadcast_to_board(action:, target:, **options)
     Turbo::StreamsChannel.broadcast_action_to(board_stream_name, action: action, target: target, **options)
+  end
+
+  def evaluate_routing_rules
+    return if activity_source == "web"
+    RoutingRules::Evaluator.evaluate(self)
+  rescue => e
+    Rails.logger.warn "Routing rule evaluation failed for task #{id}: #{e.message}"
   end
 end

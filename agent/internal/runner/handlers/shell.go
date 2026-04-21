@@ -39,11 +39,17 @@ func (h *ShellHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[s
 		return nil, fmt.Errorf("shell command %q not allowed", binary)
 	}
 
+	// Validate binary exists in PATH before execution
+	resolvedPath, err := exec.LookPath(binary)
+	if err != nil {
+		return nil, fmt.Errorf("shell command %q not found in PATH", binary)
+	}
+
 	timeout := shellTimeoutFromPayload(cmd.Payload)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	execCmd := exec.CommandContext(ctx, binary, parts[1:]...)
+	execCmd := exec.CommandContext(ctx, resolvedPath, parts[1:]...)
 	var stdout, stderr bytes.Buffer
 	execCmd.Stdout = &stdout
 	execCmd.Stderr = &stderr

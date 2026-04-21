@@ -16,14 +16,19 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
+RUN adduser --system --home /app --shell /bin/bash --group --disabled-password appuser && \
+    mkdir -p /app && chown -R appuser:appuser /app
+
 WORKDIR /app
 
 # Copy Gemfiles first for better caching
-COPY Gemfile Gemfile.lock ./
+USER appuser
+COPY --chown=appuser:appuser Gemfile Gemfile.lock ./
 RUN bundle install
 
 # Copy application code
-COPY . .
+COPY --chown=appuser:appuser . .
 
 # Expose port
 EXPOSE 3000

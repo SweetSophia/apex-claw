@@ -17,3 +17,7 @@ production:
     class: WorkflowDispatchJob
     queue: default
     schedule: every 5 minutes
+  escalate_blocked_tasks:
+    class: TaskEscalationJob
+    queue: default
+    schedule: every 10 minutes

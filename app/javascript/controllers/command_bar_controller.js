@@ -163,16 +163,83 @@ export default class extends Controller {
 
     if (matches.length === 0) {
       this.activeIndex = -1
-      this.searchResultsTarget.innerHTML = `
-        <div class="px-4 py-8 text-center">
-          <div class="text-sm font-semibold text-[#888]">No results</div>
-          <div class="mt-1 text-xs text-[#555]">Try a task name, board, or command like “focus” or “settings”.</div>
-        </div>`
+      this.searchResultsTarget.innerHTML = ""
+      const noResults = document.createElement("div")
+      noResults.className = "px-4 py-8 text-center"
+      noResults.appendChild(this.createElement("div", "No results", { class: "text-sm font-semibold text-[#888]" }))
+      noResults.appendChild(this.createElement("div", 'Try a task name, board, or command like "focus" or "settings".', { class: "mt-1 text-xs text-[#555]" }))
+      this.searchResultsTarget.appendChild(noResults)
       return
     }
 
-    this.searchResultsTarget.innerHTML = this.renderSections(this.groupItems(matches), { emptyState: false })
+    this.renderSearchResults(this.groupItems(matches))
     this.setActiveIndex(0)
+  }
+
+  renderSearchResults(sections) {
+    this.searchResultsTarget.innerHTML = ""
+    const fragment = document.createDocumentFragment()
+
+    sections.forEach(section => {
+      const sectionEl = document.createElement("section")
+      sectionEl.className = "px-2 py-1"
+
+      const labelEl = document.createElement("div")
+      labelEl.className = "px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#444]"
+      labelEl.textContent = section.label
+      sectionEl.appendChild(labelEl)
+
+      const itemsContainer = document.createElement("div")
+      itemsContainer.className = "flex flex-col gap-1"
+
+      section.items.forEach((item, idx) => {
+        const currentIndex = this.results.indexOf(item)
+        const button = this.createSearchResultButton(item, currentIndex)
+        itemsContainer.appendChild(button)
+      })
+
+      sectionEl.appendChild(itemsContainer)
+      fragment.appendChild(sectionEl)
+    })
+
+    this.searchResultsTarget.appendChild(fragment)
+  }
+
+  createSearchResultButton(item, index) {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.dataset.commandBarResultIndex = index
+    button.dataset.action = "click->command-bar#clickResult mouseenter->command-bar#hoverResult"
+    button.className = "command-bar-result flex items-center gap-3 w-full rounded-lg border border-transparent bg-transparent px-2.5 py-[9px] text-left transition-colors hover:bg-white/[0.04] focus:outline-none"
+    button.setAttribute("aria-selected", "false")
+
+    const icon = document.createElement("div")
+    icon.className = "flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.05] bg-white/[0.04] text-[13px] flex-shrink-0"
+    icon.textContent = item.icon || "•"
+    button.appendChild(icon)
+
+    const content = document.createElement("div")
+    content.className = "min-w-0 flex-1"
+
+    const title = document.createElement("div")
+    title.className = "truncate text-[13px] font-semibold text-[#ddd]"
+    title.textContent = item.title || ""
+    content.appendChild(title)
+
+    if (item.subtitle) {
+      const subtitle = document.createElement("div")
+      subtitle.className = "truncate text-[11px] font-medium text-[#555]"
+      subtitle.textContent = item.subtitle
+      content.appendChild(subtitle)
+    }
+    button.appendChild(content)
+
+    const kind = document.createElement("div")
+    kind.className = "text-[10px] font-medium uppercase tracking-[0.06em] text-[#444]"
+    kind.textContent = item.kind || ""
+    button.appendChild(kind)
+
+    return button
   }
 
   renderDefaultState() {
@@ -185,16 +252,51 @@ export default class extends Controller {
     this.activeIndex = -1
     this.searchResultsTarget.classList.add("hidden")
     this.actionsPanelTarget.classList.remove("hidden")
-    this.actionsPanelTarget.innerHTML = this.renderSections([
+    this.renderActionsPanel([
       { label: "Actions", items: featuredActions },
       { label: "Jump to", items: navigation },
       { label: "Boards", items: boards },
       { label: "Recent tasks", items: recentTasks },
-    ], { emptyState: true })
+    ])
 
     if (this.results.length > 0) {
       this.setActiveIndex(0)
     }
+  }
+
+  renderActionsPanel(sections) {
+    this.actionsPanelTarget.innerHTML = ""
+    const fragment = document.createDocumentFragment()
+
+    sections.forEach(section => {
+      const sectionEl = document.createElement("section")
+      sectionEl.className = "px-2 py-1"
+
+      const labelEl = document.createElement("div")
+      labelEl.className = "px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#444]"
+      labelEl.textContent = section.label
+      sectionEl.appendChild(labelEl)
+
+      const itemsContainer = document.createElement("div")
+      itemsContainer.className = "flex flex-col gap-1"
+
+      section.items.forEach(item => {
+        const currentIndex = this.results.indexOf(item)
+        const button = this.createSearchResultButton(item, currentIndex)
+        itemsContainer.appendChild(button)
+      })
+
+      sectionEl.appendChild(itemsContainer)
+      fragment.appendChild(sectionEl)
+    })
+
+    const footer = document.createElement("div")
+    footer.className = "px-4 pt-3 pb-4 text-[10px] font-medium text-[#444] border-t border-white/[0.05] mt-2 flex items-center justify-between"
+    footer.appendChild(document.createElement("span")).textContent = "Use ↑ ↓ to move, ↵ to open"
+    footer.appendChild(document.createElement("span")).textContent = "Esc to close"
+    fragment.appendChild(footer)
+
+    this.actionsPanelTarget.appendChild(fragment)
   }
 
   groupItems(items) {
@@ -448,43 +550,84 @@ export default class extends Controller {
     if (!this.hasAgentMessagesTarget) return
 
     if (this.messages.length === 0 && !this.typing) {
-      this.agentMessagesTarget.innerHTML = `
-        <div class="py-5 text-center">
-          <div class="text-[28px] mb-2.5">⌨️</div>
-          <div class="text-[13px] font-semibold text-[#666]">Query your tasks</div>
-          <div class="text-[11px] font-medium text-[#444] mt-1">Ask about what is overdue, in progress, blocked, or get a summary.</div>
-          <div class="flex gap-[5px] justify-center mt-4 flex-wrap">
-            ${["What should I focus on?", "Weekly recap"].map(q =>
-              `<button data-action="click->command-bar#chipSend" data-prompt="${this.escapeHtml(q)}"
-                       class="text-[11px] font-medium py-[5px] px-[11px] rounded-[7px] cursor-pointer text-[#999]"
-                       style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.10)">${this.escapeHtml(q)}</button>`
-            ).join("")}
-          </div>
-        </div>`
+      this.agentMessagesTarget.innerHTML = ""
+
+      const container = document.createElement("div")
+      container.className = "py-5 text-center"
+
+      const emoji = document.createElement("div")
+      emoji.className = "text-[28px] mb-2.5"
+      emoji.textContent = "⌨️"
+      container.appendChild(emoji)
+
+      const title = document.createElement("div")
+      title.className = "text-[13px] font-semibold text-[#666]"
+      title.textContent = "Query your tasks"
+      container.appendChild(title)
+
+      const subtitle = document.createElement("div")
+      subtitle.className = "text-[11px] font-medium text-[#444] mt-1"
+      subtitle.textContent = "Ask about what is overdue, in progress, blocked, or get a summary."
+      container.appendChild(subtitle)
+
+      const chipContainer = document.createElement("div")
+      chipContainer.className = "flex gap-[5px] justify-center mt-4 flex-wrap"
+
+      const prompts = ["What should I focus on?", "Weekly recap"]
+      prompts.forEach(q => {
+        const button = document.createElement("button")
+        button.dataset.action = "click->command-bar#chipSend"
+        button.dataset.prompt = q
+        button.className = "text-[11px] font-medium py-[5px] px-[11px] rounded-[7px] cursor-pointer text-[#999]"
+        button.style.cssText = "background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.10)"
+        button.textContent = q
+        chipContainer.appendChild(button)
+      })
+
+      container.appendChild(chipContainer)
+      this.agentMessagesTarget.appendChild(container)
       return
     }
 
-    let html = ""
+    this.agentMessagesTarget.innerHTML = ""
+    const fragment = document.createDocumentFragment()
+
     this.messages.forEach(message => {
-      if (message.type === "user") {
-        html += `<div class="self-end max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 3px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);color:#ddd;font-size:12.5px;line-height:1.55">${this.escapeHtml(message.text)}</div>`
-      } else {
-        html += `<div class="self-start max-w-[88%] whitespace-pre-wrap" style="padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);color:#bbb;font-size:12.5px;line-height:1.55">${this.escapeHtml(message.text)}</div>`
-      }
+      const msgDiv = document.createElement("div")
+      msgDiv.className = message.type === "user"
+        ? "self-end max-w-[88%] whitespace-pre-wrap"
+        : "self-start max-w-[88%] whitespace-pre-wrap"
+      msgDiv.style.cssText = message.type === "user"
+        ? "padding:9px 13px;border-radius:12px 12px 3px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);color:#ddd;font-size:12.5px;line-height:1.55"
+        : "padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);color:#bbb;font-size:12.5px;line-height:1.55"
+      msgDiv.textContent = message.text
+      fragment.appendChild(msgDiv)
     })
 
     if (this.typing) {
-      html += `<div class="self-start" style="padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);display:flex;align-items:center;gap:6px">
-        <div style="display:flex;gap:3px">
-          <div class="cmd-dot" style="animation-delay:0s"></div>
-          <div class="cmd-dot" style="animation-delay:0.15s"></div>
-          <div class="cmd-dot" style="animation-delay:0.3s"></div>
-        </div>
-      </div>`
+      const typingDiv = document.createElement("div")
+      typingDiv.className = "self-start"
+      typingDiv.style.cssText = "padding:9px 13px;border-radius:12px 12px 12px 3px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.08);display:flex;align-items:center;gap:6px"
+
+      const dotsContainer = document.createElement("div")
+      dotsContainer.style.cssText = "display:flex;gap:3px"
+
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("div")
+        dot.className = "cmd-dot"
+        dot.style.cssText = `animation-delay:${i * 0.15}s`
+        dotsContainer.appendChild(dot)
+      }
+
+      typingDiv.appendChild(dotsContainer)
+      fragment.appendChild(typingDiv)
     }
 
-    html += `<div data-command-bar-target="scrollAnchor"></div>`
-    this.agentMessagesTarget.innerHTML = html
+    const anchor = document.createElement("div")
+    anchor.dataset.commandBarTarget = "scrollAnchor"
+    fragment.appendChild(anchor)
+
+    this.agentMessagesTarget.appendChild(fragment)
   }
 
   chipSend(e) {
@@ -541,5 +684,19 @@ export default class extends Controller {
     const div = document.createElement("div")
     div.textContent = text || ""
     return div.innerHTML
+  }
+
+  createElement(tag, text, attributes = {}) {
+    const el = document.createElement(tag)
+    if (text) el.textContent = text
+    for (const [key, value] of Object.entries(attributes)) {
+      el.setAttribute(key, value)
+    }
+    return el
+  }
+
+  clearAndAppend(target, element) {
+    target.innerHTML = ""
+    target.appendChild(element)
   }
 }

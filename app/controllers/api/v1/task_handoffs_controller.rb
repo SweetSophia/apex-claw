@@ -24,6 +24,27 @@ module Api
         render json: @handoffs.map { |h| handoff_json(h) }
       end
 
+      # GET /api/v1/tasks/:id/handoff_suggestions
+      def suggestions
+        @task = current_user.tasks.find(params[:id])
+
+        limit = (params[:limit] || 5).to_i.clamp(1, 20)
+        suggestions = TaskHandoffs::Suggester.new(@task).suggest(limit: limit)
+
+        render json: {
+          task_id: @task.id,
+          suggestions: suggestions.map { |s|
+            {
+              agent_id: s[:agent].id,
+              agent_name: s[:agent].name,
+              agent_status: s[:agent].status,
+              score: s[:score],
+              reasons: s[:reasons]
+            }
+          }
+        }
+      end
+
       # POST /api/v1/tasks/:id/handoff
       def create
         @task = current_user.tasks.find(params[:id])
