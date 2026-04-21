@@ -1,0 +1,50 @@
+<div class="max-w-2xl">
+  <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Agent Skills</div>
+  <p class="text-xs text-[#666] mb-4">
+    Assign reusable knowledge blocks to this agent. Skills are injected into the agent's context for every task.
+  </p>
+
+  <%# Assigned skills list %>
+  <div id="agent_skills_list" class="space-y-2 mb-4">
+    <% if agent.skills.any? %>
+      <% agent.skills.each do |skill| %>
+        <div class="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] group">
+          <div class="flex-1 min-w-0">
+            <span class="text-sm text-[#e0e0e0]"><%= skill.name %></span>
+            <% if skill.description.present? %>
+              <span class="text-xs text-[#666] ml-2 truncate"><%= skill.description %></span>
+            <% end %>
+          </div>
+          <%= button_to "Remove",
+                remove_skill_agent_path(agent, skill_id: skill.id),
+                method: :delete,
+                form: { data: { turbo: true } },
+                class: "text-xs text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity" %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-xs text-[#666] py-3">No skills assigned yet.</div>
+    <% end %>
+  </div>
+
+  <%# Add skill dropdown %>
+  <% available_skills = agent.user.skills.where.not(id: agent.skill_ids).order(:name) %>
+  <% if available_skills.any? %>
+    <div data-controller="dropdown" class="relative">
+      <button type="button"
+              data-action="click->dropdown#toggle"
+              class="px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors">
+        + Assign Skill
+      </button>
+      <div data-dropdown-target="menu" class="hidden fixed z-[100] min-w-[200px] max-h-[300px] overflow-y-auto bg-[#1e1e22] border border-white/[0.08] rounded-lg shadow-lg py-1">
+        <% available_skills.each do |skill| %>
+          <%= button_to skill.name,
+                assign_skill_agent_path(agent, skill_id: skill.id),
+                method: :post,
+                form: { data: { turbo: true } },
+                class: "w-full text-left px-3 py-2 text-sm text-[#e0e0e0] hover:bg-white/[0.05] transition-colors" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
