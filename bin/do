@@ -41,14 +41,13 @@ def error(message)
 end
 
 def remote_exec(command, interactive: false)
-  ssh_command = "ssh #{REMOTE_USER}@#{REMOTE_HOST}"
-  full_command = "#{ssh_command} '#{command}'"
+  ssh_command = ["ssh", "#{REMOTE_USER}@#{REMOTE_HOST}"]
 
   if interactive
-    exec full_command
+    exec *ssh_command, command
   else
     log "Running: #{command}", :blue
-    system(full_command) || error("Remote command failed")
+    system(*ssh_command, command) || error("Remote command failed")
   end
 end
 
@@ -104,7 +103,7 @@ def db_download
   remote_exec("cd #{APP_DIR} && source .env.production && PGPASSWORD=\"$DATABASE_PASSWORD\" pg_dump -U #{DB_USER} -h localhost #{DB_NAME} > /tmp/#{APP_NAME}_backup.sql")
 
   log "Copying database dump to local machine..."
-  system("scp #{REMOTE_USER}@#{REMOTE_HOST}:/tmp/#{APP_NAME}_backup.sql #{local_backup}") || error("Failed to download database")
+  system("scp", "#{REMOTE_USER}@#{REMOTE_HOST}:/tmp/#{APP_NAME}_backup.sql", local_backup) || error("Failed to download database")
 
   if File.exist?(local_backup)
     log "Database downloaded to: #{local_backup}"
@@ -139,7 +138,7 @@ def db_restore(backup_file)
   error "Restore cancelled" unless confirmation == "yes"
 
   log "Uploading backup to server..."
-  system("scp #{backup_file} #{REMOTE_USER}@#{REMOTE_HOST}:/tmp/restore.sql") || error("Upload failed")
+  system("scp", backup_file, "#{REMOTE_USER}@#{REMOTE_HOST}:/tmp/restore.sql") || error("Upload failed")
 
   log "Restoring from backup...", :yellow
   remote_exec("cd #{APP_DIR} && source .env.production && PGPASSWORD=\"$DATABASE_PASSWORD\" psql -U #{DB_USER} -h localhost #{DB_NAME} < /tmp/restore.sql")

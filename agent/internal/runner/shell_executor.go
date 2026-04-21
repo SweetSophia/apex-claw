@@ -56,6 +56,15 @@ func (s *ShellExecutor) Execute(ctx context.Context, task *clawdeck.Task) Execut
 		}
 	}
 
+	// Validate binary exists in PATH before execution
+	resolvedPath, err := exec.LookPath(binary)
+	if err != nil {
+		return ExecutionResult{
+			Completed: false,
+			Error:     fmt.Errorf("shell executor: command %q not found in PATH", binary),
+		}
+	}
+
 	// Apply timeout.
 	if s.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -63,12 +72,12 @@ func (s *ShellExecutor) Execute(ctx context.Context, task *clawdeck.Task) Execut
 		defer cancel()
 	}
 
-	cmd := exec.CommandContext(ctx, binary, parts[1:]...)
+	cmd := exec.CommandContext(ctx, resolvedPath, parts[1:]...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	output := stdout.String()
 	if stderrStr := stderr.String(); stderrStr != "" {
 		if output != "" {
