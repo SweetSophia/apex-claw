@@ -1,0 +1,54 @@
+<%= form_with(
+      model: workflow,
+      url: workflow.new_record? ? workflows_path : workflow_path(workflow),
+      method: workflow.new_record? ? :post : :patch,
+      data: { turbo_submit: true, turbo_method: workflow.new_record? ? :post : :patch }
+    ) do |f| %>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Name</label>
+      <%= f.text_field :name,
+            placeholder: "e.g. Daily code review, Weekly report",
+            class: "w-full max-w-md rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Description</label>
+      <%= f.text_field :description,
+            placeholder: "What this workflow does",
+            class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Assigned Agent</label>
+      <%= f.select :agent_id,
+            agents.map { |a| [a.name, a.id] },
+            { prompt: "Select an agent" },
+            class: "w-full max-w-xs rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div class="flex gap-6">
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Trigger</label>
+        <%= f.select :trigger_type,
+              Workflow.trigger_types.keys.map { |k| [k.humanize, k] },
+              {},
+              class: "rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Execution Mode</label>
+        <%= f.select :execution_mode,
+              Workflow.execution_modes.keys.map { |k| [k.humanize, k] },
+              {},
+              class: "rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <span></span>
+      <%= f.submit workflow.new_record? ? "Create Workflow" : "Save Changes",
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-amber-400 text-[#161619] hover:bg-amber-500 transition-colors cursor-pointer" %>
+    </div>
+  </div>
+<% end %>

@@ -31,6 +31,7 @@ class Agent < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
   has_many :agent_skills, dependent: :destroy
   has_many :skills, through: :agent_skills
+  has_many :workflows, dependent: :nullify
 
   enum :status, {
     offline: 0,
