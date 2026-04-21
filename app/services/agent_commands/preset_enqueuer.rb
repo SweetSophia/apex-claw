@@ -6,7 +6,10 @@ module AgentCommands
     end
 
     def enqueue!(preset)
-      raise ActiveRecord::RecordInvalid, preset unless preset.applicable_to?(agent)
+      unless preset.applicable_to?(agent)
+        preset.errors.add(:base, "Preset is not applicable to this agent")
+        raise ActiveRecord::RecordInvalid, preset
+      end
 
       agent.agent_commands.create!(
         kind: preset.kind,

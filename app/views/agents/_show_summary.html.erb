@@ -8,41 +8,21 @@
 <% error_rate = health_stats.fetch(:error_rate, agent.recent_command_error_rate) %>
 <% alerts = agent.health_alerts(health_stats: health_stats) %>
 <% owner_label = agent.user.respond_to?(:email_address) ? agent.user.email_address : agent.user.try(:email) %>
-<% status_classes = case agent.status
-   when "online" then "bg-emerald-500/20 text-emerald-300"
-   when "draining" then "bg-yellow-500/20 text-yellow-300"
-   when "disabled" then "bg-red-500/20 text-red-300"
-   else "bg-white/[0.06] text-[#8a8a92]"
-   end %>
-<% health_classes = case agent.health_status
-   when :healthy then "bg-emerald-500/15 text-emerald-300"
-   when :degraded then "bg-amber-500/15 text-amber-300"
-   when :draining then "bg-yellow-500/15 text-yellow-300"
-   when :disabled then "bg-red-500/15 text-red-300"
-   else "bg-white/[0.06] text-[#8a8a92]"
-   end %>
-<% last_seen_classes = case agent.last_seen_state
-   when :live then "bg-emerald-500/15 text-emerald-300"
-   when :stale then "bg-amber-500/15 text-amber-300"
-   when :disabled then "bg-red-500/15 text-red-300"
-   when :never then "bg-white/[0.06] text-[#8a8a92]"
-   else "bg-white/[0.06] text-[#8a8a92]"
-   end %>
 
 <div id="agent_show_summary_<%= agent.id %>">
   <div class="mb-8 rounded-[1.5rem] border border-white/[0.08] bg-[#1e1e22] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
     <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
       <div class="min-w-0 flex items-start gap-4">
         <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-black/20 text-2xl shadow-inner shadow-black/20">
-          <%= agent.status == "online" ? "🟢" : agent.status == "draining" ? "🟡" : agent.status == "disabled" ? "🔴" : "⚫" %>
+          <%= agent_status_icon(agent) %>
         </div>
 
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2.5">
             <h1 class="text-2xl font-extrabold tracking-tight text-[#e0e0e0]"><%= agent.name %></h1>
-            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= status_classes %>"><%= agent.status.humanize %></span>
-            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= health_classes %>"><%= agent.health_badge_label %></span>
-            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= last_seen_classes %>"><%= agent.last_seen_state.to_s.humanize %></span>
+            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= agent_status_badge_classes(agent) %>"><%= agent.status.humanize %></span>
+            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= agent_health_badge_classes(agent) %>"><%= agent.health_badge_label %></span>
+            <span class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] <%= agent_last_seen_badge_classes(agent) %>"><%= agent.last_seen_state.to_s.humanize %></span>
           </div>
 
           <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#666]">

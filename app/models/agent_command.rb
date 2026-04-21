@@ -16,7 +16,8 @@ class AgentCommand < ApplicationRecord
     failed: 3
   }, default: :pending
 
-  validates :kind, presence: true, inclusion: { in: ALLOWED_KINDS }
+  validates :kind, presence: true
+  validate :kind_is_allowed
 
   after_commit :broadcast_agent_dashboard
 
@@ -27,6 +28,14 @@ class AgentCommand < ApplicationRecord
   scope :long_running, ->(threshold = 10.minutes) { acknowledged.where(acked_at: ..threshold.ago) }
 
   private
+
+  def kind_is_allowed
+    return if kind.blank?
+    return if ALLOWED_KINDS.include?(kind)
+    return if persisted? && !will_save_change_to_kind?
+
+    errors.add(:kind, "is not included in the list")
+  end
 
   def broadcast_agent_dashboard
     Agent.broadcast_dashboard_update(agent, sections: [:card, :summary, :commands])

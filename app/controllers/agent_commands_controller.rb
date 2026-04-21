@@ -2,21 +2,26 @@ class AgentCommandsController < ApplicationController
   before_action :set_agent
 
   def create
-    @command = if params[:preset_id].present?
+    if params[:preset_id].present?
       preset = current_user.command_presets.find(params[:preset_id])
-      AgentCommands::PresetEnqueuer.new(agent: @agent, requested_by_user: current_user).enqueue!(preset)
+      @command = AgentCommands::PresetEnqueuer.new(agent: @agent, requested_by_user: current_user).enqueue!(preset)
+      redirect_to agent_path(@agent), notice: "#{@command.kind.humanize} command queued."
     else
-      @agent.agent_commands.build(command_params).tap do |command|
+      @command = @agent.agent_commands.build(command_params).tap do |command|
         command.requested_by_user = current_user
         command.state = :pending
       end
-    end
 
-    if @command.save
-      redirect_to agent_path(@agent), notice: "#{@command.kind.humanize} command queued."
-    else
-      redirect_to agent_path(@agent), alert: "Failed to queue command: #{@command.errors.full_messages.join(', ')}"
+      if @command.save
+        redirect_to agent_path(@agent), notice: "#{@command.kind.humanize} command queued."
+      else
+        redirect_to agent_path(@agent), alert: "Failed to queue command: #{@command.errors.full_messages.join(', ')}"
+      end
     end
+  rescue JSON::ParserError
+    redirect_to agent_path(@agent), alert: "Failed to queue command: Payload must be valid JSON."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to agent_path(@agent), alert: "Failed to queue command: #{e.record.errors.full_messages.to_sentence}"
   end
 
   private

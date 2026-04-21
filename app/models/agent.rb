@@ -21,7 +21,7 @@ class Agent < ApplicationRecord
   has_one :agent_rate_limit, dependent: :destroy
   has_many :agent_tokens, dependent: :destroy
   has_many :agent_commands, dependent: :destroy
-  has_many :command_presets, dependent: :nullify
+  has_many :command_presets, dependent: :destroy
   has_many :task_activities,
            class_name: "TaskActivity",
            foreign_key: :actor_agent_id,
@@ -268,7 +268,19 @@ class Agent < ApplicationRecord
   def last_seen_label
     return "Never" if last_heartbeat_at.blank?
 
-    "#{ActionController::Base.helpers.time_ago_in_words(last_heartbeat_at)} ago"
+    seconds = (Time.current - last_heartbeat_at).to_i
+    return "Just now" if seconds < 1.minute
+
+    if seconds < 1.hour
+      minutes = (seconds / 1.minute).floor
+      "#{minutes} #{'minute'.pluralize(minutes)} ago"
+    elsif seconds < 1.day
+      hours = (seconds / 1.hour).floor
+      "#{hours} #{'hour'.pluralize(hours)} ago"
+    else
+      days = (seconds / 1.day).floor
+      "#{days} #{'day'.pluralize(days)} ago"
+    end
   end
 
   def last_seen_state

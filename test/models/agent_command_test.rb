@@ -98,6 +98,21 @@ class AgentCommandTest < ActiveSupport::TestCase
     end
   end
 
+  test "legacy command kinds can still update unchanged records" do
+    legacy = @agent.agent_commands.create!(kind: "drain", payload: {})
+    legacy.update_column(:kind, "legacy_upgrade")
+
+    assert legacy.update(state: :acknowledged, acked_at: Time.current)
+    assert_equal "acknowledged", legacy.reload.state
+  end
+
+  test "invalid kind changes are still rejected for persisted records" do
+    command = @agent.agent_commands.create!(kind: "drain", payload: {})
+
+    assert_not command.update(kind: "legacy_upgrade")
+    assert_includes command.errors[:kind], "is not included in the list"
+  end
+
   test "recent scope orders newest first" do
     older = @agent.agent_commands.create!(kind: "drain", payload: {}, created_at: 2.hours.ago)
     newer = @agent.agent_commands.create!(kind: "restart", payload: {}, created_at: 10.minutes.ago)
