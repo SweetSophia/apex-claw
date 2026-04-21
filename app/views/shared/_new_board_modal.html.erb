@@ -26,9 +26,6 @@
         <label class="block text-sm font-medium text-content-secondary mb-2">Icon</label>
         <div class="flex flex-wrap gap-2" id="icon-group">
           <% available_icons = Board::DEFAULT_ICONS.dup %>
-          <% if current_user.agent_last_active_at.present? && current_user.agent_emoji.present? && !available_icons.include?(current_user.agent_emoji) %>
-            <% available_icons << current_user.agent_emoji %>
-          <% end %>
           <% available_icons.each do |icon| %>
             <button type="button"
                     onclick="selectBoardIcon(this, '<%= icon %>')"

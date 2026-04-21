@@ -2,8 +2,8 @@
 <% is_done = task.status == "done" %>
 <% board_color = task.board.color || "red" %>
 <li id="task_<%= task.id %>"
-    class="group cursor-grab transition-all duration-150 <%= 'opacity-50' if is_done %>"
-    style="padding:12px 14px;background:rgba(255,255,255,0.035);border-radius:10px;border:1px solid rgba(255,255,255,0.05)"
+    class="group cursor-grab transition-all duration-150 hover:-translate-y-px <%= 'opacity-50' if is_done %>"
+    style="padding:10px 12px;background:rgba(255,255,255,0.06);border-radius:12px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 1px 0 rgba(255,255,255,0.02) inset"
 
     <% if has_current_user %>
       data-controller="dropdown delete-confirm"
@@ -159,7 +159,7 @@
   <%= link_to board_task_path(task.board, task), data: { turbo_frame: "task_panel" }, class: "block" do %>
 
   <%# Task Title %>
-  <div style="font-size:13px;font-weight:600;color:<%= is_done ? '#555' : '#ddd' %>;line-height:1.35;<%= 'margin-bottom:7px' if has_metadata %>">
+  <div style="font-size:13px;font-weight:600;color:<%= is_done ? '#6a6a70' : '#f0f0f0' %>;line-height:1.35;<%= 'margin-bottom:7px' if has_metadata %>">
     <%= task.name %>
   </div>
 
@@ -175,7 +175,7 @@
       <% end %>
       <% if subtask_total > 0 %>
         <div style="display:flex;align-items:center;gap:4px">
-          <span style="font-size:10px;font-weight:500;color:#444">☐ <%= subtask_done %>/<%= subtask_total %></span>
+          <span style="font-size:10px;font-weight:500;color:#8d8d92">☐ <%= subtask_done %>/<%= subtask_total %></span>
           <div style="width:32px;height:3px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden">
             <div style="height:100%;border-radius:2px;width:<%= subtask_total > 0 ? (subtask_done.to_f / subtask_total * 100).round : 0 %>%;opacity:0.7" class="bg-<%= board_color %>-500"></div>
           </div>

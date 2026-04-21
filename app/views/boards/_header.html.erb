@@ -38,9 +38,6 @@
         <label class="block text-sm font-medium text-content-secondary mb-2">Icon</label>
         <div class="flex flex-wrap gap-2" id="edit-icon-group">
           <% edit_icons = Board::DEFAULT_ICONS.dup %>
-          <% if current_user.agent_last_active_at.present? && current_user.agent_emoji.present? && !edit_icons.include?(current_user.agent_emoji) %>
-            <% edit_icons << current_user.agent_emoji %>
-          <% end %>
           <% if @board.icon.present? && !edit_icons.include?(@board.icon) %>
             <% edit_icons << @board.icon %>
           <% end %>

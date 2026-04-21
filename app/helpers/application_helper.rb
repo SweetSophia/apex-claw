@@ -187,6 +187,20 @@ module ApplicationHelper
     }[status.to_s] || "•"
   end
 
+  def registered_agents_for(user)
+    return Agent.none unless user
+
+    user.agents.order(last_heartbeat_at: :desc, created_at: :desc)
+  end
+
+  def primary_registered_agent_for(user)
+    registered_agents_for(user).first
+  end
+
+  def any_registered_agents?(user)
+    registered_agents_for(user).exists?
+  end
+
   private
 
   def command_bar_done_status

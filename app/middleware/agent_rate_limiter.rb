@@ -51,25 +51,30 @@ class AgentRateLimiter
   def increment_counter(key, expires_in:)
     now = Time.current.to_i
     expires_at_value = now + expires_in.to_i
+    connection = ActiveRecord::Base.connection
 
-    # Single atomic upsert with expiry-aware reset:
-    # - If row doesn't exist: INSERT with count=1
-    # - If row exists and NOT expired: increment count
-    # - If row exists and IS expired: reset count to 1 and update expiry
-    result = ActiveRecord::Base.connection.exec_query(
-      "INSERT INTO counters (key, count, expires_at, created_at, updated_at)
-       VALUES ($1, 1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       ON CONFLICT (key) DO UPDATE SET
-         count = CASE WHEN counters.expires_at <= $3 THEN 1 ELSE counters.count + 1 END,
-         expires_at = CASE WHEN counters.expires_at <= $3 THEN $2 ELSE counters.expires_at END,
-         updated_at = CURRENT_TIMESTAMP
-       RETURNING count",
-      "Rate Limit Increment",
-      [ [ nil, key ], [ nil, expires_at_value ], [ nil, now ] ]
-    )
+    quoted_key = connection.quote(key)
+    quoted_expires_at = connection.quote(expires_at_value)
+    quoted_now = connection.quote(now)
+
+    # Use adapter quoting instead of positional binds here because the
+    # middleware runs very early in the stack and we hit a production-only
+    # bind casting failure (`TypeError: can't cast Array`) with exec_query.
+    # The values interpolated below are all server-generated scalars.
+    sql = <<~SQL
+      INSERT INTO counters (key, count, expires_at, created_at, updated_at)
+      VALUES (#{quoted_key}, 1, #{quoted_expires_at}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (key) DO UPDATE SET
+        count = CASE WHEN counters.expires_at <= #{quoted_now} THEN 1 ELSE counters.count + 1 END,
+        expires_at = CASE WHEN counters.expires_at <= #{quoted_now} THEN #{quoted_expires_at} ELSE counters.expires_at END,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING count
+    SQL
+
+    result = connection.exec_query(sql, "Rate Limit Increment")
     row = result.first
     row ? row["count"].to_i : 1
-  rescue ActiveRecord::StatementInvalid
+  rescue ActiveRecord::StatementInvalid, TypeError
     # Fallback for DB errors - allow request through
     1
   end

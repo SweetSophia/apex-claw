@@ -15,22 +15,21 @@
   }
 %>
 
-<div class="flex-1 min-w-0 flex flex-col h-full overflow-hidden"
+<div class="w-[220px] min-w-[220px] max-w-[220px] flex flex-col self-start"
      data-controller="inline-add"
      data-inline-add-status-value="<%= status %>"
      data-inline-add-url-value="<%= board_tasks_path(@board) %>"
      data-status="<%= status %>">
   <%# Column Header %>
-  <div class="flex items-center gap-2" style="padding:6px 8px 10px">
+  <div class="flex items-center gap-2 px-1 pb-2">
     <div class="rounded-full" style="width:7px;height:7px;background:<%= column_dot_colors[status] %>"></div>
-    <span style="font-size:13px;font-weight:700;color:#bbb"><%= column_labels[status] %></span>
-    <span id="column-<%= status %>-count" class="column__task-count" aria-live="polite" style="font-size:11px;font-weight:600;color:#444;background:rgba(255,255,255,0.04);padding:0 7px;border-radius:5px;line-height:20px"><%= tasks.count %></span>
+    <span class="text-[13px] font-semibold text-[#d7d7d9]"><%= column_labels[status] %></span>
+    <span id="column-<%= status %>-count" class="column__task-count" aria-live="polite" style="font-size:11px;font-weight:600;color:#8d8d92;background:rgba(255,255,255,0.04);padding:0 6px;border-radius:999px;line-height:18px;min-width:18px;text-align:center"><%= tasks.count %></span>
   </div>
 
   <%# Tasks List %>
   <ul id="column-<%= status %>"
-      class="flex-1 flex flex-col gap-[5px] min-h-[2rem] overflow-y-hidden hover:overflow-y-auto transition-all duration-[120ms] list-none m-0"
-      style="border-radius:10px;padding:6px;background:rgba(255,255,255,0.01);border:2px solid transparent"
+      class="min-h-[10rem] list-none m-0 flex flex-col gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] p-2"
       data-controller="sortable"
       data-sortable-group-value="board"
       data-sortable-status-value="<%= status %>"
@@ -41,8 +40,8 @@
   </ul>
 
   <%# Inline Add Card Form (hidden by default) %>
-  <div data-inline-add-target="form" class="hidden px-1.5 py-1.5">
-    <div class="bg-bg-elevated rounded-lg border border-border p-2">
+  <div data-inline-add-target="form" class="hidden px-1 pt-2">
+    <div class="rounded-xl border border-white/[0.08] bg-bg-elevated p-2">
       <textarea data-inline-add-target="input"
                 data-action="keydown->inline-add#handleKeydown"
                 placeholder="Enter a title for this card..."
@@ -66,11 +65,10 @@
   </div>
 
   <%# Add Card Button %>
-  <div data-inline-add-target="button" class="px-1.5 py-1">
+  <div data-inline-add-target="button" class="px-1 pt-2">
     <button type="button"
             data-action="click->inline-add#show"
-            class="w-full flex items-center gap-1.5 rounded-lg cursor-pointer border-none bg-transparent transition-colors"
-            style="padding:8px 10px;font-size:12px;font-weight:500;color:#333">
+            class="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-xs font-medium text-content-muted transition-colors hover:bg-white/[0.04] hover:text-content">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 8H2M8 2V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Add a card
     </button>

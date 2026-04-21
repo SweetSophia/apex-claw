@@ -78,6 +78,7 @@ Rails.application.routes.draw do
   resources :passwords, param: :token
   resource :settings, only: [ :show, :update ], controller: "profiles" do
     post :regenerate_api_token
+    post :generate_join_token
   end
 
   # Boards (multi-board kanban views)

@@ -131,10 +131,12 @@
       </button>
 
       <%# Agent indicator %>
-      <% if current_user.agent_last_active_at.present? %>
-        <div class="relative cursor-default" title="<%= current_user.agent_name || 'Agent' %> &middot; Last active: <%= time_ago_in_words(current_user.agent_last_active_at) %> ago">
-          <span class="text-lg"><%= current_user.agent_emoji || "🦞" %></span>
-          <% if current_user.agent_last_active_at > 5.minutes.ago %>
+      <% primary_agent = primary_registered_agent_for(current_user) %>
+      <% if primary_agent.present? %>
+        <div class="relative cursor-default"
+             title="<%= primary_agent.name %> &middot; Last heartbeat: <%= primary_agent.last_heartbeat_at.present? ? time_ago_in_words(primary_agent.last_heartbeat_at) + ' ago' : 'never' %>">
+          <span class="text-lg">🤖</span>
+          <% if primary_agent.online? && primary_agent.last_heartbeat_at.present? && primary_agent.last_heartbeat_at > 5.minutes.ago %>
             <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-success rounded-full border border-bg-base"></span>
           <% end %>
         </div>
@@ -153,6 +155,7 @@
           </svg>
           Board settings
         </button>
+        <%= render "boards/view_toggle" %>
       <% end %>
 
       <%# User avatar dropdown %>

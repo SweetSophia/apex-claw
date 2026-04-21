@@ -141,33 +141,7 @@
           </button>
         </div>
 
-        <!-- Agent row -->
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:12px;font-weight:500;color:#888">Agent</span>
-          <% if task.assigned_to_agent? %>
-            <button type="button"
-                    data-action="click->task-modal#toggleAgent"
-                    style="width:100px;height:30px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:7px;cursor:pointer;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);transition:all 0.12s">
-              <span style="font-size:11px">🤖</span>
-              <span style="font-size:11px;font-weight:600;color:#fbbf24">Assigned</span>
-            </button>
-          <% else %>
-            <% agent_connected = current_user.agent_last_active_at.present? %>
-            <% if agent_connected %>
-              <button type="button"
-                      data-action="click->task-modal#toggleAgent"
-                      style="width:100px;height:30px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:7px;cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:all 0.12s">
-                <span style="font-size:11px">🤖</span>
-                <span style="font-size:11px;font-weight:600;color:#555">Assign</span>
-              </button>
-            <% else %>
-              <span style="width:100px;height:30px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:7px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);cursor:not-allowed">
-                <span style="font-size:11px">🤖</span>
-                <span style="font-size:11px;font-weight:600;color:#555">Assign</span>
-              </span>
-            <% end %>
-          <% end %>
-        </div>
+        <%= render "boards/tasks/agent_assignment", task: task, board: @board %>
       </div>
 
       <!-- Agent Status Banner -->

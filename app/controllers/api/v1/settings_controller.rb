@@ -23,21 +23,17 @@ module Api
 
       def settings_json
         {
-          agent_name: current_user.agent_name || "OpenClaw",
-          agent_emoji: current_user.agent_emoji || "🦞",
           agent_auto_mode: current_user.agent_auto_mode,
           agent_status: agent_status,
+          registered_agents_count: current_user.agents.count,
           email: current_user.email_address
         }
       end
 
       def agent_status
-        # Check if agent has ever been used (API token used)
-        return "not_configured" unless current_user.api_tokens.exists?(["last_used_at IS NOT NULL"])
+        return "not_configured" unless current_user.agents.exists?
 
-        # Check if agent is currently working on a task
-        working = current_user.tasks.where(status: :in_progress).where.not(agent_claimed_at: nil).exists?
-        working ? "working" : "idle"
+        current_user.agents.where(status: :online).exists? ? "online" : "offline"
       end
     end
   end

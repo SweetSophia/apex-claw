@@ -61,131 +61,120 @@
     <% end %>
   </div>
 
-  <!-- Section 2: OpenClaw Integration -->
-  <div class="bg-bg-surface border border-border rounded-lg p-5 space-y-4">
-    <div class="flex items-center gap-2">
-      <span class="text-lg">🦞</span>
-      <h3 class="text-sm font-semibold text-content font-display">OpenClaw Integration</h3>
+  <!-- Section 2: Multi-agent Integration -->
+  <div id="agents" class="bg-bg-surface border border-border rounded-lg p-5 space-y-5">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">🤖</span>
+        <div>
+          <h3 class="text-sm font-semibold text-content font-display">Agent Registration</h3>
+          <p class="text-xs text-content-secondary mt-1">Use join tokens for real agent registration. Header-only presence does not create an agent record.</p>
+        </div>
+      </div>
+      <%= button_to "Generate join token", generate_join_token_settings_path,
+          method: :post,
+          class: "cursor-pointer px-3 py-1.5 bg-accent text-content hover:bg-accent-hover text-xs font-semibold rounded-md transition-colors" %>
     </div>
-
-    <p class="text-xs text-content-secondary">
-      Connect your OpenClaw agent to ClawDeck. Copy the prompt below and add it to your agent's configuration.
-    </p>
 
     <% api_url = "#{request.base_url}/api/v1" %>
     <% api_token = flash[:api_token_plaintext].presence || "•••••••• (regenerate to see token)" %>
+    <% join_token = flash[:join_token_plaintext] %>
+    <% join_token_expires_at = flash[:join_token_expires_at] %>
 
-    <!-- Comprehensive agent prompt -->
-    <div data-controller="clipboard">
+    <% integration_prompt = <<~PROMPT %>
+      # ClawDeck multi-agent registration
+
+      Use the real multi-agent flow, not just presence headers.
+
+      API URL: #{api_url}
+      User API token: #{api_token}
+      Join token: #{join_token || 'Generate one in Settings'}
+
+      Register once with:
+      POST /agents/register
+      {
+        "join_token": "#{join_token || 'jt_xxx'}",
+        "agent": {
+          "name": "your-agent-name",
+          "hostname": "your-host",
+          "host_uid": "stable-host-id",
+          "platform": "linux-x64",
+          "version": "1.0.0",
+          "tags": ["openclaw"],
+          "metadata": {"runtime": "openclaw"}
+        }
+      }
+
+      Then store the returned agent_token and use it for:
+      - POST /agents/:id/heartbeat
+      - GET /tasks/next
+      - PATCH /tasks/:id/claim
+      - PATCH /tasks/:id
+      - PATCH /tasks/:id/complete
+      - commands, handoffs, artifacts
+
+      Do not rely on X-Agent-Name / X-Agent-Emoji alone. Those do not register a real agent.
+    PROMPT
+    %>
+
+    <div data-controller="clipboard" class="space-y-3">
       <div class="bg-bg-elevated rounded-md max-h-96 overflow-y-auto">
-        <pre
-          data-clipboard-target="source"
-          class="px-3 py-3 text-xs font-mono text-content-secondary whitespace-pre-wrap break-words leading-relaxed"
-># ClawDeck — Your Task Dashboard
-
-ClawDeck is where your human manages your work queue. Think of it as your shared kanban board.
-
-## How it works
-
-1. Your human creates tasks and organizes them on the board
-2. Your human explicitly assigns tasks to you when ready
-3. You poll for assigned tasks and work on them
-4. You update progress and mark things done
-5. Your human sees everything in real-time
-
-## Connection
-
-- **API URL:** <%= api_url %>
-- **Token:** <%= api_token %>
-- **Auth Header:** `Authorization: Bearer <%= api_token %>`
-
-## Identify yourself
-
-Include these headers with every request so your human knows who's connected:
-- `X-Agent-Name`: Your name (e.g., "<%= @user.agent_name.presence || "OpenClaw" %>")
-- `X-Agent-Emoji`: Your emoji (e.g., "<%= @user.agent_emoji.presence || "🦞" %>")
-
-## Your workflow
-
-### Polling for assigned tasks (every 30s or on heartbeat):
-1. Call `GET /tasks?assigned=true` to get tasks assigned to you
-2. Pick the first task (oldest assignment)
-3. Move it to "in_progress" and start working
-
-### When working on a task:
-- **Need help:** Set `blocked: true` — your human will unblock you
-- **Finished:** Move to "in_review" (needs human review) or "done" (complete)
-
-### You can also:
-- Create new tasks (ideas, follow-ups, things you noticed)
-- Check task details and history
-
-## API Reference
-
-**Get assigned tasks (your work queue):**
-`GET /tasks?assigned=true`
-Returns tasks assigned to you, ordered by assignment time (oldest first).
-
-**List all tasks:**
-`GET /tasks` or `GET /tasks?status=in_progress`
-
-**Get task:**
-`GET /tasks/:id`
-
-**Update task:**
-`PATCH /tasks/:id`
-Body: `{ "status": "in_progress" }` or `{ "blocked": true }`
-
-**Complete task:**
-`PATCH /tasks/:id/complete`
-
-**Create task:**
-`POST /tasks`
-Body: `{ "name": "Task title", "status": "inbox" }`
-
-## Statuses
-- `inbox` — New, not prioritized
-- `up_next` — Prioritized, waiting to be assigned
-- `in_progress` — You're working on it
-- `in_review` — Done, needs human review
-- `done` — Complete
-
-## Priorities
-`none`, `low`, `medium`, `high`
-
-## Tips
-- Poll for assigned tasks frequently — your human assigns work explicitly
-- When stuck, mark blocked — your human will unblock you
-- Create tasks for things you notice but can't tackle now</pre>
+        <pre data-clipboard-target="source" class="px-3 py-3 text-xs font-mono text-content-secondary whitespace-pre-wrap break-words leading-relaxed"><%= integration_prompt %></pre>
       </div>
-      <div class="flex items-center gap-3 mt-2">
-        <button
-          type="button"
-          data-action="click->clipboard#copy"
-          class="cursor-pointer px-3 py-1.5 bg-bg-elevated hover:bg-bg-hover text-content-secondary text-xs font-medium rounded-md transition-colors"
-        >
-          <span data-clipboard-target="label">Copy</span>
+      <div class="flex items-center gap-3 flex-wrap">
+        <button type="button"
+                data-action="click->clipboard#copy"
+                class="cursor-pointer px-3 py-1.5 bg-bg-elevated hover:bg-bg-hover text-content-secondary text-xs font-medium rounded-md transition-colors">
+          <span data-clipboard-target="label">Copy registration prompt</span>
         </button>
-        <%= button_to "Regenerate token", regenerate_api_token_settings_path,
+        <%= button_to "Regenerate user API token", regenerate_api_token_settings_path,
             method: :post,
-            data: { turbo_confirm: "This will invalidate your current token. Continue?" },
+            data: { turbo_confirm: "This will invalidate your current user API token. Continue?" },
             class: "cursor-pointer text-xs text-content-muted hover:text-content-secondary transition-colors" %>
+        <% if join_token.present? %>
+          <% expires_at = join_token_expires_at.present? ? Time.zone.parse(join_token_expires_at) : nil %>
+          <span class="text-xs text-amber-300">Join token shown once.<% if expires_at %> Expires in <%= distance_of_time_in_words(Time.current, expires_at) %>.<% end %></span>
+        <% end %>
       </div>
     </div>
 
-    <!-- Connected Agent (within same box) -->
-    <div class="pt-4 border-t border-border">
-      <p class="text-xs font-medium text-content-secondary mb-3">Connected Agent</p>
+    <div class="pt-4 border-t border-border space-y-3">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <p class="text-xs font-medium text-content-secondary">Registered agents</p>
+          <p class="text-xs text-content-muted mt-1">These are real agent records. Multi-agent assignment, heartbeats, and health cards use this list.</p>
+        </div>
+        <%= link_to agents_path, class: "text-xs text-accent hover:text-accent-hover transition-colors" do %>
+          Open agents tab
+        <% end %>
+      </div>
 
-      <% if @user.agent_last_active_at.present? %>
-        <div class="flex items-center gap-3">
-          <span class="text-xl"><%= @user.agent_emoji || "🦞" %></span>
-          <span class="text-sm text-content"><%= @user.agent_name || "Agent" %></span>
-          <span class="text-xs text-content-muted">•</span>
-          <span class="text-xs text-content-muted">Last active: <%= time_ago_in_words(@user.agent_last_active_at) %> ago</span>
+      <% if @registered_agents.any? %>
+        <div class="space-y-2">
+          <% @registered_agents.each do |agent| %>
+            <div class="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm">🤖</span>
+                  <span class="text-sm font-semibold text-content"><%= agent.name %></span>
+                  <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= agent.online? ? 'bg-emerald-500/20 text-emerald-400' : agent.draining? ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/[0.06] text-content-muted' %>"><%= agent.status.humanize %></span>
+                </div>
+                <div class="text-xs text-content-muted mt-1">
+                  <%= agent.hostname.presence || 'unknown host' %>
+                  <% if agent.last_heartbeat_at.present? %>
+                    • heartbeat <%= time_ago_in_words(agent.last_heartbeat_at) %> ago
+                  <% end %>
+                </div>
+              </div>
+              <div class="text-right text-xs text-content-muted">
+                <div><%= agent.assigned_tasks.where.not(status: :done).count %> assigned</div>
+                <div><%= agent.claimed_tasks.where.not(status: :done).count %> claimed</div>
+              </div>
+            </div>
+          <% end %>
         </div>
       <% else %>
-        <p class="text-xs text-content-muted">No agent connected yet</p>
+        <p class="text-xs text-content-muted">No registered agents yet. Generate a join token and register each agent once.</p>
       <% end %>
     </div>
   </div>

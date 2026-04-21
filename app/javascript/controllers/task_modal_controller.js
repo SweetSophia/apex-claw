@@ -3,12 +3,11 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="task-modal"
 export default class extends Controller {
   static targets = ["modal", "backdrop", "form", "nameField", "descriptionField", "submitButton", "priorityField", "priorityButton", "statusPill", "statusDot", "statusLabel"]
-  static values = { taskId: Number, updateUrl: String, assignUrl: String, unassignUrl: String }
+  static values = { taskId: Number, updateUrl: String }
 
   connect() {
     this.boundHandleKeydown = this.handleKeydown.bind(this)
     this.autoSaveTimeout = null
-    this.isAssigned = this.element.querySelector('[data-action="click->task-modal#toggleAgent"]')?.textContent?.includes('Assigned') || false
 
     // Auto-open the modal when it's loaded
     setTimeout(() => {
@@ -196,37 +195,6 @@ export default class extends Controller {
       if (html) {
         // Apply turbo stream updates immediately (card move between columns)
         Turbo.renderStreamMessage(html)
-      }
-    })
-  }
-
-  // --- Agent toggle (fetch-based) ---
-
-  toggleAgent() {
-    const url = this.isAssigned ? this.unassignUrlValue : this.assignUrlValue
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-
-    fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Accept': 'text/vnd.turbo-stream.html',
-        'X-CSRF-Token': csrfToken
-      }
-    }).then(response => {
-      if (response.ok) return response.text()
-    }).then(html => {
-      if (html) {
-        Turbo.renderStreamMessage(html)
-      }
-      // Reload the panel to reflect the new agent state
-      this.isAssigned = !this.isAssigned
-      // Re-fetch the panel content
-      const taskPanelFrame = document.getElementById('task_panel')
-      if (taskPanelFrame) {
-        taskPanelFrame.src = taskPanelFrame.src || window.location.href
-        // Visit the task show URL to reload panel
-        const taskLink = document.querySelector(`[data-task-id="${this.taskIdValue}"] a[data-turbo-frame="task_panel"]`)
-        if (taskLink) taskLink.click()
       }
     })
   }

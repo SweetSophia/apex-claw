@@ -174,14 +174,16 @@ class AgentController < ApplicationController
       end
 
     elsif q.match?(/agent|openclaw/)
-      if current_user.agent_last_active_at.present?
-        name = current_user.agent_name || "Agent"
-        emoji = current_user.agent_emoji || "🦞"
-        ago = time_ago_in_words(current_user.agent_last_active_at)
+      agents = current_user.agents.order(last_heartbeat_at: :desc)
+      if agents.any?
+        names = agents.first(3).map do |agent|
+          heartbeat = agent.last_heartbeat_at.present? ? "#{time_ago_in_words(agent.last_heartbeat_at)} ago" : "never"
+          "#{agent.name} (#{agent.status}, heartbeat #{heartbeat})"
+        end
         assigned = tasks.where(assigned_to_agent: true, completed: false).count
-        "#{emoji} #{name} was last active #{ago} ago. #{assigned} tasks currently assigned to your agent."
+        "Registered agents: #{names.join(', ')}. #{assigned} tasks currently assigned to agents."
       else
-        "No agent connected yet. Go to Settings to set up your OpenClaw integration."
+        "No registered agents yet. Go to Settings and generate a join token for each agent."
       end
 
     elsif q.match?(/how many|count|total|stat/)
