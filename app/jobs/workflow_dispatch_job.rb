@@ -31,13 +31,17 @@ class WorkflowDispatchJob < ApplicationJob
   def parse_cron_to_interval(cron)
     case cron
     when /\Aevery (\d+) minutes?\z/i
-      $1.to_i.minutes
+      value = $1.to_i
+      value > 0 ? value.minutes : nil
     when /\Aevery (\d+) hours?\z/i
-      $1.to_i.hours
+      value = $1.to_i
+      value > 0 ? value.hours : nil
     when /\A(\d+)m\z/
-      $1.to_i.minutes
+      value = $1.to_i
+      value > 0 ? value.minutes : nil
     when /\A(\d+)h\z/
-      $1.to_i.hours
+      value = $1.to_i
+      value > 0 ? value.hours : nil
     else
       nil
     end

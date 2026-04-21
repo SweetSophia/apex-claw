@@ -46,6 +46,7 @@ class Workflow < ApplicationRecord
 
   def agent_belongs_to_user
     return unless agent_id.present?
+    return errors.add(:agent_id, "could not be found") unless agent
     errors.add(:agent_id, "must belong to you") unless agent.user_id == user_id
   end
 end

@@ -88,7 +88,7 @@ module Api
         }
 
         if include_runs
-          json[:runs] = workflow.workflow_runs.limit(20).map { |r| run_json(r) }
+          json[:runs] = workflow.workflow_runs.order(created_at: :desc).limit(20).map { |r| run_json(r) }
         end
 
         json
