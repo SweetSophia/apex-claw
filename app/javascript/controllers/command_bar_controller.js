@@ -694,9 +694,4 @@ export default class extends Controller {
     }
     return el
   }
-
-  clearAndAppend(target, element) {
-    target.innerHTML = ""
-    target.appendChild(element)
-  }
 }
