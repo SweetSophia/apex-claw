@@ -64,6 +64,14 @@ class AgentRuntimePhase5Test < ActiveSupport::TestCase
     end
   end
 
+  test "health_alerts requires precomputed health stats" do
+    agent = create_agent(suffix: "explicit-stats")
+
+    assert_raises(ArgumentError) do
+      agent.health_alerts
+    end
+  end
+
   private
 
   def create_agent(suffix:, **attrs)

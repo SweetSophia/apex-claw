@@ -290,8 +290,8 @@ class Agent < ApplicationRecord
     online? ? :live : status.to_sym
   end
 
-  def health_alerts(health_stats: nil)
-    stats = health_stats || self.class.health_stats_for([self])[id] || {}
+  def health_alerts(health_stats:)
+    stats = health_stats || {}
     alerts = []
     alerts << "Heartbeat is stale" if heartbeat_stale?
     alerts << "Task runner is idle" unless task_runner_active?
