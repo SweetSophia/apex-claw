@@ -49,6 +49,9 @@ class Task < ApplicationRecord
   scope :unassigned, -> { where(assigned_to_agent: false) }
   scope :eligible_for_agent, ->(agent) do
     return none unless agent
+
+    # Offline agents may still receive pre-assigned work; only exclude agents
+    # that are archived or explicitly unavailable for new tasks.
     return none if agent.archived? || agent.disabled? || agent.draining?
 
     where(status: :up_next, blocked: false, claimed_by_agent_id: nil)
