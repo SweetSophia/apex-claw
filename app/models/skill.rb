@@ -1,4 +1,8 @@
 class Skill < ApplicationRecord
+  include Auditable
+
+  audit_events :create, :update, :destroy
+
   belongs_to :user
   has_many :agent_skills, dependent: :destroy
   has_many :agents, through: :agent_skills
