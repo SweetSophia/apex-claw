@@ -16,6 +16,11 @@ module Api
           return
         end
 
+        if current_agent.archived?
+          head :no_content
+          return
+        end
+
         if current_agent.draining?
           head :no_content
           return

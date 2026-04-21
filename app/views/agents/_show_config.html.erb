@@ -4,7 +4,12 @@
     Configure environment variables, CLI arguments, and runtime preferences for this agent.
   </p>
 
-  <%= form_with model: agent, url: api_v1_agent_path(agent), method: :patch do |f| %>
+  <%= form_with(
+        model: agent,
+        url: url_for(controller: "agents", action: "update_config", id: agent),
+        method: :patch,
+        data: { turbo_submit: true, turbo_method: :patch }
+      ) do |f| %>
     <div class="space-y-5">
       <%# Model preference %>
       <div>

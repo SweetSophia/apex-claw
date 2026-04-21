@@ -434,6 +434,102 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # ─── Sibling agent isolation ────────────────────────────────────────────
+
+  test "agent token cannot update sibling agent under same user" do
+    sibling = Agent.create!(
+      user: @user,
+      name: "Sibling Worker",
+      hostname: "sibling.local",
+      host_uid: "uid-sibling",
+      platform: "linux",
+      version: "1.0.0"
+    )
+    _sibling_token, sibling_plaintext = AgentToken.issue!(agent: sibling, name: "Sibling Token")
+
+    patch "/api/v1/agents/#{@agent.id}",
+          headers: auth_header(sibling_plaintext),
+          params: { agent: { name: "Hijacked Name" } }
+
+    assert_response :forbidden
+    assert_not_equal "Hijacked Name", @agent.reload.name
+  end
+
+  # ─── Invalid JSON validation ────────────────────────────────────────────
+
+  test "patch returns 422 for invalid JSON in custom_env" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token).merge("Content-Type" => "application/json"),
+          params: { agent: { custom_env: "not-valid-json{" } }.to_json
+
+    assert_response :unprocessable_entity
+    assert_includes response.parsed_body["error"].downcase, "invalid json"
+  end
+
+  test "patch returns 422 for invalid JSON in custom_args" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token).merge("Content-Type" => "application/json"),
+          params: { agent: { custom_args: "[broken-json" } }.to_json
+
+    assert_response :unprocessable_entity
+    assert_includes response.parsed_body["error"].downcase, "invalid json"
+  end
+
+  # ─── Archived agents excluded from tasks/next ──────────────────────────
+
+  test "archived agent receives no tasks from tasks next" do
+    board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
+    Task.create!(user: @user, board: board, name: "Up Next Task", status: :up_next)
+
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+
+    get "/api/v1/tasks/next", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :no_content
+  end
+
+  # ─── Archived agents excluded from index ────────────────────────────────
+
+  test "index excludes archived agents by default" do
+    archived_agent = Agent.create!(
+      user: @user,
+      name: "Archived Agent",
+      hostname: "archived.local",
+      host_uid: "uid-archived",
+      platform: "linux",
+      version: "1.0.0",
+      archived_at: Time.current,
+      archived_by: @user
+    )
+
+    get "/api/v1/agents", headers: auth_header(@user_token)
+
+    assert_response :success
+    ids = response.parsed_body.map { |a| a["id"] }
+    assert_includes ids, @agent.id
+    assert_not_includes ids, archived_agent.id
+  end
+
+  test "index includes archived agents when include_archived is true" do
+    archived_agent = Agent.create!(
+      user: @user,
+      name: "Archived Agent",
+      hostname: "archived.local",
+      host_uid: "uid-archived",
+      platform: "linux",
+      version: "1.0.0",
+      archived_at: Time.current,
+      archived_by: @user
+    )
+
+    get "/api/v1/agents?include_archived=true", headers: auth_header(@user_token)
+
+    assert_response :success
+    ids = response.parsed_body.map { |a| a["id"] }
+    assert_includes ids, @agent.id
+    assert_includes ids, archived_agent.id
+  end
+
   private
 
   def auth_header(token)

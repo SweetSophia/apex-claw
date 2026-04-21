@@ -4,6 +4,7 @@
 <div data-controller="agent-tabs" class="mb-6">
   <div class="flex border-b border-white/[0.08] space-x-1">
     <button
+      data-agent-tabs-target="tab"
       data-action="agent-tabs#switch"
       data-panel="panel-summary"
       class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-amber-400 text-amber-400"
@@ -11,6 +12,7 @@
       Summary
     </button>
     <button
+      data-agent-tabs-target="tab"
       data-action="agent-tabs#switch"
       data-panel="panel-instructions"
       class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
@@ -18,6 +20,7 @@
       Instructions
     </button>
     <button
+      data-agent-tabs-target="tab"
       data-action="agent-tabs#switch"
       data-panel="panel-config"
       class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
@@ -25,6 +28,7 @@
       Configuration
     </button>
     <button
+      data-agent-tabs-target="tab"
       data-action="agent-tabs#switch"
       data-panel="panel-settings"
       class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"

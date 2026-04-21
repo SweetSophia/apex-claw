@@ -31,15 +31,16 @@
             <%= time_ago_in_words(agent.archived_at) %> ago
           </span>
           <%= button_to "Restore Agent",
-                restore_api_v1_agent_path(agent),
+                url_for(controller: "agents", action: "restore", id: agent),
                 method: :post,
+                form: { data: { turbo_submit: true, turbo_method: :post } },
                 class: "px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors" %>
         </div>
       <% else %>
         <%= button_to "Archive Agent",
-              archive_api_v1_agent_path(agent),
+              url_for(controller: "agents", action: "archive", id: agent),
               method: :post,
-              data: { confirm: "Archive this agent? It will no longer receive new tasks." },
+              form: { data: { turbo_submit: true, turbo_method: :post, turbo_confirm: "Archive this agent? It will no longer receive new tasks." } },
               class: "px-3 py-1.5 text-xs font-medium rounded-md border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors" %>
       <% end %>
     </div>

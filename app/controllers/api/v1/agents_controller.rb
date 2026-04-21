@@ -1,5 +1,7 @@
 module Api
   module V1
+    class InvalidJsonError < StandardError; end
+
     class AgentsController < BaseController
       MIN_HEARTBEAT_INTERVAL = 5
       MAX_HEARTBEAT_INTERVAL = 300
@@ -9,6 +11,10 @@ module Api
       before_action :set_agent_for_heartbeat, only: [ :heartbeat ]
       before_action :require_current_agent!, only: :heartbeat
       before_action :require_agent_self!, only: :heartbeat
+      before_action :require_owner_user!, only: [ :update, :rotate_token, :revoke_token, :archive, :restore, :tasks ]
+      before_action :require_user_token!, only: [ :update, :archive, :restore, :tasks ]
+
+      rescue_from InvalidJsonError, with: :json_parse_error
 
       def register
         join_token = JoinToken.consume!(register_join_token)
@@ -129,7 +135,7 @@ module Api
       private
 
       def set_agent
-        @agent = current_user.agents.find(params[:id])
+        @agent = Agent.find(params[:id])
       end
 
       def set_agent_for_heartbeat
@@ -146,6 +152,25 @@ module Api
         return if current_agent.id == @agent.id
 
         render json: { error: "Forbidden" }, status: :forbidden
+      end
+
+      # Verifies the authenticated identity is allowed to access @agent.
+      # Agent tokens may only manage the agent they belong to (no sibling access).
+      # User tokens may manage any agent belonging to the user.
+      def require_owner_user!
+        if current_agent_token.present?
+          return if current_agent.id == @agent.id
+        else
+          return if @agent.user_id == current_user.id
+        end
+        render json: { error: "Unauthorized" }, status: :unauthorized
+      end
+
+      # Restricts the action to user-token auth only (blocks agent tokens).
+      def require_user_token!
+        return if current_agent_token.nil?
+
+        render json: { error: "Unauthorized" }, status: :unauthorized
       end
 
       def register_join_token
@@ -177,6 +202,7 @@ module Api
       # Parse JSON-encoded string values for custom_env and custom_args.
       # Accepts either a pre-parsed Hash/Array (from other clients) or a
       # JSON string (from the web UI form fields).
+      # Returns a hard 422 on invalid JSON instead of silently defaulting.
       def parse_json_fields(p)
         %i[custom_env custom_args].each do |key|
           val = p[key]
@@ -189,8 +215,12 @@ module Api
             else {}
           end
         rescue JSON::ParserError
-          p[key] = (key == :custom_env ? {} : [])
+          raise InvalidJsonError
         end
+      end
+
+      def json_parse_error
+        render json: { error: 'Invalid JSON format' }, status: :unprocessable_entity
       end
 
       def heartbeat_interval_seconds

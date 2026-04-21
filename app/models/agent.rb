@@ -185,6 +185,10 @@ class Agent < ApplicationRecord
     update!(archived_at: nil, archived_by: nil)
   end
 
+  def active_for_work?
+    online? && !archived?
+  end
+
   def heartbeat_stale?
     return true if last_heartbeat_at.blank?
 
@@ -253,6 +257,10 @@ class Agent < ApplicationRecord
   end
 
   private
+
+  def audit_ignored_change_keys
+    super + %w[custom_env custom_args]
+  end
 
   def broadcast_dashboard_update
     sections = [:card, :summary]

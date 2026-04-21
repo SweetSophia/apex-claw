@@ -256,6 +256,28 @@ class AgentTest < ActiveSupport::TestCase
     refute_includes Agent.archived, agent_active
   end
 
+  # ─── active_for_work? ──────────────────────────────────────────────────
+
+  test "active_for_work? returns true for online non-archived agent" do
+    agent = Agent.create!(user: @user, name: "Work Agent", status: :online)
+    assert agent.active_for_work?
+  end
+
+  test "active_for_work? returns false for archived agent" do
+    agent = Agent.create!(user: @user, name: "Archived Work Agent", status: :online, archived_at: Time.current, archived_by: @user)
+    assert_not agent.active_for_work?
+  end
+
+  test "active_for_work? returns false for draining agent" do
+    agent = Agent.create!(user: @user, name: "Draining Work Agent", status: :draining)
+    assert_not agent.active_for_work?
+  end
+
+  test "active_for_work? returns false for disabled agent" do
+    agent = Agent.create!(user: @user, name: "Disabled Work Agent", status: :disabled)
+    assert_not agent.active_for_work?
+  end
+
   # ─── Default values ────────────────────────────────────────────────────
 
   test "instructions defaults to nil" do
