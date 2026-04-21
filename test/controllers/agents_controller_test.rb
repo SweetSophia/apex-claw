@@ -31,4 +31,16 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to agent_path(@agent)
     assert_not @agent.reload.archived?
   end
+
+  test "update_config handles invalid json gracefully" do
+    patch update_config_agent_path(@agent), params: {
+      agent: {
+        custom_env: "{bad-json",
+        custom_args: "[]"
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_match "Invalid JSON format", response.body
+  end
 end

@@ -29,14 +29,8 @@ class AgentsController < ApplicationController
   def update_config
     attrs = config_params
 
-    begin
-      parse_config_json(attrs)
-    rescue JSON::ParserError
-      @agent.errors.add(:base, "Invalid JSON format in configuration fields")
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-config", partial: "agents/show_config", locals: { agent: @agent }), status: :unprocessable_entity }
-        format.html { render :show, status: :unprocessable_entity }
-      end
+    unless parse_config_json(attrs)
+      render_invalid_config_json
       return
     end
 
@@ -152,6 +146,17 @@ class AgentsController < ApplicationController
           end
         else key == :custom_env ? {} : []
       end
+    end
+    true
+  rescue JSON::ParserError
+    @agent.errors.add(:base, "Invalid JSON format in configuration fields")
+    false
+  end
+
+  def render_invalid_config_json
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-config", partial: "agents/show_config", locals: { agent: @agent }), status: :unprocessable_entity }
+      format.html { render :show, status: :unprocessable_entity }
     end
   end
 end
