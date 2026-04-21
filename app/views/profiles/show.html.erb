@@ -83,6 +83,27 @@
 
     <% integration_prompt = agent_registration_prompt(api_url: api_url, api_token: api_token, join_token: join_token) %>
 
+    <% if join_token.present? %>
+      <% expires_at = join_token_expires_at.present? ? Time.zone.parse(join_token_expires_at) : nil %>
+      <div data-controller="clipboard" class="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-300">Join token</p>
+          <p class="mt-1 text-xs text-content-secondary">Copy and share this raw token only for agent registration. Do not paraphrase or shorten it.</p>
+        </div>
+        <div class="rounded-md bg-bg-elevated px-3 py-3">
+          <code data-clipboard-target="source" class="block break-all font-mono text-xs text-content"><%= join_token %></code>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <button type="button"
+                  data-action="click->clipboard#copy"
+                  class="cursor-pointer px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium rounded-md transition-colors">
+            <span data-clipboard-target="label">Copy join token only</span>
+          </button>
+          <span class="text-xs text-amber-300">Single use.<% if expires_at %> Expires in <%= distance_of_time_in_words(Time.current, expires_at) %>.<% end %></span>
+        </div>
+      </div>
+    <% end %>
+
     <div data-controller="clipboard" class="space-y-3">
       <div class="bg-bg-elevated rounded-md max-h-96 overflow-y-auto">
         <pre data-clipboard-target="source" class="px-3 py-3 text-xs font-mono text-content-secondary whitespace-pre-wrap break-words leading-relaxed"><%= integration_prompt %></pre>
@@ -97,10 +118,6 @@
             method: :post,
             data: { turbo_confirm: "This will invalidate your current user API token. Continue?" },
             class: "cursor-pointer text-xs text-content-muted hover:text-content-secondary transition-colors" %>
-        <% if join_token.present? %>
-          <% expires_at = join_token_expires_at.present? ? Time.zone.parse(join_token_expires_at) : nil %>
-          <span class="text-xs text-amber-300">Join token shown once.<% if expires_at %> Expires in <%= distance_of_time_in_words(Time.current, expires_at) %>.<% end %></span>
-        <% end %>
       </div>
     </div>
 
