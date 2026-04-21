@@ -81,41 +81,7 @@
     <% join_token = flash[:join_token_plaintext] %>
     <% join_token_expires_at = flash[:join_token_expires_at] %>
 
-    <% integration_prompt = <<~PROMPT %>
-      # ClawDeck multi-agent registration
-
-      Use the real multi-agent flow, not just presence headers.
-
-      API URL: #{api_url}
-      User API token: #{api_token}
-      Join token: #{join_token || 'Generate one in Settings'}
-
-      Register once with:
-      POST /agents/register
-      {
-        "join_token": "#{join_token || 'jt_xxx'}",
-        "agent": {
-          "name": "your-agent-name",
-          "hostname": "your-host",
-          "host_uid": "stable-host-id",
-          "platform": "linux-x64",
-          "version": "1.0.0",
-          "tags": ["openclaw"],
-          "metadata": {"runtime": "openclaw"}
-        }
-      }
-
-      Then store the returned agent_token and use it for:
-      - POST /agents/:id/heartbeat
-      - GET /tasks/next
-      - PATCH /tasks/:id/claim
-      - PATCH /tasks/:id
-      - PATCH /tasks/:id/complete
-      - commands, handoffs, artifacts
-
-      Do not rely on X-Agent-Name / X-Agent-Emoji alone. Those do not register a real agent.
-    PROMPT
-    %>
+    <% integration_prompt = agent_registration_prompt(api_url: api_url, api_token: api_token, join_token: join_token) %>
 
     <div data-controller="clipboard" class="space-y-3">
       <div class="bg-bg-elevated rounded-md max-h-96 overflow-y-auto">

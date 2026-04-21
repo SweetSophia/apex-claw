@@ -201,6 +201,46 @@ module ApplicationHelper
     registered_agents_for(user).exists?
   end
 
+  def agent_registration_prompt(api_url:, api_token:, join_token:)
+    token_value = join_token.presence || "Generate one in Settings"
+    example_join_token = join_token.presence || "jt_xxx"
+
+    [
+      "# ClawDeck multi-agent registration",
+      "",
+      "Use the real multi-agent flow, not just presence headers.",
+      "",
+      "API URL: #{api_url}",
+      "User API token: #{api_token}",
+      "Join token: #{token_value}",
+      "",
+      "Register once with:",
+      "POST /agents/register",
+      "{",
+      "  \"join_token\": \"#{example_join_token}\",",
+      "  \"agent\": {",
+      "    \"name\": \"your-agent-name\",",
+      "    \"hostname\": \"your-host\",",
+      "    \"host_uid\": \"stable-host-id\",",
+      "    \"platform\": \"linux-x64\",",
+      "    \"version\": \"1.0.0\",",
+      "    \"tags\": [\"openclaw\"],",
+      "    \"metadata\": {\"runtime\": \"openclaw\"}",
+      "  }",
+      "}",
+      "",
+      "Then store the returned agent_token and use it for:",
+      "- POST /agents/:id/heartbeat",
+      "- GET /tasks/next",
+      "- PATCH /tasks/:id/claim",
+      "- PATCH /tasks/:id",
+      "- PATCH /tasks/:id/complete",
+      "- commands, handoffs, artifacts",
+      "",
+      "Do not rely on X-Agent-Name / X-Agent-Emoji alone. Those do not register a real agent."
+    ].join("\n")
+  end
+
   private
 
   def command_bar_done_status
