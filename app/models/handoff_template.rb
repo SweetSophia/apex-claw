@@ -9,6 +9,7 @@ class HandoffTemplate < ApplicationRecord
   validates :name, presence: true
   validates :name, uniqueness: { scope: :user_id, message: "already exists in your workspace" }
   validates :context_template, presence: true
+  validate :agent_belongs_to_user
 
   scope :recent, -> { order(updated_at: :desc) }
   scope :auto_suggest, -> { where(auto_suggest: true) }
@@ -26,6 +27,12 @@ class HandoffTemplate < ApplicationRecord
   end
 
   private
+
+  def agent_belongs_to_user
+    return unless agent_id.present?
+    return errors.add(:agent_id, "could not be found") unless agent
+    errors.add(:agent_id, "must belong to you") unless agent.user_id == user_id
+  end
 
   def audit_ignored_change_keys
     super + [ "context_template" ]

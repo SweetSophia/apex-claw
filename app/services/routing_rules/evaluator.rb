@@ -37,10 +37,7 @@ module RoutingRules
 
     def assign_task(agent)
       @task.activity_source = "routing"
-      @task.assign_to_agent!
-
-      @task.activity_source = "routing"
-      @task.update!(assigned_agent: agent)
+      @task.update!(assigned_to_agent: true, assigned_at: Time.current, assigned_agent: agent)
     end
   end
 end

@@ -48,7 +48,7 @@ class HandoffTemplatesController < ApplicationController
   private
 
   def set_template
-    @template = current_user.handoff_templates.find(params[:id])
+    @template = current_user.handoff_templates.includes(:agent).find(params[:id])
   end
 
   def template_params

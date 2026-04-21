@@ -49,7 +49,7 @@ class RoutingRulesController < ApplicationController
   private
 
   def set_rule
-    @rule = current_user.routing_rules.find(params[:id])
+    @rule = current_user.routing_rules.includes(:agent).find(params[:id])
   end
 
   def rule_params

@@ -18,7 +18,6 @@ class Task < ApplicationRecord
   validates :name, presence: true
   validates :priority, inclusion: { in: priorities.keys }
   validates :status, inclusion: { in: statuses.keys }
-  validates :escalation_config, presence: true, allow_blank: true
 
   scope :with_skills, ->(*skill_names) { where.overlap(required_skills: skill_names) }
 

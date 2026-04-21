@@ -38,11 +38,11 @@ module Api
       private
 
       def set_rule
-        @rule = current_user.routing_rules.find(params[:id])
+        @rule = current_user.routing_rules.includes(:agent).find(params[:id])
       end
 
       def require_user_token!
-        return if current_agent_token.nil?
+        return unless current_agent_token
         render json: { error: "Forbidden" }, status: :forbidden
       end
 

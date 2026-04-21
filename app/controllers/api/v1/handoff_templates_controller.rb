@@ -4,7 +4,7 @@ module Api
       before_action :set_template, only: [ :show, :update, :destroy ]
 
       def index
-        templates = current_user.handoff_templates.recent
+        templates = current_user.handoff_templates.includes(:agent).recent
         render json: { templates: templates.map { |t| template_json(t) } }
       end
 
@@ -37,7 +37,7 @@ module Api
       private
 
       def set_template
-        @template = current_user.handoff_templates.find(params[:id])
+        @template = current_user.handoff_templates.includes(:agent).find(params[:id])
       end
 
       def template_params

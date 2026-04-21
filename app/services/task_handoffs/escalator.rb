@@ -71,11 +71,14 @@ module TaskHandoffs
         .find { |agent| suitable_target_agent?(agent, excluding: from_agent) }
     end
 
-    def build_context(_task, config)
+    def build_context(task, config)
       template = config["message_template"].presence || DEFAULT_MESSAGE_TEMPLATE
       timeout = block_timeout_minutes_for(config)
 
       template.gsub("{{timeout}}", timeout.to_s)
+              .gsub("{{task_name}}", task.name.to_s)
+              .gsub("{{task_status}}", task.status.to_s)
+              .gsub("{{task_priority}}", task.priority.to_s)
     end
 
     def escalation_config_for(task)
@@ -83,7 +86,7 @@ module TaskHandoffs
     end
 
     def timeout_elapsed?(task, config)
-      reference_time = task.updated_at || task.created_at
+      reference_time = task.created_at
       return false if reference_time.blank?
 
       reference_time <= block_timeout_minutes_for(config).minutes.ago
