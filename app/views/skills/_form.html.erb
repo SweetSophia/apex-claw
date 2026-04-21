@@ -1,0 +1,42 @@
+<%= form_with(
+      model: skill,
+      url: skill.new_record? ? skills_path : skill_path(skill),
+      method: skill.new_record? ? :post : :patch,
+      data: { turbo_submit: true, turbo_method: skill.new_record? ? :post : :patch }
+    ) do |f| %>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Name</label>
+      <%= f.text_field :name,
+            placeholder: "e.g. Code Review, Testing, Documentation",
+            class: "w-full max-w-md rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Description</label>
+      <%= f.text_field :description,
+            placeholder: "Brief description of what this skill does",
+            class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-[#888] mb-1.5">Skill Body</label>
+      <%= f.text_area :body,
+            placeholder: "Write the skill instructions here. This content will be injected into the agent's context...",
+            class: "w-full min-h-[150px] rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-mono placeholder:text-[#444] focus:outline-none focus:ring-1 focus:ring-amber-400/50 resize-y" %>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <%= f.check_box :shared, class: "rounded border-white/[0.08] bg-white/[0.03] text-amber-400 focus:ring-amber-400/50" %>
+      <label class="text-xs text-[#888]">Shared across workspace</label>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-[#555]">
+        <%= (skill.body || "").length %> characters
+      </span>
+      <%= f.submit skill.new_record? ? "Create Skill" : "Save Changes",
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-amber-400 text-[#161619] hover:bg-amber-500 transition-colors cursor-pointer" %>
+    </div>
+  </div>
+<% end %>

@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_many :boards, dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_many :agents, dependent: :destroy
+  has_many :skills, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
   has_many :join_tokens, dependent: :destroy
   has_many :created_join_tokens,

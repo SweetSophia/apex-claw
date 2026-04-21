@@ -35,6 +35,14 @@
     >
       Settings
     </button>
+    <button
+      data-agent-tabs-target="tab"
+      data-action="agent-tabs#switch"
+      data-panel="panel-skills"
+      class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
+    >
+      Skills
+    </button>
   </div>
 
   <%# Panels %>
@@ -62,6 +70,11 @@
     <%# Settings panel %>
     <div id="panel-settings" data-agent-tabs-target="panel" class="hidden">
       <%= render "agents/show_settings", agent: agent %>
+    </div>
+
+    <%# Skills panel %>
+    <div id="panel-skills" data-agent-tabs-target="panel" class="hidden">
+      <%= render "agents/show_skills", agent: agent, available_skills: agent.user.skills.where.not(id: agent.skill_ids).order(:name) %>
     </div>
   </div>
 </div>

@@ -29,6 +29,8 @@ class Agent < ApplicationRecord
   has_many :sent_handoffs, class_name: "TaskHandoff", foreign_key: :from_agent_id, dependent: :destroy
   has_many :received_handoffs, class_name: "TaskHandoff", foreign_key: :to_agent_id, dependent: :destroy
   belongs_to :archived_by, class_name: "User", optional: true
+  has_many :agent_skills, dependent: :destroy
+  has_many :skills, through: :agent_skills
 
   enum :status, {
     offline: 0,
@@ -44,6 +46,7 @@ class Agent < ApplicationRecord
 
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
+  scope :with_skill, ->(skill_id) { joins(:agent_skills).where(agent_skills: { skill_id: skill_id }) }
 
   after_update_commit :broadcast_dashboard_update, if: :dashboard_summary_changed?
 

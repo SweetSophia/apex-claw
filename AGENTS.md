@@ -281,6 +281,12 @@ Key design tokens:
 
 ## Development Guidelines
 
+## Workflow Reminder
+
+Recall Workflow Rules:
+Understand → build the best path (delegated based on Agent rules, split and parallelized as much as possible) → execute → verify.
+If delegating, launch the specialist in the same turn you mention it.
+
 ### Conventions
 - Never default to regular JS if Turbo/Hotwire can accomplish the same thing
 - Always follow Rails conventions and use DRY principles

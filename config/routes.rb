@@ -20,6 +20,7 @@ Rails.application.routes.draw do
         end
 
         resource :rate_limit, only: [ :show, :update ], controller: "agent_rate_limits"
+        resources :skills, only: [:index, :create, :destroy], controller: "agent_skills"
       end
 
       resources :agent_commands, only: [] do
@@ -34,6 +35,7 @@ Rails.application.routes.draw do
       end
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
+      resources :skills, only: [ :index, :show, :create, :update, :destroy ]
       resources :audit_logs, only: [ :index ]
 
       get "events", to: "events#index"
@@ -77,9 +79,13 @@ Rails.application.routes.draw do
       patch :update_settings
       patch :archive
       patch :restore
+      post :assign_skill
+      delete :remove_skill
     end
     resources :commands, only: [ :create ], controller: "agent_commands"
   end
+
+  resources :skills, only: [ :index, :show, :create, :update, :destroy ]
 
   resource :session, only: [:new, :create, :destroy]
   resource :registration, only: [:new, :create]
