@@ -18,7 +18,10 @@ class WorkflowDispatchJob < ApplicationJob
     return false unless cron.present?
 
     interval = parse_cron_to_interval(cron)
-    return false unless interval
+    if interval.nil?
+      Rails.logger.warn "Workflow #{workflow.id} has unparseable cron schedule: #{cron.inspect}"
+      return false
+    end
 
     workflow.last_run_at.nil? || workflow.last_run_at < interval.ago
   end

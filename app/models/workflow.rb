@@ -5,6 +5,7 @@ class Workflow < ApplicationRecord
 
   validates :name, presence: true
   validates :execution_mode, presence: true
+  validate :agent_belongs_to_user
 
   enum :trigger_type, {
     manual: 0,
@@ -39,5 +40,12 @@ class Workflow < ApplicationRecord
 
   def runnable?
     active? && agent.present? && !agent.archived?
+  end
+
+  private
+
+  def agent_belongs_to_user
+    return unless agent_id.present?
+    errors.add(:agent_id, "must belong to you") unless agent.user_id == user_id
   end
 end

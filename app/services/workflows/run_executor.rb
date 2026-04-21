@@ -43,10 +43,9 @@ module Workflows
         name: task_name,
         description: task_description,
         status: :up_next,
-        assigned_agent: agent,
-        assigned_to_agent: true,
-        assigned_at: Time.current
+        assigned_agent: agent
       )
+      task.assign_to_agent!
 
       mark_completed(result: { task_id: task.id, task_name: task.name })
     end

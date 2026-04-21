@@ -98,4 +98,13 @@ class WorkflowTest < ActiveSupport::TestCase
     workflow = Workflow.create!(user: @user, agent: @agent, name: "Archived Agent WF")
     assert_not workflow.runnable?
   end
+
+  # Cross-user isolation
+  test "rejects agent belonging to different user" do
+    other_user = users(:two)
+    other_agent = Agent.create!(user: other_user, name: "Other Agent", hostname: "other.local", host_uid: "uid-other", platform: "linux")
+    workflow = Workflow.new(user: @user, agent: other_agent, name: "Cross-User WF")
+    assert_not workflow.valid?
+    assert_includes workflow.errors[:agent_id], "must belong to you"
+  end
 end
