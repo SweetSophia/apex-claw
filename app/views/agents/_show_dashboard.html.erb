@@ -74,7 +74,7 @@
 
     <%# Skills panel %>
     <div id="panel-skills" data-agent-tabs-target="panel" class="hidden">
-      <%= render "agents/show_skills", agent: agent %>
+      <%= render "agents/show_skills", agent: agent, available_skills: agent.user.skills.where.not(id: agent.skill_ids).order(:name) %>
     </div>
   </div>
 </div>

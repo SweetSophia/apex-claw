@@ -109,7 +109,7 @@ class AgentsController < ApplicationController
     skill = current_user.skills.find(params[:skill_id])
     @agent.agent_skills.create!(skill: skill)
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-skills", partial: "agents/show_skills", locals: { agent: @agent }) }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-skills", partial: "agents/show_skills", locals: { agent: @agent, available_skills: @agent.user.skills.where.not(id: @agent.skill_ids).order(:name) }) }
       format.html { redirect_to agent_path(@agent), notice: "Skill assigned" }
     end
   rescue ActiveRecord::RecordInvalid => e
@@ -123,7 +123,7 @@ class AgentsController < ApplicationController
     agent_skill = @agent.agent_skills.find_by!(skill_id: params[:skill_id])
     agent_skill.destroy!
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-skills", partial: "agents/show_skills", locals: { agent: @agent }) }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-skills", partial: "agents/show_skills", locals: { agent: @agent, available_skills: @agent.user.skills.where.not(id: @agent.skill_ids).order(:name) }) }
       format.html { redirect_to agent_path(@agent), notice: "Skill removed" }
     end
   end

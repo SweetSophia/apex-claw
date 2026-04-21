@@ -1,8 +1,11 @@
 module Api
   module V1
     class SkillsController < BaseController
+      before_action :set_skill, only: [ :show, :update, :destroy ]
+      before_action :require_user_token!, only: [ :create, :update, :destroy ]
+
       def index
-        skills = current_user.skills.recent
+        skills = current_user.skills.recent.includes(:agent_skills)
         render json: { skills: skills.map { |skill| skill_json(skill) } }
       end
 
@@ -36,6 +39,12 @@ module Api
 
       def set_skill
         @skill = current_user.skills.find(params[:id])
+      end
+
+      def require_user_token!
+        return if current_agent_token.nil?
+
+        render json: { error: "Forbidden" }, status: :forbidden
       end
 
       def skill_params

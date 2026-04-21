@@ -1,9 +1,8 @@
 class SkillsController < ApplicationController
-  before_action :authenticate_user!
   before_action :set_skill, only: [:show, :update, :destroy]
 
   def index
-    @skills = current_user.skills.order(updated_at: :desc)
+    @skills = current_user.skills.includes(:agents).order(updated_at: :desc)
   end
 
   def show

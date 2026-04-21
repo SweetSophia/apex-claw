@@ -2,7 +2,8 @@ module Api
   module V1
     class AgentSkillsController < BaseController
       before_action :set_agent
-      before_action :require_agent_owner!
+      before_action :require_owner_user!
+      before_action :require_user_token!, only: [ :create, :destroy ]
       before_action :set_skill, only: [:destroy]
 
       def index
@@ -31,8 +32,22 @@ module Api
         @agent = Agent.find(params[:agent_id])
       end
 
-      def require_agent_owner!
-        return if @agent.user_id == current_user.id
+      # Verifies the authenticated identity is allowed to access @agent.
+      # Agent tokens may only manage skills for the agent they belong to.
+      # User tokens may manage any agent belonging to the user.
+      def require_owner_user!
+        if current_agent_token.present?
+          return if current_agent.id == @agent.id
+        else
+          return if @agent.user_id == current_user.id
+        end
+        render json: { error: "Forbidden" }, status: :forbidden
+      end
+
+      # Restricts write operations (create, destroy) to user-token auth only.
+      def require_user_token!
+        return if current_agent_token.nil?
+
         render json: { error: "Forbidden" }, status: :forbidden
       end
 

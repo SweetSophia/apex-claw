@@ -10,6 +10,12 @@ class Skill < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   def assigned_to_agent?(agent)
-    agents.include?(agent)
+    agents.exists?(agent.id)
+  end
+
+  private
+
+  def audit_ignored_change_keys
+    super + [ "body" ]
   end
 end

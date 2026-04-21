@@ -28,7 +28,7 @@
   </div>
 
   <%# Add skill dropdown %>
-  <% available_skills = agent.user.skills.where.not(id: agent.skill_ids).order(:name) %>
+  <% available_skills = local_assigns[:available_skills] || [] %>
   <% if available_skills.any? %>
     <div data-controller="dropdown" class="relative">
       <button type="button"
