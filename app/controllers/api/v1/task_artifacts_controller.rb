@@ -38,7 +38,7 @@ module Api
       def show
         blob = @artifact.file.blob
         response.headers["Content-Type"] = blob.content_type || @artifact.content_type
-        safe_name = @artifact.filename.gsub(/["\\]/, '')
+        safe_name = @artifact.filename.gsub(/["\\]/, "")
         response.headers["Content-Disposition"] = %(attachment; filename="#{safe_name}")
         response.headers["Content-Length"] = blob.byte_size.to_s
 

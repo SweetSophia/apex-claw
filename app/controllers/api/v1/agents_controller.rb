@@ -212,11 +212,11 @@ module Api
           val = p[key]
           next if val.nil?
           p[key] = case val
-            when Hash then val
-            when Array then val
-            when String
-              val.strip.empty? ? (key == :custom_env ? {} : []) : JSON.parse(val)
-            else {}
+          when Hash then val
+          when Array then val
+          when String
+            val.strip.empty? ? (key == :custom_env ? {} : []) : JSON.parse(val)
+          else {}
           end
         rescue JSON::ParserError
           raise InvalidJsonError
@@ -224,7 +224,7 @@ module Api
       end
 
       def json_parse_error
-        render json: { error: 'Invalid JSON format' }, status: :unprocessable_entity
+        render json: { error: "Invalid JSON format" }, status: :unprocessable_entity
       end
 
       def heartbeat_interval_seconds

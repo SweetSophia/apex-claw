@@ -13,7 +13,7 @@ class CommandBarExperienceTest < ActionDispatch::IntegrationTest
     get home_path
 
     assert_response :success
-    assert_match 'data-command-bar-search-items-value=', response.body
+    assert_match "data-command-bar-search-items-value=", response.body
     assert_match board_path(@board, task_id: @task.id), response.body
     assert_match "What should I focus on?", response.body
   end

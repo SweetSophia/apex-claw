@@ -159,15 +159,15 @@ class AgentsController < ApplicationController
       next if val.nil?
 
       attrs[key] = case val
-        when Hash, Array then val
-        when String
-          stripped = val.strip
-          if stripped.empty?
-            key == :custom_env ? {} : []
-          else
-            JSON.parse(stripped)
-          end
-        else key == :custom_env ? {} : []
+      when Hash, Array then val
+      when String
+        stripped = val.strip
+        if stripped.empty?
+          key == :custom_env ? {} : []
+        else
+          JSON.parse(stripped)
+        end
+      else key == :custom_env ? {} : []
       end
     end
     true

@@ -38,5 +38,5 @@ Rails.application.config.content_security_policy do |policy|
   policy.upgrade_insecure_requests :always if Rails.env.production? && ssl_enabled
 end
 
-Rails.application.config.content_security_policy_nonce_generator = -> request { SecureRandom.base64(16) }
+Rails.application.config.content_security_policy_nonce_generator = ->(request) { SecureRandom.base64(16) }
 Rails.application.config.content_security_policy_nonce_directives = %w[script-src]
