@@ -61,9 +61,21 @@ module Api
           value.to_unsafe_h.transform_values { |nested| normalize_payload(nested) }
         when Array
           value.map { |nested| normalize_payload(nested) }
+        when String
+          coerce_scalar(value)
         else
           value
         end
+      end
+
+      def coerce_scalar(value)
+        return true if value == "true"
+        return false if value == "false"
+        return nil if value == "null"
+        return value.to_i if value.match?(/\A-?\d+\z/)
+        return value.to_f if value.match?(/\A-?\d+\.\d+\z/)
+
+        value
       end
 
       def command_preset_json(preset)

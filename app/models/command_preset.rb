@@ -14,7 +14,7 @@ class CommandPreset < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :recent, -> { order(updated_at: :desc) }
-  scope :for_agent, ->(agent) { where(agent_id: [nil, agent&.id].compact.uniq) }
+  scope :for_agent, ->(agent) { where(agent_id: [nil, agent&.id].uniq) }
 
   def applicable_to?(target_agent)
     return false unless active?

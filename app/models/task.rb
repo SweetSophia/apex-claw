@@ -48,7 +48,8 @@ class Task < ApplicationRecord
   scope :assigned_to_agent, -> { where(assigned_to_agent: true).reorder(assigned_at: :asc) }
   scope :unassigned, -> { where(assigned_to_agent: false) }
   scope :eligible_for_agent, ->(agent) do
-    return none unless agent&.active_for_work?
+    return none unless agent
+    return none if agent.archived? || agent.disabled? || agent.draining?
 
     where(status: :up_next, blocked: false, claimed_by_agent_id: nil)
       .where(assigned_agent_id: [ nil, agent.id ])
