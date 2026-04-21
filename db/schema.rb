@@ -45,6 +45,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
   create_table "agent_commands", force: :cascade do |t|
     t.datetime "acked_at"
     t.bigint "agent_id", null: false
+    t.bigint "command_preset_id"
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.string "kind", null: false
@@ -55,6 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
     t.datetime "updated_at", null: false
     t.index ["agent_id", "state"], name: "index_agent_commands_on_agent_id_and_state"
     t.index ["agent_id"], name: "index_agent_commands_on_agent_id"
+    t.index ["command_preset_id"], name: "index_agent_commands_on_command_preset_id"
     t.index ["requested_by_user_id"], name: "index_agent_commands_on_requested_by_user_id"
   end
 
@@ -166,6 +168,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
     t.bigint "user_id", null: false
     t.index ["user_id", "position"], name: "index_boards_on_user_id_and_position"
     t.index ["user_id"], name: "index_boards_on_user_id"
+  end
+
+  create_table "command_presets", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.bigint "agent_id"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["agent_id"], name: "index_command_presets_on_agent_id"
+    t.index ["user_id", "active"], name: "index_command_presets_on_user_id_and_active"
+    t.index ["user_id", "name"], name: "index_command_presets_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_command_presets_on_user_id"
   end
 
   create_table "join_tokens", force: :cascade do |t|
@@ -604,6 +622,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agent_commands", "agents"
+  add_foreign_key "agent_commands", "command_presets", on_delete: :nullify
   add_foreign_key "agent_commands", "users", column: "requested_by_user_id"
   add_foreign_key "agent_rate_limits", "agents"
   add_foreign_key "agent_tokens", "agents"
@@ -612,6 +631,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
   add_foreign_key "api_tokens", "users"
   add_foreign_key "api_usage_records", "users"
   add_foreign_key "boards", "users"
+  add_foreign_key "command_presets", "agents", on_delete: :nullify
+  add_foreign_key "command_presets", "users", on_delete: :cascade
   add_foreign_key "join_tokens", "users"
   add_foreign_key "join_tokens", "users", column: "created_by_user_id"
   add_foreign_key "projects", "users"
