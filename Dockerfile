@@ -39,7 +39,7 @@ COPY --chown=appuser:appuser . .
 # This makes first container start much faster and ensures assets exist
 # even if the DB isn't ready at startup. Startup precompile in
 # docker-compose.prod.yml is a fallback that runs after DB is healthy.
-RUN SECRET_KEY_BASE=dummy RAILS_SERVE_STATIC_FILES=1 bundle exec rails assets:precompile || true
+RUN SECRET_KEY_BASE=dummy DATABASE_URL=postgres://localhost/dummy RAILS_SERVE_STATIC_FILES=1 bundle exec rails assets:precompile
 
 # Expose port
 EXPOSE 3000
