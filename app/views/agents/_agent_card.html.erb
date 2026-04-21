@@ -1,69 +1,123 @@
 <% health_stats ||= {} %>
-<div id="agent_<%= agent.id %>" class="block p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center text-lg">
+<% completed_count = health_stats.fetch(:completed, agent.recent_completed_tasks_count) %>
+<% assigned_count = health_stats.fetch(:assigned_count, agent.assigned_tasks.count) %>
+<% claimed_count = health_stats.fetch(:claimed_count, agent.claimed_tasks.count) %>
+<% pending_count = health_stats.fetch(:pending, agent.pending_commands_count) %>
+<% error_rate = health_stats.fetch(:error_rate, agent.recent_command_error_rate) %>
+<% alerts = agent.health_alerts(health_stats: health_stats) %>
+<% status_classes = case agent.status
+   when "online" then "bg-emerald-500/20 text-emerald-300"
+   when "draining" then "bg-yellow-500/20 text-yellow-300"
+   when "disabled" then "bg-red-500/20 text-red-300"
+   else "bg-white/[0.06] text-[#8a8a92]"
+   end %>
+<% health_classes = case agent.health_status
+   when :healthy then "bg-emerald-500/15 text-emerald-300"
+   when :degraded then "bg-amber-500/15 text-amber-300"
+   when :draining then "bg-yellow-500/15 text-yellow-300"
+   when :disabled then "bg-red-500/15 text-red-300"
+   else "bg-white/[0.06] text-[#8a8a92]"
+   end %>
+<% last_seen_classes = case agent.last_seen_state
+   when :live then "bg-emerald-500/15 text-emerald-300"
+   when :stale then "bg-amber-500/15 text-amber-300"
+   when :disabled then "bg-red-500/15 text-red-300"
+   when :never then "bg-white/[0.06] text-[#8a8a92]"
+   else "bg-white/[0.06] text-[#8a8a92]"
+   end %>
+
+<div id="agent_<%= agent.id %>" class="block rounded-2xl border border-white/[0.08] bg-[#1e1e22] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.04]">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="min-w-0 flex items-start gap-3">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-black/20 text-lg shadow-inner shadow-black/20">
         <%= agent.status == "online" ? "🟢" : agent.status == "draining" ? "🟡" : agent.status == "disabled" ? "🔴" : "⚫" %>
       </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-bold text-[#e0e0e0]"><%= agent.name %></span>
-          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= agent.status == "online" ? "bg-emerald-500/20 text-emerald-400" : agent.status == "draining" ? "bg-yellow-500/20 text-yellow-400" : agent.status == "disabled" ? "bg-red-500/20 text-red-400" : "bg-white/[0.06] text-[#666]" %>"><%= agent.status.humanize %></span>
-          <% badge_classes = case agent.health_status
-             when :healthy then "bg-emerald-500/15 text-emerald-300"
-             when :degraded then "bg-amber-500/15 text-amber-300"
-             when :draining then "bg-yellow-500/15 text-yellow-300"
-             when :disabled then "bg-red-500/15 text-red-300"
-             else "bg-white/[0.06] text-[#777]"
-             end %>
-          <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= badge_classes %>"><%= agent.health_badge_label %></span>
+
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="truncate text-sm font-bold text-[#e0e0e0]"><%= agent.name %></span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= status_classes %>"><%= agent.status.humanize %></span>
+          <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= health_classes %>"><%= agent.health_badge_label %></span>
         </div>
-        <div class="text-xs text-[#555] mt-0.5 flex items-center gap-2">
+
+        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#666]">
           <% if agent.hostname.present? %>
             <span><%= agent.hostname %></span>
+            <span class="text-[#444]">•</span>
           <% end %>
+          <span><%= agent.runtime_provider %></span>
           <% if agent.version.present? %>
-            <span class="text-[#444]">v<%= agent.version %></span>
+            <span class="text-[#444]">•</span>
+            <span>v<%= agent.version %></span>
+          <% end %>
+          <% if agent.platform.present? %>
+            <span class="text-[#444]">•</span>
+            <span><%= agent.platform %></span>
           <% end %>
         </div>
       </div>
     </div>
-    <div class="text-right">
-      <% if agent.last_heartbeat_at %>
-        <div class="text-xs text-[#555]">
-          <%= time_ago_in_words(agent.last_heartbeat_at) %> ago
-        </div>
-      <% else %>
-        <div class="text-xs text-[#444]">Never connected</div>
-      <% end %>
+
+    <div class="flex flex-col items-start gap-2 text-left lg:items-end lg:text-right">
+      <div>
+        <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Last seen</div>
+        <div class="mt-1 text-sm font-semibold text-[#e0e0e0]"><%= agent.last_seen_label %></div>
+      </div>
+
+      <div class="flex flex-wrap gap-1.5 lg:justify-end">
+        <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= last_seen_classes %>"><%= agent.last_seen_state.to_s.humanize %></span>
+        <% if pending_count.positive? %>
+          <span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fbbf24]"><%= pluralize(pending_count, "pending command") %></span>
+        <% end %>
+      </div>
+
       <% if agent.tags.any? %>
-        <div class="flex gap-1 mt-1 justify-end">
+        <div class="flex flex-wrap gap-1 lg:justify-end">
           <% agent.tags.first(3).each do |tag| %>
-            <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.06] text-[#666]"><%= tag %></span>
+            <span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[9px] font-medium text-[#8a8a92]"><%= tag %></span>
           <% end %>
         </div>
       <% end %>
     </div>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
-      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Uptime</div>
-      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= agent.uptime_label %></div>
+  <div class="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Uptime</div>
+      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= agent.uptime_label %></div>
+      <div class="mt-1 text-[11px] <%= agent.task_runner_active? ? 'text-emerald-300' : 'text-amber-300' %>"><%= agent.task_runner_active? ? "Runner active" : "Runner idle" %></div>
     </div>
-    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
-      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Throughput 24h</div>
-      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= health_stats.fetch(:completed, agent.recent_completed_tasks_count) %> done</div>
+
+    <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Open Tasks</div>
+      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= claimed_count %> claimed</div>
+      <div class="mt-1 text-[11px] text-[#666]"><%= assigned_count %> assigned</div>
     </div>
-    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
-      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Command Errors</div>
-      <div class="text-sm text-[#d5d5d5] font-semibold mt-1"><%= health_stats.fetch(:error_rate, agent.recent_command_error_rate) %>%</div>
+
+    <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Command Health</div>
+      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= error_rate %>% error rate</div>
+      <div class="mt-1 text-[11px] text-[#666]"><%= pending_count %> pending now</div>
     </div>
-    <div class="rounded-lg bg-black/20 border border-white/[0.05] px-3 py-2">
-      <div class="text-[10px] uppercase tracking-wider text-[#555] font-semibold">Runner</div>
-      <div class="text-sm font-semibold mt-1 <%= agent.task_runner_active? ? 'text-emerald-300' : 'text-amber-300' %>">
-        <%= agent.task_runner_active? ? 'Active' : 'Idle' %>
-      </div>
+
+    <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Throughput 24h</div>
+      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= completed_count %> tasks done</div>
+      <div class="mt-1 text-[11px] text-[#666]"><%= agent.runtime_provider %> runtime</div>
     </div>
   </div>
+
+  <% if alerts.any? %>
+    <div class="mt-4 flex flex-wrap items-center gap-2 rounded-xl border <%= agent.last_seen_state == :stale ? 'border-amber-400/20 bg-amber-400/10' : 'border-white/[0.06] bg-white/[0.03]' %> px-3 py-2 text-xs text-[#c9c9ce]">
+      <span class="font-semibold <%= agent.last_seen_state == :stale ? 'text-amber-300' : 'text-[#fbbf24]' %>">Attention</span>
+      <% alerts.first(2).each do |alert| %>
+        <span class="text-[#444]">•</span>
+        <span><%= alert %></span>
+      <% end %>
+      <% if alerts.size > 2 %>
+        <span class="text-[#444]">•</span>
+        <span class="text-[#888]">+<%= alerts.size - 2 %> more</span>
+      <% end %>
+    </div>
+  <% end %>
 </div>

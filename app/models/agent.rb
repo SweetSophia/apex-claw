@@ -21,6 +21,7 @@ class Agent < ApplicationRecord
   has_one :agent_rate_limit, dependent: :destroy
   has_many :agent_tokens, dependent: :destroy
   has_many :agent_commands, dependent: :destroy
+  has_many :command_presets, dependent: :nullify
   has_many :task_activities,
            class_name: "TaskActivity",
            foreign_key: :actor_agent_id,
@@ -258,6 +259,33 @@ class Agent < ApplicationRecord
 
   def pending_commands_count
     agent_commands.pending.count
+  end
+
+  def runtime_provider
+    metadata_value("provider").presence || model.presence || "OpenClaw"
+  end
+
+  def last_seen_label
+    return "Never" if last_heartbeat_at.blank?
+
+    "#{ActionController::Base.helpers.time_ago_in_words(last_heartbeat_at)} ago"
+  end
+
+  def last_seen_state
+    return :never if last_heartbeat_at.blank?
+    return :stale if heartbeat_stale?
+
+    online? ? :live : status.to_sym
+  end
+
+  def health_alerts(health_stats: nil)
+    stats = health_stats || self.class.health_stats_for([self])[id] || {}
+    alerts = []
+    alerts << "Heartbeat is stale" if heartbeat_stale?
+    alerts << "Task runner is idle" unless task_runner_active?
+    alerts << "#{stats[:failed]} command failures in 24h" if stats[:failed].to_i.positive?
+    alerts << "#{stats[:pending]} commands pending" if stats[:pending].to_i >= 3
+    alerts
   end
 
   private

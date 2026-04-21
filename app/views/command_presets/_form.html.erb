@@ -1,0 +1,76 @@
+<% agents ||= current_user.agents.active.order(:name) %>
+
+<%= form_with(
+      model: command_preset,
+      url: command_preset.new_record? ? command_presets_path : command_preset_path(command_preset),
+      method: command_preset.new_record? ? :post : :patch,
+      data: { turbo_submit: true, turbo_method: command_preset.new_record? ? :post : :patch }
+    ) do |f| %>
+  <% if command_preset.errors.any? %>
+    <div class="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+      <div class="font-semibold"><%= pluralize(command_preset.errors.count, "issue") %> blocked this preset:</div>
+      <ul class="mt-1 list-disc pl-4">
+        <% command_preset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="space-y-4">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-xs font-medium text-[#888]">Name</label>
+        <%= f.text_field :name,
+              placeholder: "e.g. Reload runtime config, Maintenance drain",
+              class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-xs font-medium text-[#888]">Command Kind</label>
+        <%= f.select :kind,
+              AgentCommand::ALLOWED_KINDS.map { |kind| [kind.humanize, kind] },
+              {},
+              class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+    </div>
+
+    <div>
+      <label class="mb-1.5 block text-xs font-medium text-[#888]">Description</label>
+      <%= f.text_field :description,
+            placeholder: "When should operators use this preset?",
+            class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-[minmax(0,1fr),auto] md:items-end">
+      <div>
+        <label class="mb-1.5 block text-xs font-medium text-[#888]">Applies To</label>
+        <%= f.select :agent_id,
+              agents.map { |agent| [agent.name, agent.id] },
+              { prompt: "All agents (global preset)" },
+              class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+
+      <label class="flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-[#888]">
+        <%= f.check_box :active, class: "rounded border-white/[0.08] bg-white/[0.03] text-amber-400 focus:ring-amber-400/50" %>
+        Active preset
+      </label>
+    </div>
+
+    <div class="rounded-lg border border-white/[0.08] bg-black/10 px-3 py-3 text-xs text-[#666]">
+      <% if command_preset.payload.present? %>
+        <div class="mb-2 font-semibold uppercase tracking-[0.18em] text-[#888]">Stored Payload</div>
+        <pre class="overflow-x-auto text-[11px] text-[#a8a8ae]"><%= JSON.pretty_generate(command_preset.payload) %></pre>
+        <div class="mt-2 text-[#555]">Payload stays unchanged when editing from the UI. Use the API for complex payload changes.</div>
+      <% else %>
+        This UI creates presets with an empty payload by default. Use the API if you need advanced payload overrides.
+      <% end %>
+    </div>
+
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-[#555]">Global presets can be run from any compatible agent panel.</span>
+      <%= f.submit command_preset.new_record? ? "Create Preset" : "Save Changes",
+            class: "cursor-pointer rounded-md bg-amber-400 px-3 py-1.5 text-xs font-medium text-[#161619] transition-colors hover:bg-amber-500" %>
+    </div>
+  </div>
+<% end %>
