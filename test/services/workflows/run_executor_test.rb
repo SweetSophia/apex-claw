@@ -10,9 +10,11 @@ class RunExecutorTest < ActiveSupport::TestCase
 
   test "creates a task and assigns to agent" do
     run = @workflow.trigger!(trigger_type: :manual)
+    created_task = nil
 
     assert_difference "Task.count", 1 do
       Workflows::RunExecutor.new(run).execute!
+      created_task = Task.order(:created_at).last
     end
 
     run.reload

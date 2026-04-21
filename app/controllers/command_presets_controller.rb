@@ -62,6 +62,8 @@ class CommandPresetsController < ApplicationController
     case value
     when ActionController::Parameters
       value.to_unsafe_h.transform_values { |nested| normalize_payload(nested) }
+    when Hash
+      value.transform_values { |nested| normalize_payload(nested) }
     when Array
       value.map { |nested| normalize_payload(nested) }
     when String
