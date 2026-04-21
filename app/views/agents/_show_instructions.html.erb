@@ -4,8 +4,7 @@
     Define this agent's role, expertise, and working style. These instructions are injected into the agent's context for every task.
   </p>
 
-  <%= form_with model: agent, url: api_v1_agent_path(agent), method: :patch,
-        data: { turbo_frame: "agent_show_instructions_#{agent.id}" } do |f| %>
+  <%= form_with model: agent, url: api_v1_agent_path(agent), method: :patch do |f| %>
     <div class="mb-4">
       <%= f.text_area :instructions,
             value: agent.instructions,

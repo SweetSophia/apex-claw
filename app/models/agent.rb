@@ -263,7 +263,11 @@ class Agent < ApplicationRecord
   end
 
   def dashboard_summary_changed?
-    (previous_changes.keys & %w[name status hostname platform version last_heartbeat_at metadata tags archived_at]).any?
+    (previous_changes.keys & %w[
+      name status hostname platform version last_heartbeat_at
+      metadata tags archived_at instructions model
+      max_concurrent_tasks custom_env custom_args
+    ]).any?
   end
 
   def metadata_value(key)

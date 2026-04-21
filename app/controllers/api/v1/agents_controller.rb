@@ -153,19 +153,44 @@ module Api
       end
 
       def register_params
-        params.fetch(:agent, ActionController::Parameters.new).permit(
+        p = params.fetch(:agent, ActionController::Parameters.new).permit(
           :name, :hostname, :host_uid, :platform, :version,
           :instructions, :model, :max_concurrent_tasks,
-          tags: [], metadata: {}, custom_env: {}, custom_args: []
+          :custom_env, :custom_args,
+          tags: [], metadata: {}
         )
+        parse_json_fields(p)
+        p
       end
 
       def update_params
-        params.fetch(:agent, ActionController::Parameters.new).permit(
+        p = params.fetch(:agent, ActionController::Parameters.new).permit(
           :name, :status,
           :instructions, :model, :max_concurrent_tasks,
-          tags: [], metadata: {}, custom_env: {}, custom_args: []
+          :custom_env, :custom_args,
+          tags: [], metadata: {}
         )
+        parse_json_fields(p)
+        p
+      end
+
+      # Parse JSON-encoded string values for custom_env and custom_args.
+      # Accepts either a pre-parsed Hash/Array (from other clients) or a
+      # JSON string (from the web UI form fields).
+      def parse_json_fields(p)
+        %i[custom_env custom_args].each do |key|
+          val = p[key]
+          next if val.nil?
+          p[key] = case val
+            when Hash then val
+            when Array then val
+            when String
+              val.strip.empty? ? (key == :custom_env ? {} : []) : JSON.parse(val)
+            else {}
+          end
+        rescue JSON::ParserError
+          p[key] = (key == :custom_env ? {} : [])
+        end
       end
 
       def heartbeat_interval_seconds
