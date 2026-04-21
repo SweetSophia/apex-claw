@@ -1,0 +1,41 @@
+<% conditions = rule.conditions.presence || {} %>
+<% summary_parts = [] %>
+<% summary_parts << "skills: #{Array(conditions["skills"]).join(", ")}" if Array(conditions["skills"]).any? %>
+<% summary_parts << "priority: #{conditions["priority"]}" if conditions["priority"].present? %>
+<% summary_parts << "tags: #{Array(conditions["tags"]).join(", ")}" if Array(conditions["tags"]).any? %>
+<% summary_parts << "status: #{conditions["status"]}" if conditions["status"].present? %>
+
+<%= tag.div id: dom_id(rule), class: "mb-3 p-4 rounded-lg bg-[#1e1e22] border border-white/[0.08] group" do %>
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <h3 class="text-sm font-medium text-[#e0e0e0] truncate"><%= rule.name %></h3>
+        <span class="text-[10px] px-1.5 py-0.5 rounded <%= rule.active? ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/[0.05] text-[#666]' %>">
+          <%= rule.active? ? "Active" : "Inactive" %>
+        </span>
+      </div>
+
+      <div class="text-xs text-[#666] mt-1">
+        Agent: <span class="text-[#e0e0e0]"><%= rule.agent&.name || "Unassigned" %></span>
+      </div>
+
+      <div class="text-xs text-[#555] mt-2">
+        <%= summary_parts.any? ? summary_parts.join(" · ") : "Matches all tasks" %>
+        · Priority: <%= rule.priority %>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <%= button_to(rule.active? ? "Disable" : "Enable",
+            routing_rule_path(rule),
+            method: :patch,
+            params: { routing_rule: { active: !rule.active? } },
+            form: { data: { turbo_submit: true, turbo_method: :patch } },
+            class: "text-xs text-amber-400 hover:text-amber-300 transition-colors") %>
+      <%= link_to "Edit", routing_rule_path(rule), class: "text-xs text-[#888] hover:text-amber-400 transition-colors" %>
+      <%= button_to "Delete", routing_rule_path(rule), method: :delete,
+            form: { data: { turbo_confirm: "Delete this routing rule?" } },
+            class: "text-xs text-red-400 hover:text-red-300 transition-colors" %>
+    </div>
+  </div>
+<% end %>

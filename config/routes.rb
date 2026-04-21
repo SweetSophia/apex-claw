@@ -36,6 +36,8 @@ Rails.application.routes.draw do
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
       resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+      resources :handoff_templates, only: [ :index, :show, :create, :update, :destroy ]
+      resources :routing_rules, only: [ :index, :show, :create, :update, :destroy ]
       resources :workflows, only: [ :index, :show, :create, :update, :destroy ] do
         member do
           post :run
@@ -64,6 +66,7 @@ Rails.application.routes.draw do
           patch :assign
           patch :unassign
           post :handoff, to: "task_handoffs#create"
+          get :handoff_suggestions, to: "task_handoffs#suggestions"
         end
 
         resources :artifacts, only: [ :index, :create, :show ], controller: "task_artifacts", param: :artifact_id
@@ -91,6 +94,9 @@ Rails.application.routes.draw do
   end
 
   resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+
+  resources :handoff_templates, only: [ :index, :show, :create, :update, :destroy ]
+  resources :routing_rules, only: [ :index, :show, :create, :update, :destroy ]
 
   resources :workflows, only: [ :index, :show, :create, :update, :destroy ] do
     member do

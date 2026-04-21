@@ -6,6 +6,7 @@ class TaskHandoff < ApplicationRecord
   belongs_to :task
   belongs_to :from_agent, class_name: "Agent"
   belongs_to :to_agent, class_name: "Agent"
+  belongs_to :handoff_template, optional: true
 
   enum :status, { pending: 0, accepted: 1, rejected: 2, expired: 3 }, default: :pending
 
@@ -15,6 +16,7 @@ class TaskHandoff < ApplicationRecord
 
   scope :for_agent, ->(agent_id) { where(from_agent_id: agent_id).or(where(to_agent_id: agent_id)) }
   scope :for_task, ->(task_id) { where(task_id: task_id) }
+  scope :escalated, -> { where(escalation: true) }
 
   after_create_commit :broadcast_handoff_created
 
