@@ -5,7 +5,7 @@ module Api
       MAX_HEARTBEAT_INTERVAL = 300
 
       skip_before_action :authenticate_api_token, only: :register
-      before_action :set_agent, only: [ :show, :update, :rotate_token, :revoke_token ]
+      before_action :set_agent, only: [ :show, :update, :rotate_token, :revoke_token, :archive, :restore, :tasks ]
       before_action :set_agent_for_heartbeat, only: [ :heartbeat ]
       before_action :require_current_agent!, only: :heartbeat
       before_action :require_agent_self!, only: :heartbeat
@@ -74,6 +74,41 @@ module Api
         }
       end
 
+      def archive
+        if @agent.archived?
+          render json: { error: "Agent is already archived" }, status: :unprocessable_entity
+          return
+        end
+        @agent.archive!(current_user)
+        render json: agent_json(@agent)
+      end
+
+      def restore
+        if !@agent.archived?
+          render json: { error: "Agent is not archived" }, status: :unprocessable_entity
+          return
+        end
+        @agent.restore!
+        render json: agent_json(@agent)
+      end
+
+      def tasks
+        claimed = @agent.claimed_tasks
+          .includes(:board)
+          .order(Arel.sql("CASE WHEN status = 'done' THEN 1 ELSE 0 END, completed_at DESC NULLS LAST, updated_at DESC"))
+          .limit(50)
+        assigned = @agent.assigned_tasks
+          .where.not(id: claimed.select(:id))
+          .includes(:board)
+          .order(updated_at: :desc)
+          .limit(50)
+
+        render json: {
+          claimed: claimed.map { |t| task_json(t) },
+          assigned: assigned.map { |t| task_json(t) }
+        }
+      end
+
       def index
         agents = current_user.agents.order(created_at: :desc)
         render json: agents.map { |agent| agent_json(agent) }
@@ -118,13 +153,19 @@ module Api
       end
 
       def register_params
-        params.fetch(:agent, ActionController::Parameters.new)
-          .permit(:name, :hostname, :host_uid, :platform, :version, tags: [], metadata: {})
+        params.fetch(:agent, ActionController::Parameters.new).permit(
+          :name, :hostname, :host_uid, :platform, :version,
+          :instructions, :model, :max_concurrent_tasks,
+          tags: [], metadata: {}, custom_env: {}, custom_args: []
+        )
       end
 
       def update_params
-        params.fetch(:agent, ActionController::Parameters.new)
-          .permit(:name, :status, tags: [], metadata: {})
+        params.fetch(:agent, ActionController::Parameters.new).permit(
+          :name, :status,
+          :instructions, :model, :max_concurrent_tasks,
+          tags: [], metadata: {}, custom_env: {}, custom_args: []
+        )
       end
 
       def heartbeat_interval_seconds
@@ -143,9 +184,29 @@ module Api
           version: agent.version,
           tags: agent.tags || [],
           metadata: agent.metadata || {},
+          instructions: agent.instructions,
+          custom_env: agent.custom_env || {},
+          custom_args: agent.custom_args || [],
+          model: agent.model,
+          max_concurrent_tasks: agent.max_concurrent_tasks,
+          archived_at: agent.archived_at&.iso8601,
           last_heartbeat_at: agent.last_heartbeat_at&.iso8601,
           created_at: agent.created_at.iso8601,
           updated_at: agent.updated_at.iso8601
+        }
+      end
+
+      def task_json(task)
+        {
+          id: task.id,
+          name: task.name,
+          status: task.status,
+          priority: task.priority,
+          board_id: task.board_id,
+          board_name: task.board.name,
+          completed_at: task.completed_at&.iso8601,
+          updated_at: task.updated_at.iso8601,
+          created_at: task.created_at.iso8601
         }
       end
     end

@@ -312,6 +312,128 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Rate limit exceeded", response.parsed_body["error"]
   end
 
+  # ─── Profile fields ──────────────────────────────────────────────────────
+
+  test "patch updates agent profile fields" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token),
+          params: {
+            agent: {
+              instructions: "You are a code reviewer.",
+              custom_env: { "OPENAI_KEY" => "secret" },
+              custom_args: ["--verbose"],
+              model: "claude-sonnet-4",
+              max_concurrent_tasks: 3
+            }
+          }
+
+    assert_response :success
+    @agent.reload
+    assert_equal "You are a code reviewer.", @agent.instructions
+    assert_equal({ "OPENAI_KEY" => "secret" }, @agent.custom_env)
+    assert_equal(["--verbose"], @agent.custom_args)
+    assert_equal "claude-sonnet-4", @agent.model
+    assert_equal 3, @agent.max_concurrent_tasks
+  end
+
+  test "patch rejects max_concurrent_tasks outside valid range" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token),
+          params: { agent: { max_concurrent_tasks: 999 } }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "register accepts profile fields" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Profile Agent",
+        hostname: "profile.local",
+        host_uid: "profile-uid",
+        platform: "linux",
+        instructions: "You are a researcher.",
+        model: "claude-3-opus",
+        max_concurrent_tasks: 2
+      }
+    }
+
+    assert_response :created
+    body = response.parsed_body
+    assert_equal "You are a researcher.", body.dig("agent", "instructions")
+    assert_equal "claude-3-opus", body.dig("agent", "model")
+    assert_equal 2, body.dig("agent", "max_concurrent_tasks")
+  end
+
+  # ─── Archive / Restore ─────────────────────────────────────────────────
+
+  test "archive marks agent as archived" do
+    post "/api/v1/agents/#{@agent.id}/archive", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].present?
+    @agent.reload
+    assert @agent.archived?
+  end
+
+  test "restore clears archived state" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    post "/api/v1/agents/#{@agent.id}/restore", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].nil?
+    @agent.reload
+    assert_not @agent.archived?
+  end
+
+  test "archive is scoped to owner" do
+    post "/api/v1/agents/#{@other_agent.id}/archive", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "restore is scoped to owner" do
+    @other_agent.update!(archived_at: Time.current)
+    post "/api/v1/agents/#{@other_agent.id}/restore", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "cannot archive already archived agent" do
+    @agent.update!(archived_at: Time.current)
+    post "/api/v1/agents/#{@agent.id}/archive", headers: auth_header(@user_token)
+    assert_response :unprocessable_entity
+  end
+
+  test "cannot restore non-archived agent" do
+    post "/api/v1/agents/#{@agent.id}/restore", headers: auth_header(@user_token)
+    assert_response :unprocessable_entity
+  end
+
+  # ─── Tasks endpoint ────────────────────────────────────────────────────
+
+  test "tasks returns claimed and assigned tasks" do
+    board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
+    Task.create!(user: @user, board: board, name: "Claimed Task", claimed_by_agent: @agent, status: :in_progress)
+    Task.create!(user: @user, board: board, name: "Assigned Task", assigned_agent: @agent, status: :up_next)
+    Task.create!(user: @user, board: board, name: "Done Task", claimed_by_agent: @agent, status: :done, completed: true, completed_at: Time.current)
+
+    get "/api/v1/agents/#{@agent.id}/tasks", headers: auth_header(@user_token)
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal 2, body["claimed"].length
+    assert_equal 1, body["assigned"].length
+    task_names = body["claimed"].map { |t| t["name"] }
+    assert_includes task_names, "Done Task"
+    refute_includes task_names, "Assigned Task"
+  end
+
+  test "tasks is scoped to owner" do
+    get "/api/v1/agents/#{@other_agent.id}/tasks", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
   private
 
   def auth_header(token)

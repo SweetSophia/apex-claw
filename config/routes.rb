@@ -14,6 +14,9 @@ Rails.application.routes.draw do
           post :rotate_token
           post :revoke_token
           post :commands, to: "agent_commands#enqueue"
+          post :archive
+          post :restore
+          get :tasks
         end
 
         resource :rate_limit, only: [ :show, :update ], controller: "agent_rate_limits"

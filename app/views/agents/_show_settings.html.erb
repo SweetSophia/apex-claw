@@ -1,0 +1,69 @@
+<div class="max-w-2xl">
+  <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Agent Settings</div>
+
+  <div class="space-y-6">
+    <%# Status control %>
+    <div>
+      <div class="text-xs font-medium text-[#888] mb-2">Status</div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#e0e0e0]"><%= agent.status.humanize %></span>
+        <% if agent.status == "online" %>
+          <%= button_to "Drain",
+                api_v1_agent_path(agent, agent: { status: :draining }),
+                method: :patch,
+                class: "px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors" %>
+        <% elsif agent.status == "draining" %>
+          <%= button_to "Resume",
+                api_v1_agent_path(agent, agent: { status: :online }),
+                method: :patch,
+                class: "px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors" %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Archive/Restore %>
+    <div>
+      <div class="text-xs font-medium text-[#888] mb-2">Lifecycle</div>
+      <% if agent.archived? %>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-[#888]">Archived</span>
+          <span class="text-xs text-[#555]">
+            <%= time_ago_in_words(agent.archived_at) %> ago
+          </span>
+          <%= button_to "Restore Agent",
+                restore_api_v1_agent_path(agent),
+                method: :post,
+                class: "px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors" %>
+        </div>
+      <% else %>
+        <%= button_to "Archive Agent",
+              archive_api_v1_agent_path(agent),
+              method: :post,
+              data: { confirm: "Archive this agent? It will no longer receive new tasks." },
+              class: "px-3 py-1.5 text-xs font-medium rounded-md border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors" %>
+      <% end %>
+    </div>
+
+    <%# Runtime info %>
+    <div>
+      <div class="text-xs font-medium text-[#888] mb-2">Runtime</div>
+      <div class="text-sm text-[#e0e0e0]">
+        <%= agent.hostname || "—" %> · <%= agent.platform || "unknown" %>
+        <% if agent.version %>
+          · v<%= agent.version %>
+        <% end %>
+      </div>
+      <% if agent.last_heartbeat_at %>
+        <div class="text-xs text-[#555] mt-1">
+          Last seen <%= time_ago_in_words(agent.last_heartbeat_at) %> ago
+        </div>
+      <% end %>
+    </div>
+
+    <%# Agent ID %>
+    <div>
+      <div class="text-xs font-medium text-[#888] mb-2">Agent ID</div>
+      <div class="text-xs font-mono text-[#555]"><%= agent.id %></div>
+    </div>
+  </div>
+</div>

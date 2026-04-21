@@ -28,6 +28,7 @@ class Agent < ApplicationRecord
            dependent: :nullify
   has_many :sent_handoffs, class_name: "TaskHandoff", foreign_key: :from_agent_id, dependent: :destroy
   has_many :received_handoffs, class_name: "TaskHandoff", foreign_key: :to_agent_id, dependent: :destroy
+  belongs_to :archived_by, class_name: "User", optional: true
 
   enum :status, {
     offline: 0,
@@ -37,6 +38,12 @@ class Agent < ApplicationRecord
   }, default: :offline
 
   validates :name, presence: true
+  validates :instructions, length: { maximum: 65_535 }, allow_blank: true
+  validates :max_concurrent_tasks, numericality: { greater_than: 0, less_than_or_equal_to: 100 }, allow_nil: false
+  validates :model, length: { maximum: 255 }, allow_blank: true
+
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
 
   after_update_commit :broadcast_dashboard_update, if: :dashboard_summary_changed?
 
@@ -166,6 +173,18 @@ class Agent < ApplicationRecord
     end
   end
 
+  def archived?
+    archived_at.present?
+  end
+
+  def archive!(archived_by_user)
+    update!(archived_at: Time.current, archived_by: archived_by_user)
+  end
+
+  def restore!
+    update!(archived_at: nil, archived_by: nil)
+  end
+
   def heartbeat_stale?
     return true if last_heartbeat_at.blank?
 
@@ -244,7 +263,7 @@ class Agent < ApplicationRecord
   end
 
   def dashboard_summary_changed?
-    (previous_changes.keys & %w[name status hostname platform version last_heartbeat_at metadata tags]).any?
+    (previous_changes.keys & %w[name status hostname platform version last_heartbeat_at metadata tags archived_at]).any?
   end
 
   def metadata_value(key)

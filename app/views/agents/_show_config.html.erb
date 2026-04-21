@@ -1,0 +1,53 @@
+<div class="max-w-2xl">
+  <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Agent Configuration</div>
+  <p class="text-xs text-[#666] mb-4">
+    Configure environment variables, CLI arguments, and runtime preferences for this agent.
+  </p>
+
+  <%= form_with model: agent, url: api_v1_agent_path(agent), method: :patch do |f| %>
+    <div class="space-y-5">
+      <%# Model preference %>
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Preferred Model</label>
+        <%= f.text_field :model,
+              value: agent.model,
+              placeholder: "e.g. claude-sonnet-4, gpt-4o",
+              class: "w-full max-w-xs rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+
+      <%# Max concurrent tasks %>
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Max Concurrent Tasks</label>
+        <%= f.number_field :max_concurrent_tasks,
+              value: agent.max_concurrent_tasks || 1,
+              min: 1, max: 100,
+              class: "w-32 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+      </div>
+
+      <%# Custom env vars %>
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Environment Variables (JSON)</label>
+        <%= f.text_area :custom_env,
+              value: agent.custom_env.to_json,
+              placeholder: '{"ANTHROPIC_API_KEY": "sk-...", "MODEL": "claude-sonnet-4"}',
+              class: "w-full min-h-[80px] rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-amber-400/50 resize-y" %>
+        <p class="text-xs text-[#555] mt-1">JSON object of key-value pairs injected at agent launch.</p>
+      </div>
+
+      <%# Custom args %>
+      <div>
+        <label class="block text-xs font-medium text-[#888] mb-1.5">Custom CLI Arguments (JSON array)</label>
+        <%= f.text_area :custom_args,
+              value: agent.custom_args.to_json,
+              placeholder: '["--verbose", "--model=claude-sonnet-4"]',
+              class: "w-full min-h-[60px] rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-amber-400/50 resize-y" %>
+        <p class="text-xs text-[#555] mt-1">JSON array of CLI arguments appended to the agent command.</p>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <%= f.submit "Save Configuration",
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-amber-400 text-[#161619] hover:bg-amber-500 transition-colors cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

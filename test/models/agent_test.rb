@@ -218,6 +218,75 @@ class AgentTest < ActiveSupport::TestCase
     end
   end
 
+  # ─── Archive / Restore ──────────────────────────────────────────────────
+
+  test "archived? returns true when archived_at is set" do
+    agent = Agent.create!(user: @user, name: "Archivable Agent")
+    assert_not agent.archived?
+    agent.update!(archived_at: Time.current, archived_by: @user)
+    assert agent.archived?
+  end
+
+  test "archive! sets archived_at and archived_by" do
+    agent = Agent.create!(user: @user, name: "Archiver Agent")
+    agent.archive!(@user)
+    assert agent.archived?
+    assert_equal @user.id, agent.archived_by_id
+    assert_equal @user, agent.archived_by
+  end
+
+  test "restore! clears archived_at and archived_by" do
+    agent = Agent.create!(user: @user, name: "Restorable Agent", archived_at: Time.current, archived_by: @user)
+    agent.restore!
+    assert_not agent.archived?
+    assert_nil agent.archived_by_id
+  end
+
+  test "active scope excludes archived agents" do
+    agent_active = Agent.create!(user: @user, name: "Active Agent")
+    agent_archived = Agent.create!(user: @user, name: "Archived Agent", archived_at: Time.current, archived_by: @user)
+    assert_includes Agent.active, agent_active
+    refute_includes Agent.active, agent_archived
+  end
+
+  test "archived scope includes only archived agents" do
+    agent_active = Agent.create!(user: @user, name: "Active Agent")
+    agent_archived = Agent.create!(user: @user, name: "Archived Agent", archived_at: Time.current, archived_by: @user)
+    assert_includes Agent.archived, agent_archived
+    refute_includes Agent.archived, agent_active
+  end
+
+  # ─── Default values ────────────────────────────────────────────────────
+
+  test "instructions defaults to nil" do
+    agent = Agent.create!(user: @user, name: "No Instructions")
+    assert_nil agent.instructions
+  end
+
+  test "custom_env defaults to empty hash" do
+    agent = Agent.create!(user: @user, name: "No Env")
+    assert_equal({}, agent.custom_env)
+  end
+
+  test "custom_args defaults to empty array" do
+    agent = Agent.create!(user: @user, name: "No Args")
+    assert_equal [], agent.custom_args
+  end
+
+  test "max_concurrent_tasks defaults to 1" do
+    agent = Agent.create!(user: @user, name: "Default Concurrency")
+    assert_equal 1, agent.max_concurrent_tasks
+  end
+
+  test "validates max_concurrent_tasks is within range" do
+    agent = Agent.new(user: @user, name: "Bad Concurrency", max_concurrent_tasks: 0)
+    assert_not agent.valid?
+    agent.max_concurrent_tasks = 101
+    assert_not agent.valid?
+    agent.max_concurrent_tasks = 5
+    assert agent.valid?
+  end
+
   test "health_stats_for aggregates counts for multiple agents" do
     travel_to Time.current do
       first_agent = Agent.create!(
