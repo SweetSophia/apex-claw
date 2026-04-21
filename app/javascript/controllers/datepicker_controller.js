@@ -217,8 +217,3 @@ export default class extends Controller {
     this.gridTarget.appendChild(fragment)
   }
 }
-      button.textContent = day
-      this.gridTarget.appendChild(button)
-    }
-  }
-}
