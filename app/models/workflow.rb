@@ -1,6 +1,6 @@
 class Workflow < ApplicationRecord
   belongs_to :user
-  belongs_to :agent
+  belongs_to :agent, optional: true
   has_many :workflow_runs, dependent: :destroy
 
   validates :name, presence: true
@@ -28,9 +28,9 @@ class Workflow < ApplicationRecord
   scope :recent, -> { order(updated_at: :desc) }
 
   def trigger!(trigger_type: :manual)
-    return false unless active?
-    return false if agent&.archived?
+    return false unless runnable?
 
+    update!(last_run_at: Time.current)
     WorkflowRun.create!(
       workflow: self,
       trigger_type: trigger_type,

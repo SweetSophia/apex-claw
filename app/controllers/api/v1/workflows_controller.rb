@@ -5,7 +5,7 @@ module Api
       before_action :require_user_token!, only: [:create, :update, :destroy, :run]
 
       def index
-        workflows = current_user.workflows.includes(:agent, :workflow_runs).recent
+        workflows = current_user.workflows.includes(:agent).recent
         render json: { workflows: workflows.map { |w| workflow_json(w) } }
       end
 

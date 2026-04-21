@@ -2,7 +2,7 @@ class WorkflowDispatchJob < ApplicationJob
   queue_as :default
 
   def perform
-    Workflow.active.where(trigger_type: :schedule).find_each do |workflow|
+    Workflow.active.where(trigger_type: :schedule).includes(:agent).find_each do |workflow|
       next unless workflow.runnable?
       next unless due?(workflow)
 
@@ -23,7 +23,7 @@ class WorkflowDispatchJob < ApplicationJob
       return false
     end
 
-    workflow.last_run_at.nil? || workflow.last_run_at < interval.ago
+    workflow.last_run_at.nil? || workflow.last_run_at <= interval.ago
   end
 
   # Simple cron-to-interval: supports "every N minutes/hours" patterns

@@ -13,6 +13,8 @@ module Workflows
         create_task_and_assign
       when "run_only"
         mark_completed(result: { message: "Workflow executed in run_only mode" })
+      else
+        mark_failed("Unknown execution mode: #{@workflow.execution_mode}")
       end
     rescue => e
       mark_failed(e.message)
@@ -60,7 +62,6 @@ module Workflows
         result: result,
         completed_at: Time.current
       )
-      @workflow.update!(last_run_at: Time.current)
     end
 
     def mark_failed(message)
