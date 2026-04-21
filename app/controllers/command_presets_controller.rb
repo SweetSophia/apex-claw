@@ -52,6 +52,20 @@ class CommandPresetsController < ApplicationController
   end
 
   def command_preset_params
-    params.require(:command_preset).permit(:name, :description, :kind, :agent_id, :active, payload: {})
+    attrs = params.require(:command_preset).permit(:name, :description, :kind, :agent_id, :active)
+    payload = params[:command_preset][:payload] if params[:command_preset].respond_to?(:key?) && params[:command_preset].key?(:payload)
+    attrs[:payload] = normalize_payload(payload) unless payload.nil?
+    attrs
+  end
+
+  def normalize_payload(value)
+    case value
+    when ActionController::Parameters
+      value.to_unsafe_h.transform_values { |nested| normalize_payload(nested) }
+    when Array
+      value.map { |nested| normalize_payload(nested) }
+    else
+      value
+    end
   end
 end

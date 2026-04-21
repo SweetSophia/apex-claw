@@ -13,7 +13,7 @@ module Api
         end
 
         command = if params[:preset_id].present?
-          preset = current_user.command_presets.find(params[:preset_id])
+          preset = preset_scope.find(params[:preset_id])
           AgentCommands::PresetEnqueuer.new(agent: @agent, requested_by_user: current_user).enqueue!(preset)
         else
           @agent.agent_commands.create!(
@@ -75,6 +75,11 @@ module Api
 
       def set_agent
         @agent = Agent.find(params[:id])
+      end
+
+      def preset_scope
+        owner = current_user.admin? ? @agent.user : current_user
+        owner.command_presets
       end
 
       def set_agent_command

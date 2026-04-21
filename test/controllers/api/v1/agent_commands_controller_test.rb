@@ -87,6 +87,28 @@ class Api::V1::AgentCommandsControllerTest < ActionDispatch::IntegrationTest
     assert_equal({ "reason" => "scheduled" }, command.payload)
   end
 
+  test "admin can enqueue command via target agent owner's preset" do
+    preset = CommandPreset.create!(
+      user: @user,
+      agent: @agent,
+      name: "Admin Visible Preset",
+      kind: "health_check",
+      payload: { check: { depth: "full" } }
+    )
+
+    assert_difference "AgentCommand.count", 1 do
+      post "/api/v1/agents/#{@agent.id}/commands",
+           headers: auth_header(@admin_token),
+           params: { preset_id: preset.id }
+    end
+
+    assert_response :created
+    command = AgentCommand.order(:created_at).last
+    assert_equal preset.id, command.command_preset_id
+    assert_equal({ "check" => { "depth" => "full" } }, command.payload)
+    assert_equal @admin.id, command.requested_by_user_id
+  end
+
   test "preset enqueue returns command_preset_id" do
     preset = CommandPreset.create!(user: @user, agent: @agent, name: "Health Check", kind: "health_check")
 

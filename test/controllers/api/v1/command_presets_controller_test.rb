@@ -69,6 +69,32 @@ class Api::V1::CommandPresetsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Health Check", response.parsed_body["command_preset"]["name"]
   end
 
+  test "create preserves nested payload json" do
+    nested_payload = {
+      rollout: {
+        strategy: "canary",
+        steps: [
+          { percent: 10, wait_seconds: 30 },
+          { percent: 50, wait_seconds: 60 }
+        ]
+      },
+      args: ["--force", { region: "iad" }]
+    }
+
+    post "/api/v1/command_presets",
+         headers: auth_header(@user_token),
+         params: {
+           command_preset: {
+             name: "Nested Payload",
+             kind: "config_reload",
+             payload: nested_payload
+           }
+         }
+
+    assert_response :created
+    assert_equal nested_payload.deep_stringify_keys, response.parsed_body["command_preset"]["payload"]
+  end
+
   test "create is forbidden for agent token" do
     assert_no_difference "CommandPreset.count" do
       post "/api/v1/command_presets",
@@ -94,6 +120,26 @@ class Api::V1::CommandPresetsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "Updated Preset", @preset.reload.name
     assert_equal false, @preset.active
+  end
+
+  test "update preserves nested payload json" do
+    nested_payload = {
+      rollout: {
+        strategy: "linear",
+        steps: [
+          { percent: 25 },
+          { percent: 100 }
+        ]
+      },
+      args: ["--graceful"]
+    }
+
+    patch "/api/v1/command_presets/#{@preset.id}",
+          headers: auth_header(@user_token),
+          params: { command_preset: { payload: nested_payload } }
+
+    assert_response :success
+    assert_equal nested_payload.deep_stringify_keys, @preset.reload.payload
   end
 
   test "destroy is scoped to current user" do
