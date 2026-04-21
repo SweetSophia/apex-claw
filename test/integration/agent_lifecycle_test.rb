@@ -578,6 +578,171 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     assert_match(/File exceeds max size/, response.parsed_body.fetch("error"))
   end
 
+  # ─── Agent profile fields ───────────────────────────────────────────────────
+
+  test "register accepts and returns agent profile fields" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Profile Worker",
+        hostname: "profile-worker.local",
+        host_uid: "profile-worker-001",
+        platform: "linux-amd64",
+        version: "4.0.3",
+        instructions: "You are a code reviewer.",
+        custom_env: { "FOO" => "bar" },
+        custom_args: ["--verbose"],
+        model: "claude-sonnet-4",
+        max_concurrent_tasks: 3
+      }
+    }
+
+    assert_response :created
+    body = response.parsed_body
+    agent = Agent.find(body.dig("agent", "id"))
+    assert_equal "You are a code reviewer.", agent.instructions
+    assert_equal({ "FOO" => "bar" }, agent.custom_env)
+    assert_equal(["--verbose"], agent.custom_args)
+    assert_equal "claude-sonnet-4", agent.model
+    assert_equal 3, agent.max_concurrent_tasks
+  end
+
+  test "patch updates agent profile fields" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: { name: "Updater Worker", hostname: "updater.local", host_uid: "updater-001", platform: "linux" }
+    }
+    assert_response :created
+    agent = Agent.find(response.parsed_body.dig("agent", "id"))
+
+    patch api_v1_agent_url(agent),
+          headers: @user_auth_header,
+          params: {
+            agent: {
+              instructions: "You are a senior backend engineer.",
+              custom_env: { "MODEL" => "claude-3-5-sonnet" },
+              custom_args: ["--model=claude-3-5-sonnet"],
+              model: "claude-3-5-sonnet",
+              max_concurrent_tasks: 5
+            }
+          }
+
+    assert_response :success
+    agent.reload
+    assert_equal "You are a senior backend engineer.", agent.instructions
+    assert_equal({ "MODEL" => "claude-3-5-sonnet" }, agent.custom_env)
+    assert_equal(["--model=claude-3-5-sonnet"], agent.custom_args)
+    assert_equal "claude-3-5-sonnet", agent.model
+    assert_equal 5, agent.max_concurrent_tasks
+  end
+
+  test "show returns all profile fields" do
+    @agent.update!(
+      instructions: "You are a helpful assistant.",
+      custom_env: { "A" => "1" },
+      custom_args: ["--flag"],
+      model: "gpt-4o",
+      max_concurrent_tasks: 2
+    )
+
+    get api_v1_agent_url(@agent), headers: @user_auth_header
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal "You are a helpful assistant.", body["instructions"]
+    assert_equal({ "A" => "1" }, body["custom_env"])
+    assert_equal(["--flag"], body["custom_args"])
+    assert_equal "gpt-4o", body["model"]
+    assert_equal 2, body["max_concurrent_tasks"]
+  end
+
+  # ─── Archive / Restore ────────────────────────────────────────────────────
+
+  test "archive marks agent as archived and records archiver" do
+    post "/api/v1/agents/#{@agent.id}/archive", headers: @user_auth_header
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].present?
+    @agent.reload
+    assert @agent.archived?
+    assert_equal @user.id, @agent.archived_by_id
+  end
+
+  test "restore clears archived state" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    post "/api/v1/agents/#{@agent.id}/restore", headers: @user_auth_header
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].nil?
+    @agent.reload
+    assert_not @agent.archived?
+    assert_nil @agent.archived_by_id
+  end
+
+  test "cannot archive already archived agent" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    post "/api/v1/agents/#{@agent.id}/archive", headers: @user_auth_header
+    assert_response :unprocessable_entity
+  end
+
+  test "cannot restore non-archived agent" do
+    post "/api/v1/agents/#{@agent.id}/restore", headers: @user_auth_header
+    assert_response :unprocessable_entity
+  end
+
+  test "archived agent is excluded from index" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    get api_v1_agents_url, headers: @user_auth_header
+
+    assert_response :success
+    ids = response.parsed_body.map { |a| a["id"] }
+    refute_includes ids, @agent.id
+  end
+
+  test "archived agent cannot be assigned new work" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    task = Task.create!(user: @user, board: @board, name: "Archived agent task", assigned_agent: @agent)
+    refute_includes Task.eligible_for_agent(@agent), task
+  end
+
+  # ─── Tasks endpoint ────────────────────────────────────────────────────────
+
+  test "tasks endpoint returns claimed and assigned tasks" do
+    Task.create!(user: @user, board: @board, name: "Claimed One", claimed_by_agent: @agent, status: :in_progress)
+    Task.create!(user: @user, board: @board, name: "Claimed Two", claimed_by_agent: @agent, status: :in_progress)
+    Task.create!(user: @user, board: @board, name: "Done Task", claimed_by_agent: @agent, status: :done, completed: true, completed_at: Time.current)
+    Task.create!(user: @user, board: @board, name: "Assigned Only", assigned_agent: @agent, status: :up_next)
+
+    get "/api/v1/agents/#{@agent.id}/tasks", headers: @user_auth_header
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal 3, body["claimed"].length
+    assert_equal 1, body["assigned"].length
+    claimed_names = body["claimed"].map { |t| t["name"] }
+    assert_includes claimed_names, "Claimed One"
+    assert_includes claimed_names, "Done Task"
+    refute_includes claimed_names, "Assigned Only"
+  end
+
+  test "tasks endpoint is scoped to owner" do
+    other_token = api_tokens(:two).token
+    get "/api/v1/agents/#{@agent.id}/tasks", headers: { "Authorization" => "Bearer #{other_token}" }
+    assert_response :not_found
+  end
+
+  test "tasks endpoint returns empty arrays when agent has no tasks" do
+    get "/api/v1/agents/#{@agent.id}/tasks", headers: @user_auth_header
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal [], body["claimed"]
+    assert_equal [], body["assigned"]
+  end
+
   private
 
   def uploaded_file(filename, content, content_type = "text/plain")

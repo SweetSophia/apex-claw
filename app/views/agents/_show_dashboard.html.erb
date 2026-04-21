@@ -1,7 +1,67 @@
 <% health_stats ||= Agent.health_stats_for([agent])[agent.id] || {} %>
-<%= render "agents/show_summary", agent: agent, health_stats: health_stats %>
-<%= render "agents/show_recent_work", agent: agent %>
-<%= render "agents/show_tags", agent: agent %>
-<%= render "agents/show_metadata", agent: agent %>
-<%= render "agents/show_commands", agent: agent %>
-<%= render "agents/show_tasks", agent: agent %>
+
+<%# Tab navigation %>
+<div data-controller="agent-tabs" class="mb-6">
+  <div class="flex border-b border-white/[0.08] space-x-1">
+    <button
+      data-agent-tabs-target="tab"
+      data-action="agent-tabs#switch"
+      data-panel="panel-summary"
+      class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-amber-400 text-amber-400"
+    >
+      Summary
+    </button>
+    <button
+      data-agent-tabs-target="tab"
+      data-action="agent-tabs#switch"
+      data-panel="panel-instructions"
+      class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
+    >
+      Instructions
+    </button>
+    <button
+      data-agent-tabs-target="tab"
+      data-action="agent-tabs#switch"
+      data-panel="panel-config"
+      class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
+    >
+      Configuration
+    </button>
+    <button
+      data-agent-tabs-target="tab"
+      data-action="agent-tabs#switch"
+      data-panel="panel-settings"
+      class="agent-tab border-b-2 px-4 py-2.5 text-xs font-medium transition-colors border-transparent text-[#666] hover:text-[#888]"
+    >
+      Settings
+    </button>
+  </div>
+
+  <%# Panels %>
+  <div class="pt-6">
+    <%# Summary panel (existing content) %>
+    <div id="panel-summary" data-agent-tabs-target="panel">
+      <%= render "agents/show_summary", agent: agent, health_stats: health_stats %>
+      <%= render "agents/show_recent_work", agent: agent %>
+      <%= render "agents/show_tags", agent: agent %>
+      <%= render "agents/show_metadata", agent: agent %>
+      <%= render "agents/show_commands", agent: agent %>
+      <%= render "agents/show_tasks", agent: agent %>
+    </div>
+
+    <%# Instructions panel %>
+    <div id="panel-instructions" data-agent-tabs-target="panel" class="hidden">
+      <%= render "agents/show_instructions", agent: agent %>
+    </div>
+
+    <%# Configuration panel %>
+    <div id="panel-config" data-agent-tabs-target="panel" class="hidden">
+      <%= render "agents/show_config", agent: agent %>
+    </div>
+
+    <%# Settings panel %>
+    <div id="panel-settings" data-agent-tabs-target="panel" class="hidden">
+      <%= render "agents/show_settings", agent: agent %>
+    </div>
+  </div>
+</div>

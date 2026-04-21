@@ -312,6 +312,224 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Rate limit exceeded", response.parsed_body["error"]
   end
 
+  # ─── Profile fields ──────────────────────────────────────────────────────
+
+  test "patch updates agent profile fields" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token),
+          params: {
+            agent: {
+              instructions: "You are a code reviewer.",
+              custom_env: { "OPENAI_KEY" => "secret" },
+              custom_args: ["--verbose"],
+              model: "claude-sonnet-4",
+              max_concurrent_tasks: 3
+            }
+          }
+
+    assert_response :success
+    @agent.reload
+    assert_equal "You are a code reviewer.", @agent.instructions
+    assert_equal({ "OPENAI_KEY" => "secret" }, @agent.custom_env)
+    assert_equal(["--verbose"], @agent.custom_args)
+    assert_equal "claude-sonnet-4", @agent.model
+    assert_equal 3, @agent.max_concurrent_tasks
+  end
+
+  test "patch rejects max_concurrent_tasks outside valid range" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token),
+          params: { agent: { max_concurrent_tasks: 999 } }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "register accepts profile fields" do
+    join_token, plaintext_join_token = JoinToken.issue!(user: @user, created_by_user: @user)
+
+    post "/api/v1/agents/register", params: {
+      join_token: plaintext_join_token,
+      agent: {
+        name: "Profile Agent",
+        hostname: "profile.local",
+        host_uid: "profile-uid",
+        platform: "linux",
+        instructions: "You are a researcher.",
+        model: "claude-3-opus",
+        max_concurrent_tasks: 2
+      }
+    }
+
+    assert_response :created
+    body = response.parsed_body
+    assert_equal "You are a researcher.", body.dig("agent", "instructions")
+    assert_equal "claude-3-opus", body.dig("agent", "model")
+    assert_equal 2, body.dig("agent", "max_concurrent_tasks")
+  end
+
+  # ─── Archive / Restore ─────────────────────────────────────────────────
+
+  test "archive marks agent as archived" do
+    post "/api/v1/agents/#{@agent.id}/archive", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].present?
+    @agent.reload
+    assert @agent.archived?
+  end
+
+  test "restore clears archived state" do
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+    post "/api/v1/agents/#{@agent.id}/restore", headers: auth_header(@user_token)
+
+    assert_response :success
+    assert response.parsed_body["archived_at"].nil?
+    @agent.reload
+    assert_not @agent.archived?
+  end
+
+  test "archive is scoped to owner" do
+    post "/api/v1/agents/#{@other_agent.id}/archive", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "restore is scoped to owner" do
+    @other_agent.update!(archived_at: Time.current)
+    post "/api/v1/agents/#{@other_agent.id}/restore", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  test "cannot archive already archived agent" do
+    @agent.update!(archived_at: Time.current)
+    post "/api/v1/agents/#{@agent.id}/archive", headers: auth_header(@user_token)
+    assert_response :unprocessable_entity
+  end
+
+  test "cannot restore non-archived agent" do
+    post "/api/v1/agents/#{@agent.id}/restore", headers: auth_header(@user_token)
+    assert_response :unprocessable_entity
+  end
+
+  # ─── Tasks endpoint ────────────────────────────────────────────────────
+
+  test "tasks returns claimed and assigned tasks" do
+    board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
+    Task.create!(user: @user, board: board, name: "Claimed Task", claimed_by_agent: @agent, status: :in_progress)
+    Task.create!(user: @user, board: board, name: "Assigned Task", assigned_agent: @agent, status: :up_next)
+    Task.create!(user: @user, board: board, name: "Done Task", claimed_by_agent: @agent, status: :done, completed: true, completed_at: Time.current)
+
+    get "/api/v1/agents/#{@agent.id}/tasks", headers: auth_header(@user_token)
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal 2, body["claimed"].length
+    assert_equal 1, body["assigned"].length
+    task_names = body["claimed"].map { |t| t["name"] }
+    assert_includes task_names, "Done Task"
+    refute_includes task_names, "Assigned Task"
+  end
+
+  test "tasks is scoped to owner" do
+    get "/api/v1/agents/#{@other_agent.id}/tasks", headers: auth_header(@user_token)
+    assert_response :not_found
+  end
+
+  # ─── Sibling agent isolation ────────────────────────────────────────────
+
+  test "agent token cannot update sibling agent under same user" do
+    sibling = Agent.create!(
+      user: @user,
+      name: "Sibling Worker",
+      hostname: "sibling.local",
+      host_uid: "uid-sibling",
+      platform: "linux",
+      version: "1.0.0"
+    )
+    _sibling_token, sibling_plaintext = AgentToken.issue!(agent: sibling, name: "Sibling Token")
+
+    patch "/api/v1/agents/#{@agent.id}",
+          headers: auth_header(sibling_plaintext),
+          params: { agent: { name: "Hijacked Name" } }
+
+    assert_response :forbidden
+    assert_not_equal "Hijacked Name", @agent.reload.name
+  end
+
+  # ─── Invalid JSON validation ────────────────────────────────────────────
+
+  test "patch returns 422 for invalid JSON in custom_env" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token).merge("Content-Type" => "application/json"),
+          params: { agent: { custom_env: "not-valid-json{" } }.to_json
+
+    assert_response :unprocessable_entity
+    assert_includes response.parsed_body["error"].downcase, "invalid json"
+  end
+
+  test "patch returns 422 for invalid JSON in custom_args" do
+    patch api_v1_agent_url(@agent),
+          headers: auth_header(@user_token).merge("Content-Type" => "application/json"),
+          params: { agent: { custom_args: "[broken-json" } }.to_json
+
+    assert_response :unprocessable_entity
+    assert_includes response.parsed_body["error"].downcase, "invalid json"
+  end
+
+  # ─── Archived agents excluded from tasks/next ──────────────────────────
+
+  test "archived agent receives no tasks from tasks next" do
+    board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
+    Task.create!(user: @user, board: board, name: "Up Next Task", status: :up_next)
+
+    @agent.update!(archived_at: Time.current, archived_by: @user)
+
+    get "/api/v1/tasks/next", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :no_content
+  end
+
+  # ─── Archived agents excluded from index ────────────────────────────────
+
+  test "index excludes archived agents by default" do
+    archived_agent = Agent.create!(
+      user: @user,
+      name: "Archived Agent",
+      hostname: "archived.local",
+      host_uid: "uid-archived",
+      platform: "linux",
+      version: "1.0.0",
+      archived_at: Time.current,
+      archived_by: @user
+    )
+
+    get "/api/v1/agents", headers: auth_header(@user_token)
+
+    assert_response :success
+    ids = response.parsed_body.map { |a| a["id"] }
+    assert_includes ids, @agent.id
+    assert_not_includes ids, archived_agent.id
+  end
+
+  test "index includes archived agents when include_archived is true" do
+    archived_agent = Agent.create!(
+      user: @user,
+      name: "Archived Agent",
+      hostname: "archived.local",
+      host_uid: "uid-archived",
+      platform: "linux",
+      version: "1.0.0",
+      archived_at: Time.current,
+      archived_by: @user
+    )
+
+    get "/api/v1/agents?include_archived=true", headers: auth_header(@user_token)
+
+    assert_response :success
+    ids = response.parsed_body.map { |a| a["id"] }
+    assert_includes ids, @agent.id
+    assert_includes ids, archived_agent.id
+  end
+
   private
 
   def auth_header(token)

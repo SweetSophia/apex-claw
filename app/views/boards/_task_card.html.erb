@@ -19,8 +19,9 @@
     <button data-dropdown-target="button" class="hidden" aria-expanded="false"></button>
     <div data-dropdown-target="menu" class="hidden fixed z-[100] min-w-[160px] bg-bg-elevated border border-border rounded-lg shadow-lg py-1">
       <%# Agent Assignment %>
-      <% user_agents = current_user.agents.to_a %>
-      <% if user_agents.any? %>
+      <% user_agents = current_user.agents.active.where(status: :online).to_a %>
+      <% assignment_controls_visible = user_agents.any? || task.assigned_to_agent? || task.assigned_agent_id.present? %>
+      <% if assignment_controls_visible %>
         <div class="relative group/agent">
           <button type="button" class="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-content-secondary hover:bg-bg-hover transition-colors">
             <span class="flex items-center gap-2">

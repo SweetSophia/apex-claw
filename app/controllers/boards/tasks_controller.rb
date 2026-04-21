@@ -61,11 +61,15 @@ class Boards::TasksController < ApplicationController
     @task.activity_source = "web"
     agent_id = params[:agent_id]
     if agent_id.present? && agent_id != ""
-      @agent = current_user.agents.find_by(id: agent_id)
+      @agent = current_user.agents.active.where(status: :online).find_by(id: agent_id)
       if @agent
         @task.update!(assigned_agent_id: @agent.id, assigned_to_agent: true, assigned_at: Time.current)
       else
-        @task.update!(assigned_agent_id: nil, assigned_to_agent: true, assigned_at: Time.current)
+        respond_to do |format|
+          format.turbo_stream { head :unprocessable_entity }
+          format.html { redirect_to board_path(@board), alert: "Agent is not available for new work." }
+        end
+        return
       end
     else
       @task.update!(assigned_agent_id: nil, assigned_to_agent: true, assigned_at: Time.current)
