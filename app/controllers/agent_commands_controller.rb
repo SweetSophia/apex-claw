@@ -37,8 +37,5 @@ class AgentCommandsController < ApplicationController
       attrs[:payload] = stripped.present? ? JSON.parse(stripped) : {}
     end
     attrs
-  rescue JSON::ParserError
-    attrs[:payload] = {}
-    attrs
   end
 end
