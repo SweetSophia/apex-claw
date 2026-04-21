@@ -36,6 +36,11 @@ Rails.application.routes.draw do
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
       resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+      resources :workflows, only: [ :index, :show, :create, :update, :destroy ] do
+        member do
+          post :run
+        end
+      end
       resources :audit_logs, only: [ :index ]
 
       get "events", to: "events#index"
@@ -86,6 +91,12 @@ Rails.application.routes.draw do
   end
 
   resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+
+  resources :workflows, only: [ :index, :show, :create, :update, :destroy ] do
+    member do
+      post :run
+    end
+  end
 
   resource :session, only: [:new, :create, :destroy]
   resource :registration, only: [:new, :create]
