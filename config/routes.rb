@@ -36,6 +36,7 @@ Rails.application.routes.draw do
 
       resources :boards, only: [ :index, :show, :create, :update, :destroy ]
       resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+      resources :command_presets, only: [ :index, :show, :create, :update, :destroy ]
       resources :handoff_templates, only: [ :index, :show, :create, :update, :destroy ]
       resources :routing_rules, only: [ :index, :show, :create, :update, :destroy ]
       resources :workflows, only: [ :index, :show, :create, :update, :destroy ] do
@@ -94,6 +95,7 @@ Rails.application.routes.draw do
   end
 
   resources :skills, only: [ :index, :show, :create, :update, :destroy ]
+  resources :command_presets, only: [ :index, :show, :create, :update, :destroy ]
 
   resources :handoff_templates, only: [ :index, :show, :create, :update, :destroy ]
   resources :routing_rules, only: [ :index, :show, :create, :update, :destroy ]

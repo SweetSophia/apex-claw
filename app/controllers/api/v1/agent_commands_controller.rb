@@ -12,11 +12,16 @@ module Api
           return
         end
 
-        command = @agent.agent_commands.create!(
-          kind: params[:kind],
-          payload: params[:payload] || {},
-          requested_by_user: current_user
-        )
+        command = if params[:preset_id].present?
+          preset = preset_scope.find(params[:preset_id])
+          AgentCommands::PresetEnqueuer.new(agent: @agent, requested_by_user: current_user).enqueue!(preset)
+        else
+          @agent.agent_commands.create!(
+            kind: params[:kind],
+            payload: params[:payload] || {},
+            requested_by_user: current_user
+          )
+        end
 
         render json: agent_command_json(command), status: :created
       end
@@ -72,6 +77,11 @@ module Api
         @agent = Agent.find(params[:id])
       end
 
+      def preset_scope
+        owner = current_user.admin? ? @agent.user : current_user
+        owner.command_presets
+      end
+
       def set_agent_command
         @agent_command = AgentCommand.find(params[:id])
       end
@@ -94,6 +104,7 @@ module Api
           agent_id: command.agent_id,
           kind: command.kind,
           payload: command.payload,
+          command_preset_id: command.command_preset_id,
           state: command.state,
           result: command.result,
           requested_by_user_id: command.requested_by_user_id,

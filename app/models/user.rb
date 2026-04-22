@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :workflows, dependent: :destroy
   has_many :handoff_templates, dependent: :destroy
   has_many :routing_rules, dependent: :destroy
+  has_many :command_presets, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
   has_many :join_tokens, dependent: :destroy
   has_many :created_join_tokens,

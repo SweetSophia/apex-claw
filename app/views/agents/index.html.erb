@@ -9,6 +9,14 @@
     <div>
       <h1 class="text-xl font-extrabold text-[#e0e0e0] tracking-tight">Agents</h1>
       <p class="text-sm text-[#666] mt-1">Manage your fleet of OpenClaw agents</p>
+      <% if @agents.any? %>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <span class="rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c3c3c8]"><%= pluralize(@agents.size, "agent") %></span>
+          <span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300"><%= @live_agent_count %> live</span>
+          <span class="rounded-full bg-amber-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300"><%= @stale_agent_count %> stale</span>
+          <span class="rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fbbf24]"><%= @pending_command_count %> pending commands</span>
+        </div>
+      <% end %>
     </div>
     <%= link_to settings_path(anchor: "agents"), class: "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] text-[#888] transition-colors" do %>
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">

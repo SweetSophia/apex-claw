@@ -1,9 +1,11 @@
 require "test_helper"
 
 class AgentCommandTest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::TimeHelpers
+
   setup do
     @user = users(:one)
-    @agent = Agent.create!(user: @user, name: "Command Agent")
+    @agent = create_agent(@user, "command-agent")
   end
 
   # Validations
@@ -34,6 +36,16 @@ class AgentCommandTest < ActiveSupport::TestCase
     assert_nil command.requested_by_user
   end
 
+  test "command_preset association is optional" do
+    preset = CommandPreset.create!(user: @user, agent: @agent, name: "Restart Preset", kind: "restart")
+
+    command_without_preset = @agent.agent_commands.create!(kind: "drain", payload: {})
+    command_with_preset = @agent.agent_commands.create!(kind: "restart", payload: {}, command_preset: preset)
+
+    assert_nil command_without_preset.command_preset
+    assert_equal preset, command_with_preset.command_preset
+  end
+
   # Enum: state
   test "default state is pending" do
     command = @agent.agent_commands.create!(kind: "drain", payload: {})
@@ -60,7 +72,7 @@ class AgentCommandTest < ActiveSupport::TestCase
 
   # Scopes
   test "for_agent scope filters by agent" do
-    other_agent = Agent.create!(user: @user, name: "Other Agent")
+    other_agent = create_agent(@user, "other-agent")
     cmd1 = @agent.agent_commands.create!(kind: "drain", payload: {})
     cmd2 = other_agent.agent_commands.create!(kind: "restart", payload: {})
 
@@ -78,6 +90,62 @@ class AgentCommandTest < ActiveSupport::TestCase
     assert_not_includes results, acked
   end
 
+  test "kind validation allows health_check and config_reload" do
+    %w[health_check config_reload].each do |kind|
+      command = AgentCommand.new(agent: @agent, kind: kind)
+
+      assert command.valid?, "expected #{kind} to be valid"
+    end
+  end
+
+  test "legacy command kinds can still update unchanged records" do
+    legacy = @agent.agent_commands.create!(kind: "drain", payload: {})
+    legacy.update_column(:kind, "legacy_upgrade")
+
+    assert legacy.update(state: :acknowledged, acked_at: Time.current)
+    assert_equal "acknowledged", legacy.reload.state
+  end
+
+  test "invalid kind changes are still rejected for persisted records" do
+    command = @agent.agent_commands.create!(kind: "drain", payload: {})
+
+    assert_not command.update(kind: "legacy_upgrade")
+    assert_includes command.errors[:kind], "is not included in the list"
+  end
+
+  test "recent scope orders newest first" do
+    older = @agent.agent_commands.create!(kind: "drain", payload: {}, created_at: 2.hours.ago)
+    newer = @agent.agent_commands.create!(kind: "restart", payload: {}, created_at: 10.minutes.ago)
+
+    assert_equal [ newer, older ], AgentCommand.where(id: [ older.id, newer.id ]).recent.to_a
+  end
+
+  test "failed_recent scope returns recent failed commands only" do
+    recent_failed = @agent.agent_commands.create!(kind: "drain", payload: {}, state: :failed, created_at: 2.hours.ago)
+    @agent.agent_commands.create!(kind: "restart", payload: {}, state: :failed, created_at: 2.days.ago)
+    @agent.agent_commands.create!(kind: "resume", payload: {}, state: :completed, created_at: 1.hour.ago)
+
+    results = AgentCommand.failed_recent(6.hours)
+
+    assert_includes results, recent_failed
+    assert_equal [ recent_failed ], results.to_a
+  end
+
+  test "long_running scope returns acknowledged commands past threshold" do
+    long_running = @agent.agent_commands.create!(
+      kind: "drain",
+      payload: {},
+      state: :acknowledged,
+      acked_at: 20.minutes.ago
+    )
+    @agent.agent_commands.create!(kind: "restart", payload: {}, state: :acknowledged, acked_at: 5.minutes.ago)
+    @agent.agent_commands.create!(kind: "resume", payload: {}, state: :pending)
+
+    results = AgentCommand.long_running(10.minutes)
+
+    assert_equal [ long_running ], results.to_a
+  end
+
   # Payload
   test "payload defaults to empty hash" do
     command = @agent.agent_commands.create!(kind: "drain")
@@ -86,11 +154,24 @@ class AgentCommandTest < ActiveSupport::TestCase
 
   test "payload stores arbitrary JSON" do
     command = @agent.agent_commands.create!(
-      kind: "upgrade",
+      kind: "config_reload",
       payload: { version: "2.0.0", force: true, notes: "Major release" }
     )
     command.reload
     assert_equal "2.0.0", command.payload["version"]
     assert_equal true, command.payload["force"]
+  end
+
+  private
+
+  def create_agent(user, suffix)
+    Agent.create!(
+      user: user,
+      name: suffix.titleize,
+      hostname: "#{suffix}.example.test",
+      host_uid: "uid-#{suffix}",
+      platform: "linux",
+      version: "1.0.0"
+    )
   end
 end

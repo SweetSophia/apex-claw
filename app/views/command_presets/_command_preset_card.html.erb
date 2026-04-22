@@ -1,0 +1,39 @@
+<% scope_label = command_preset.agent.present? ? "Agent scoped" : "Global" %>
+<% payload_preview = if command_preset.payload.present?
+     command_preset.payload.map { |key, value| "#{key}: #{value.is_a?(String) ? value : value.to_json}" }.join(" · ")
+   end %>
+
+<%= tag.div id: dom_id(command_preset), class: "group mb-3 rounded-lg border border-white/[0.08] bg-[#1e1e22] p-4" do %>
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="truncate text-sm font-medium text-[#e0e0e0]"><%= command_preset.name %></h3>
+        <span class="rounded-full px-1.5 py-0.5 text-[10px] <%= command_preset.active? ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/[0.05] text-[#666]' %>"><%= command_preset.active? ? 'Active' : 'Inactive' %></span>
+        <span class="rounded-full bg-amber-400/10 px-1.5 py-0.5 text-[10px] text-amber-400"><%= command_preset.kind.humanize %></span>
+        <span class="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-[#888]"><%= scope_label %></span>
+      </div>
+
+      <% if command_preset.description.present? %>
+        <p class="mt-1 text-xs text-[#666]"><%= command_preset.description %></p>
+      <% end %>
+
+      <div class="mt-2 text-xs text-[#555]">
+        <%= command_preset.agent.present? ? "Agent: #{command_preset.agent.name}" : "Available to all agents" %>
+        <% if command_preset.updated_at.present? %>
+          · Updated <%= time_ago_in_words(command_preset.updated_at) %> ago
+        <% end %>
+      </div>
+
+      <% if payload_preview.present? %>
+        <div class="mt-2 truncate text-xs text-[#888]" title="<%= payload_preview %>">Payload: <%= truncate(payload_preview, length: 140) %></div>
+      <% end %>
+    </div>
+
+    <div class="flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+      <%= link_to "Edit", command_preset_path(command_preset), class: "text-xs text-[#888] transition-colors hover:text-amber-400" %>
+      <%= button_to "Delete", command_preset_path(command_preset), method: :delete,
+            form: { data: { turbo_confirm: "Delete this command preset?" } },
+            class: "text-xs text-red-400 transition-colors hover:text-red-300" %>
+    </div>
+  </div>
+<% end %>

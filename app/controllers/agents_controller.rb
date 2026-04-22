@@ -7,6 +7,9 @@ class AgentsController < ApplicationController
       .includes(:agent_commands, :assigned_tasks, :claimed_tasks)
       .order(last_heartbeat_at: :desc)
     @agent_health_stats = Agent.health_stats_for(@agents)
+    @live_agent_count = @agents.count { |agent| agent.last_seen_state == :live }
+    @stale_agent_count = @agents.count { |agent| agent.last_seen_state == :stale }
+    @pending_command_count = @agents.sum { |agent| @agent_health_stats.fetch(agent.id, {})[:pending].to_i }
   end
 
   def show

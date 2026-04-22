@@ -1,21 +1,138 @@
-<% commands = agent.agent_commands.order(created_at: :desc).limit(20) %>
+<% commands = agent.agent_commands.includes(:command_preset, :requested_by_user).recent.limit(20) %>
+<% applicable_presets = agent.user.command_presets.active.for_agent(agent).includes(:agent).recent.limit(8) %>
+
 <div id="agent_show_commands_<%= agent.id %>">
+  <div class="mb-8 grid gap-4 xl:grid-cols-[0.95fr,1.05fr]">
+    <div class="rounded-2xl border border-white/[0.08] bg-[#1e1e22] p-5">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-[#555]">Quick Actions</div>
+          <p class="mt-1 text-sm text-[#666]">Push immediate runtime probes without leaving this panel.</p>
+        </div>
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-2">
+        <%= button_to agent_commands_path(agent),
+            params: { agent_command: { kind: "health_check", payload: {}.to_json } },
+            class: "w-full rounded-xl border border-emerald-400/15 bg-emerald-500/10 p-4 text-left transition-colors hover:bg-emerald-500/15" do %>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-[#e0e0e0]">Run health check</div>
+              <div class="mt-1 text-xs text-[#8bb8a0]">Verify heartbeat, runner state, and runtime liveness.</div>
+            </div>
+            <span class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">health_check</span>
+          </div>
+        <% end %>
+
+        <%= button_to agent_commands_path(agent),
+            params: { agent_command: { kind: "config_reload", payload: {}.to_json } },
+            class: "w-full rounded-xl border border-amber-400/15 bg-amber-400/10 p-4 text-left transition-colors hover:bg-amber-400/15" do %>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-[#e0e0e0]">Reload config</div>
+              <div class="mt-1 text-xs text-[#d3bb75]">Refresh agent settings after environment or policy updates.</div>
+            </div>
+            <span class="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">config_reload</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-white/[0.08] bg-[#1e1e22] p-5">
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-[#555]">Command Presets</div>
+          <p class="mt-1 text-sm text-[#666]">Global and agent-scoped presets you can replay on demand.</p>
+        </div>
+        <%= link_to "Manage presets", command_presets_path, class: "shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs font-semibold text-[#c3c3c8] transition-colors hover:bg-white/[0.08]" %>
+      </div>
+
+      <% if applicable_presets.any? %>
+        <div class="space-y-2">
+          <% applicable_presets.each do |preset| %>
+            <div class="rounded-xl border border-white/[0.06] bg-black/20 p-3">
+              <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-semibold text-[#e0e0e0]"><%= preset.name %></span>
+                    <span class="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fbbf24]"><%= preset.kind.humanize %></span>
+                    <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= preset.agent_id.present? ? 'bg-blue-500/15 text-blue-300' : 'bg-white/[0.06] text-[#9c9ca3]' %>">
+                      <%= preset.agent_id.present? ? 'Scoped' : 'Global' %>
+                    </span>
+                  </div>
+
+                  <div class="mt-1 text-xs text-[#666]">
+                    <%= preset.description.presence || (preset.agent_id.present? ? "Runs only on #{preset.agent&.name || agent.name}." : "Available to the full fleet.") %>
+                  </div>
+                </div>
+
+                <%= button_to agent_commands_path(agent),
+                    params: { preset_id: preset.id },
+                    class: "shrink-0 rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-[#161619] transition-colors hover:bg-amber-500" do %>
+                  Run preset
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="rounded-xl border border-dashed border-white/[0.08] bg-black/10 px-4 py-5 text-sm text-[#666]">
+          No presets are available for this agent yet. Create a global preset or scope one directly to <span class="text-[#e0e0e0]"><%= agent.name %></span>.
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <div class="mb-8">
-    <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Recent Commands</div>
+    <div class="mb-3 flex items-center justify-between gap-3">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-[0.18em] text-[#555]">Recent Commands</div>
+        <p class="mt-1 text-sm text-[#666]">Latest control actions and the most useful execution detail.</p>
+      </div>
+    </div>
+
     <% if commands.any? %>
       <div class="space-y-2">
         <% commands.each do |cmd| %>
-          <div class="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <span class="text-[10px] font-semibold px-2 py-0.5 rounded <%= cmd.state == "completed" ? "bg-emerald-500/20 text-emerald-400" : cmd.state == "failed" ? "bg-red-500/20 text-red-400" : cmd.state == "acknowledged" ? "bg-blue-500/20 text-blue-400" : "bg-white/[0.06] text-[#666]" %>"><%= cmd.state.humanize %></span>
-              <span class="text-sm font-semibold text-[#888]"><%= cmd.kind.humanize %></span>
+          <% result_hash = cmd.result.is_a?(Hash) ? cmd.result.stringify_keys : {} %>
+          <% detail_snippet = if result_hash["error"].present?
+               result_hash["error"]
+             elsif result_hash["message"].present?
+               result_hash["message"]
+             elsif result_hash.present?
+               trimmed = result_hash.except("success").map { |key, value| "#{key}: #{value.is_a?(String) ? value : value.to_json}" }.join(" · ")
+               trimmed.presence || "success: #{result_hash["success"]}"
+             end %>
+          <div class="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= cmd.state == 'completed' ? 'bg-emerald-500/20 text-emerald-300' : cmd.state == 'failed' ? 'bg-red-500/20 text-red-300' : cmd.state == 'acknowledged' ? 'bg-blue-500/20 text-blue-300' : 'bg-white/[0.06] text-[#8a8a92]' %>"><%= cmd.state.humanize %></span>
+                  <span class="text-sm font-semibold text-[#e0e0e0]"><%= cmd.kind.humanize %></span>
+                  <% if cmd.command_preset.present? %>
+                    <span class="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300"><%= cmd.command_preset.name %></span>
+                  <% end %>
+                </div>
+
+                <% if detail_snippet.present? %>
+                  <div class="mt-2 text-xs <%= result_hash['error'].present? ? 'text-red-300' : 'text-[#888]' %>" title="<%= detail_snippet %>">
+                    <%= truncate(detail_snippet, length: 160) %>
+                  </div>
+                <% end %>
+              </div>
+
+              <div class="shrink-0 text-xs text-[#555] md:text-right">
+                <div><%= cmd.created_at.strftime("%b %d, %H:%M") %></div>
+                <% if cmd.requested_by_user.present? %>
+                  <div class="mt-1"><%= cmd.requested_by_user.respond_to?(:email_address) ? cmd.requested_by_user.email_address : "User" %></div>
+                <% end %>
+              </div>
             </div>
-            <span class="text-xs text-[#555]"><%= cmd.created_at.strftime("%b %d, %H:%M") %></span>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="text-sm text-[#555] p-4 rounded-lg bg-white/[0.03] border border-white/[0.06]">No commands yet</div>
+      <div class="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm text-[#555]">No commands have been queued for this agent yet.</div>
     <% end %>
   </div>
 </div>

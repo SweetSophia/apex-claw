@@ -27,6 +27,15 @@ class Api::V1::AgentCommandsControllerTest < ActionDispatch::IntegrationTest
       version: "1.0.0"
     )
     _other_agent_token, @other_agent_plaintext_token = AgentToken.issue!(agent: @other_agent, name: "Secondary")
+
+    @same_user_other_agent = Agent.create!(
+      user: @user,
+      name: "Second Command Worker",
+      hostname: "second-cmd-worker.local",
+      host_uid: "uid-second-cmd-worker",
+      platform: "linux",
+      version: "1.0.0"
+    )
   end
 
   test "admin can enqueue command and audit log" do
@@ -55,6 +64,77 @@ class Api::V1::AgentCommandsControllerTest < ActionDispatch::IntegrationTest
     body = response.parsed_body
     assert_equal "restart", body["kind"]
     assert_equal @user.id, body["requested_by_user_id"]
+  end
+
+  test "owner can enqueue command via preset_id" do
+    preset = CommandPreset.create!(
+      user: @user,
+      name: "Restart Preset",
+      kind: "restart",
+      payload: { reason: "scheduled" }
+    )
+
+    assert_difference "AgentCommand.count", 1 do
+      post "/api/v1/agents/#{@agent.id}/commands",
+           headers: auth_header(@user_token),
+           params: { preset_id: preset.id }
+    end
+
+    assert_response :created
+    command = AgentCommand.order(:created_at).last
+    assert_equal preset.id, command.command_preset_id
+    assert_equal "restart", command.kind
+    assert_equal({ "reason" => "scheduled" }, command.payload)
+  end
+
+  test "admin can enqueue command via target agent owner's preset" do
+    preset = CommandPreset.create!(
+      user: @user,
+      agent: @agent,
+      name: "Admin Visible Preset",
+      kind: "health_check",
+      payload: { check: { depth: "full" } }
+    )
+
+    assert_difference "AgentCommand.count", 1 do
+      post "/api/v1/agents/#{@agent.id}/commands",
+           headers: auth_header(@admin_token),
+           params: { preset_id: preset.id }
+    end
+
+    assert_response :created
+    command = AgentCommand.order(:created_at).last
+    assert_equal preset.id, command.command_preset_id
+    assert_equal({ "check" => { "depth" => "full" } }, command.payload)
+    assert_equal @admin.id, command.requested_by_user_id
+  end
+
+  test "preset enqueue returns command_preset_id" do
+    preset = CommandPreset.create!(user: @user, agent: @agent, name: "Health Check", kind: "health_check")
+
+    post "/api/v1/agents/#{@agent.id}/commands",
+         headers: auth_header(@user_token),
+         params: { preset_id: preset.id }
+
+    assert_response :created
+    assert_equal preset.id, response.parsed_body["command_preset_id"]
+  end
+
+  test "preset scoped to another agent is rejected for wrong agent" do
+    preset = CommandPreset.create!(
+      user: @user,
+      agent: @same_user_other_agent,
+      name: "Other Agent Only",
+      kind: "drain"
+    )
+
+    assert_no_difference "AgentCommand.count" do
+      post "/api/v1/agents/#{@agent.id}/commands",
+           headers: auth_header(@user_token),
+           params: { preset_id: preset.id }
+    end
+
+    assert_response :unprocessable_entity
   end
 
   test "non-owner cannot enqueue command" do

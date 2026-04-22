@@ -1,0 +1,47 @@
+<% agents = current_user.agents.active.order(:name) %>
+<% recent_runs = @command_preset.agent_commands.includes(:agent).order(created_at: :desc).limit(8) %>
+
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <%= link_to "← Command Presets", command_presets_path, class: "text-xs text-[#888] transition-colors hover:text-amber-400" %>
+      <h1 class="mt-2 text-lg font-semibold text-[#e0e0e0]"><%= @command_preset.name %></h1>
+      <% if @command_preset.description.present? %>
+        <p class="mt-1 text-xs text-[#666]"><%= @command_preset.description %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <%= render "command_presets/command_preset_card", command_preset: @command_preset %>
+  </div>
+
+  <div id="command_preset_form" class="rounded-lg border border-white/[0.08] bg-[#1e1e22] p-5">
+    <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#555]">Edit Command Preset</div>
+    <%= render "command_presets/form", command_preset: @command_preset, agents: agents %>
+  </div>
+
+  <% if recent_runs.any? %>
+    <div class="mt-8">
+      <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#555]">Recent Usage</div>
+      <div class="space-y-2">
+        <% recent_runs.each do |command| %>
+          <% result_hash = command.result.is_a?(Hash) ? command.result.stringify_keys : {} %>
+          <% detail = result_hash["error"].presence || result_hash["message"].presence %>
+          <div class="flex flex-col gap-2 rounded-lg border border-white/[0.08] bg-[#1e1e22] p-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-full px-1.5 py-0.5 text-[10px] <%= command.state == 'completed' ? 'bg-emerald-500/10 text-emerald-400' : command.state == 'failed' ? 'bg-red-500/10 text-red-400' : command.state == 'acknowledged' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/[0.05] text-[#666]' %>"><%= command.state.humanize %></span>
+                <span class="text-xs text-[#888]"><%= command.agent.name %></span>
+                <span class="text-xs text-[#555]"><%= command.created_at.strftime("%b %d, %H:%M") %></span>
+              </div>
+              <% if detail.present? %>
+                <div class="mt-1 text-xs <%= result_hash['error'].present? ? 'text-red-400' : 'text-[#666]' %>"><%= truncate(detail, length: 140) %></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

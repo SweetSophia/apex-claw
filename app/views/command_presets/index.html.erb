@@ -1,0 +1,35 @@
+<% agents = current_user.agents.active.order(:name) %>
+<% active_count = @command_presets.count(&:active?) %>
+<% global_count = @command_presets.count { |preset| preset.agent_id.nil? } %>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+  <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-[#e0e0e0]">Command Presets</h1>
+      <p class="mt-1 text-xs text-[#666]">Reusable runtime actions for replaying safe operational commands across your fleet.</p>
+
+      <% if @command_presets.any? %>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <span class="rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c3c3c8]"><%= pluralize(@command_presets.size, "preset") %></span>
+          <span class="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300"><%= active_count %> active</span>
+          <span class="rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#fbbf24]"><%= global_count %> global</span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="command_preset_form" class="mb-8 rounded-lg border border-white/[0.08] bg-[#1e1e22] p-5">
+    <div class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#555]">New Command Preset</div>
+    <%= render "command_presets/form", command_preset: CommandPreset.new, agents: agents %>
+  </div>
+
+  <div id="command_presets_list">
+    <% if @command_presets.any? %>
+      <%= render partial: "command_presets/command_preset_card", collection: @command_presets, as: :command_preset %>
+    <% else %>
+      <div class="py-12 text-center text-[#666]">
+        <p class="text-sm">No command presets yet. Create your first runtime shortcut above.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

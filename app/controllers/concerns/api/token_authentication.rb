@@ -10,6 +10,9 @@ module Api
 
     private
 
+    USER_AGENT_NAME_LIMIT = 255
+    USER_AGENT_EMOJI_LIMIT = 255
+
     def authenticate_api_token
       token = extract_token_from_header
       @current_agent = request.env["clawdeck.current_agent"]
@@ -50,14 +53,16 @@ module Api
     end
 
     def update_agent_info_from_headers
-      agent_name = request.headers["X-Agent-Name"]
-      agent_emoji = request.headers["X-Agent-Emoji"]
-      return if agent_name.blank? && agent_emoji.blank?
+      return unless @current_user
+      return if @current_agent.present?
 
       updates = {}
-      updates[:agent_name] = agent_name if agent_name.present?
-      updates[:agent_emoji] = agent_emoji if agent_emoji.present?
-      current_user.update_columns(updates) if updates.any?
+      agent_name = request.headers["X-Agent-Name"].presence
+      agent_emoji = request.headers["X-Agent-Emoji"].presence
+      updates[:agent_name] = agent_name.first(USER_AGENT_NAME_LIMIT) if agent_name
+      updates[:agent_emoji] = agent_emoji.first(USER_AGENT_EMOJI_LIMIT) if agent_emoji
+
+      @current_user.update_columns(updates) if updates.any?
     end
   end
 end
