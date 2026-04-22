@@ -70,7 +70,7 @@ module ApplicationHelper
       { title: "Home", subtitle: "Workspace overview", href: home_path, icon: "🏠", keywords: %w[home workspace dashboard overview] },
       { title: "Agents", subtitle: "Fleet status and controls", href: agents_path, icon: "🤖", keywords: %w[agents agent fleet status controls] },
       { title: "Skills", subtitle: "Reusable knowledge blocks", href: skills_path, icon: "🧠", keywords: %w[skills skill knowledge reusable blocks] },
-      { title: "Workflows", subtitle: "Triggers runs and automation", href: workflows_path, icon: "🪄", keywords: %w[workflows workflow triggers runs automation] },
+      { title: "Workflows", subtitle: "Trigger runs and automation", href: workflows_path, icon: "🪄", keywords: %w[workflows workflow triggers runs automation] },
       { title: "Handoffs", subtitle: "Transfer templates", href: handoff_templates_path, icon: "🔁", keywords: %w[handoffs handoff transfer templates] },
       { title: "Routing", subtitle: "Auto-routing rules", href: routing_rules_path, icon: "🧭", keywords: %w[routing auto-routing rules router] },
       { title: "Presets", subtitle: "Reusable command presets", href: command_presets_path, icon: "🧰", keywords: %w[presets preset commands command reusable] },
