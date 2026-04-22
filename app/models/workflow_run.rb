@@ -1,5 +1,6 @@
 class WorkflowRun < ApplicationRecord
   belongs_to :workflow
+  belongs_to :user
 
   validates :workflow, presence: true
 

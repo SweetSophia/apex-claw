@@ -194,7 +194,10 @@ class Task < ApplicationRecord
     Turbo::StreamsChannel.broadcast_action_to(stream, action: :remove, target: "task_#{cached_id}")
 
     # Update column count
-    count = Board.find(cached_board_id).tasks.where(status: cached_status).count
+    board = Board.find_by(id: cached_board_id)
+    return unless board
+
+    count = board.tasks.where(status: cached_status).count
     Turbo::StreamsChannel.broadcast_action_to(
       stream,
       action: :replace,

@@ -27,12 +27,13 @@ class Workflow < ApplicationRecord
   scope :active, -> { where(status: :active) }
   scope :recent, -> { order(updated_at: :desc) }
 
-  def trigger!(trigger_type: :manual)
+  def trigger!(trigger_type: :manual, user: nil)
     return false unless runnable?
 
     update!(last_run_at: Time.current)
     WorkflowRun.create!(
       workflow: self,
+      user: user || self.user,
       trigger_type: trigger_type,
       status: :pending
     )

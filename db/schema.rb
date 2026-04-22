@@ -515,18 +515,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
 
   create_table "workflow_runs", force: :cascade do |t|
     t.bigint "workflow_id", null: false
+    t.bigint "user_id", null: false
     t.integer "status", default: 0, null: false
     t.integer "trigger_type", default: 0, null: false
-    t.jsonb "result", default: {}, null: false
-    t.text "error_message"
+    t.jsonb "context", default: {}, null: false
+    t.text "result_summary"
     t.datetime "started_at"
-    t.datetime "completed_at"
+    t.datetime "finished_at"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["workflow_id"], name: "index_workflow_runs_on_workflow_id"
-    t.index ["workflow_id", "status"], name: "index_workflow_runs_on_workflow_id_and_status"
+    t.index ["workflow_id", "created_at"], name: "index_workflow_runs_on_workflow_id_and_created_at"
+    t.index ["user_id"], name: "index_workflow_runs_on_user_id"
+    t.index ["user_id", "created_at"], name: "index_workflow_runs_on_user_id_and_created_at"
     t.index ["created_at"], name: "index_workflow_runs_on_created_at"
   end
+
+  add_foreign_key "workflow_runs", "users", on_delete: :cascade
 
   create_table "tasks", force: :cascade do |t|
     t.datetime "agent_claimed_at"
