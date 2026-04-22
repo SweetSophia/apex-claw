@@ -13,8 +13,8 @@ class AgentRateLimiter
     return @app.call(env) unless agent_token
 
     agent = agent_token.agent
-    env["clawdeck.current_agent"] = agent
-    env["clawdeck.current_user"] = agent.user
+    env["apex_claw.current_agent"] = agent
+    env["apex_claw.current_user"] = agent.user
 
     rate_limit = agent.agent_rate_limit
     window_seconds = rate_limit&.window_seconds || DEFAULT_WINDOW_SECONDS

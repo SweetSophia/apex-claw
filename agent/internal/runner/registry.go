@@ -43,9 +43,12 @@ func (r *ExecutorRegistry) Get(name string) (Executor, error) {
 	return factory(), nil
 }
 
-// DefaultExecutorName returns the executor type from the CLAWDECK_EXECUTOR
-// environment variable, falling back to "shell".
+// DefaultExecutorName returns the executor type from the APEX_CLAW_EXECUTOR
+// environment variable (or legacy CLAWDECK_EXECUTOR), falling back to "shell".
 func DefaultExecutorName() string {
+	if name := os.Getenv("APEX_CLAW_EXECUTOR"); name != "" {
+		return name
+	}
 	if name := os.Getenv("CLAWDECK_EXECUTOR"); name != "" {
 		return name
 	}

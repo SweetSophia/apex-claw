@@ -47,7 +47,7 @@ func (s *ScriptExecutor) Execute(ctx context.Context, task *clawdeck.Task) Execu
 	}
 
 	// Write script to temp file.
-	tmpFile, err := os.CreateTemp("", "clawdeck-script-*.sh")
+	tmpFile, err := os.CreateTemp("", "apex-claw-script-*.sh")
 	if err != nil {
 		return ExecutionResult{
 			Completed: false,

@@ -42,7 +42,7 @@ type entry struct {
 
 var (
 	globalMu     sync.RWMutex
-	globalLogger = NewLogger(os.Stderr, parseLevel(os.Getenv("CLAWDECK_LOG_LEVEL")), 0)
+	globalLogger = NewLogger(os.Stderr, parseLevel(firstEnv("APEX_CLAW_LOG_LEVEL", "CLAWDECK_LOG_LEVEL")), 0)
 )
 
 func NewLogger(w io.Writer, level Level, agentID int64) *Logger {
@@ -59,7 +59,7 @@ func NewLogger(w io.Writer, level Level, agentID int64) *Logger {
 func InitLogger(agentID int64) {
 	globalMu.Lock()
 	defer globalMu.Unlock()
-	globalLogger = NewLogger(os.Stderr, parseLevel(os.Getenv("CLAWDECK_LOG_LEVEL")), agentID)
+	globalLogger = NewLogger(os.Stderr, parseLevel(firstEnv("APEX_CLAW_LOG_LEVEL", "CLAWDECK_LOG_LEVEL")), agentID)
 }
 
 func Global() *Logger {
@@ -105,6 +105,15 @@ func (l *Logger) log(level Level, msg string, fields map[string]any) {
 	l.mu.Lock()
 	l.logger.Print(string(payload))
 	l.mu.Unlock()
+}
+
+func firstEnv(keys ...string) string {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func parseLevel(value string) Level {

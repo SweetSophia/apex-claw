@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url'
 
 async function loadPlaywright() {
-  const explicitModulePath = process.env.CLAWDECK_PLAYWRIGHT_MODULE
+  const explicitModulePath = process.env.APEX_CLAW_PLAYWRIGHT_MODULE || process.env.CLAWDECK_PLAYWRIGHT_MODULE
 
   if (explicitModulePath) {
     const module = await import(pathToFileURL(explicitModulePath).href)
@@ -13,18 +13,18 @@ async function loadPlaywright() {
     return module.default ?? module
   } catch (error) {
     throw new Error(
-      'Could not load Playwright. Install it in the normal Node resolution path or set CLAWDECK_PLAYWRIGHT_MODULE to Playwright\'s index.js path.'
+      'Could not load Playwright. Install it in the normal Node resolution path or set APEX_CLAW_PLAYWRIGHT_MODULE (or legacy CLAWDECK_PLAYWRIGHT_MODULE) to Playwright\'s index.js path.'
     )
   }
 }
 
 const { chromium } = await loadPlaywright()
 
-const baseUrl = (process.env.CLAWDECK_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
-const email = process.env.CLAWDECK_EMAIL || 'one@example.com'
-const password = process.env.CLAWDECK_PASSWORD || 'password123'
-const configuredBoardId = process.env.CLAWDECK_BOARD_ID || ''
-const headless = !['0', 'false', 'no'].includes(String(process.env.CLAWDECK_HEADLESS || 'true').toLowerCase())
+const baseUrl = (process.env.APEX_CLAW_BASE_URL || process.env.CLAWDECK_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
+const email = process.env.APEX_CLAW_EMAIL || process.env.CLAWDECK_EMAIL || 'one@example.com'
+const password = process.env.APEX_CLAW_PASSWORD || process.env.CLAWDECK_PASSWORD || 'password123'
+const configuredBoardId = process.env.APEX_CLAW_BOARD_ID || process.env.CLAWDECK_BOARD_ID || ''
+const headless = !['0', 'false', 'no'].includes(String(process.env.APEX_CLAW_HEADLESS || process.env.CLAWDECK_HEADLESS || 'true').toLowerCase())
 
 const selectors = {
   commandBarToggle: 'button[onclick*="command-bar:toggle"]',

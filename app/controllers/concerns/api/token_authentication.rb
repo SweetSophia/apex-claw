@@ -15,8 +15,8 @@ module Api
 
     def authenticate_api_token
       token = extract_token_from_header
-      @current_agent = request.env["clawdeck.current_agent"]
-      @current_user = request.env["clawdeck.current_user"]
+      @current_agent = request.env["apex_claw.current_agent"] || request.env["clawdeck.current_agent"]
+      @current_user = request.env["apex_claw.current_user"] || request.env["clawdeck.current_user"]
       @current_agent_token = nil
 
       agent_token = AgentToken.authenticate(token)

@@ -1,7 +1,7 @@
-# Logrotate configuration for Cardy application
+# Logrotate configuration for Apex Claw
 # Deploy this file to the server with:
-#   scp config/logrotate/clawdeck root@104.236.193.0:/etc/logrotate.d/clawdeck
-#   ssh root@104.236.193.0 'chmod 644 /etc/logrotate.d/clawdeck'
+#   scp config/logrotate/clawdeck root@104.236.193.0:/etc/logrotate.d/apex-claw
+#   ssh root@104.236.193.0 'chmod 644 /etc/logrotate.d/apex-claw'
 
 # Application logs
 /var/www/clawdeck/log/*.log {
@@ -20,7 +20,7 @@
 }
 
 # Service logs (systemd journals handle these, but if custom log files exist)
-/var/log/clawdeck/*.log {
+/var/log/apex-claw/*.log {
     daily
     rotate 14
     compress

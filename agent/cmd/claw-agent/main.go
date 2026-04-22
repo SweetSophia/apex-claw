@@ -46,7 +46,7 @@ func main() {
 	}
 
 	if token == "" && cfg.JoinToken == "" {
-		log.Fatal("no persisted token found and CLAWDECK_JOIN_TOKEN not set")
+		log.Fatal("no persisted token found and APEX_CLAW_JOIN_TOKEN / CLAWDECK_JOIN_TOKEN not set")
 	}
 
 	if token != "" {

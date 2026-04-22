@@ -74,8 +74,8 @@ class Client
 end
 
 options = {
-  base_url: ENV.fetch('CLAWDECK_BASE_URL', 'http://localhost:3000'),
-  join_tokens: (ENV['CLAWDECK_JOIN_TOKENS'] || '').split(',').map(&:strip).reject(&:empty?),
+  base_url: ENV['APEX_CLAW_BASE_URL'] || ENV.fetch('CLAWDECK_BASE_URL', 'http://localhost:3000'),
+  join_tokens: (ENV['APEX_CLAW_JOIN_TOKENS'] || ENV['CLAWDECK_JOIN_TOKENS'] || '').split(',').map(&:strip).reject(&:empty?),
   agents: (ENV['LOADTEST_AGENTS'] || 4).to_i,
   iterations: (ENV['LOADTEST_ITERATIONS'] || 10).to_i
 }
@@ -88,7 +88,7 @@ OptionParser.new do |opts|
   opts.on('--iterations N', Integer) { |v| options[:iterations] = v }
 end.parse!
 
-abort 'need one join token per agent via repeated --join-token or CLAWDECK_JOIN_TOKENS' if options[:join_tokens].empty?
+abort 'need one join token per agent via repeated --join-token or APEX_CLAW_JOIN_TOKENS / CLAWDECK_JOIN_TOKENS' if options[:join_tokens].empty?
 abort "need at least #{options[:agents]} join tokens for #{options[:agents]} agents" if options[:join_tokens].length < options[:agents]
 
 client = Client.new(options[:base_url])

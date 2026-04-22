@@ -1,6 +1,6 @@
 # Template rendered by script/install_services.sh
 [Unit]
-Description=Puma HTTP Server for ClawDeck
+Description=Puma HTTP Server for Apex Claw
 After=network.target postgresql.service
 Requires=postgresql.service
 
@@ -21,10 +21,10 @@ RestartSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ReadWritePaths=__APP_ROOT__/storage __APP_ROOT__/tmp /var/log/clawdeck
-StandardOutput=append:/var/log/clawdeck/puma.log
-StandardError=append:/var/log/clawdeck/puma_error.log
-SyslogIdentifier=clawdeck-puma
+ReadWritePaths=__APP_ROOT__/storage __APP_ROOT__/tmp /var/log/apex-claw
+StandardOutput=append:/var/log/apex-claw/puma.log
+StandardError=append:/var/log/apex-claw/puma_error.log
+SyslogIdentifier=apex-claw-puma
 
 [Install]
 WantedBy=multi-user.target

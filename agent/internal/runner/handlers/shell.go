@@ -109,7 +109,10 @@ func validateShellCommand(binary string, args []string) error {
 }
 
 func shellAllowedCommands() []string {
-	value := os.Getenv("CLAWDECK_SHELL_ALLOWED")
+	value := os.Getenv("APEX_CLAW_SHELL_ALLOWED")
+	if strings.TrimSpace(value) == "" {
+		value = os.Getenv("CLAWDECK_SHELL_ALLOWED")
+	}
 	if strings.TrimSpace(value) == "" {
 		value = defaultShellAllowlist
 	}

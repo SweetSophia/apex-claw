@@ -10,7 +10,7 @@ import (
 )
 
 func TestShellHandlerAllowlistEnforcement(t *testing.T) {
-	t.Setenv("CLAWDECK_SHELL_ALLOWED", "echo")
+	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "echo")
 	h := &ShellHandler{}
 
 	_, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "pwd"}})
@@ -23,8 +23,8 @@ func TestShellHandlerAllowlistEnforcement(t *testing.T) {
 }
 
 func TestShellHandlerExecution(t *testing.T) {
-	_ = os.Setenv("CLAWDECK_SHELL_ALLOWED", "echo")
-	t.Cleanup(func() { os.Unsetenv("CLAWDECK_SHELL_ALLOWED") })
+	_ = os.Setenv("APEX_CLAW_SHELL_ALLOWED", "echo")
+	t.Cleanup(func() { os.Unsetenv("APEX_CLAW_SHELL_ALLOWED") })
 
 	h := &ShellHandler{}
 	result, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "echo hello", "timeout": 5}})
@@ -43,7 +43,7 @@ func TestShellHandlerExecution(t *testing.T) {
 }
 
 func TestShellHandlerRejectsDisallowedArguments(t *testing.T) {
-	t.Setenv("CLAWDECK_SHELL_ALLOWED", "df")
+	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "df")
 	h := &ShellHandler{}
 
 	_, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "df /"}})
@@ -56,7 +56,7 @@ func TestShellHandlerRejectsDisallowedArguments(t *testing.T) {
 }
 
 func TestShellHandlerSupportsSingleQuotedArguments(t *testing.T) {
-	t.Setenv("CLAWDECK_SHELL_ALLOWED", "echo")
+	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "echo")
 	h := &ShellHandler{}
 
 	result, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "echo 'hello world'", "timeout": 5}})

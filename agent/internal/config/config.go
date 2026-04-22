@@ -44,18 +44,18 @@ type persistedToken struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		APIURL:           getEnv("CLAWDECK_API_URL", DefaultAPIURL),
-		JoinToken:        os.Getenv("CLAWDECK_JOIN_TOKEN"),
-		AgentTokenPath:   getEnv("CLAWDECK_AGENT_TOKEN_PATH", ""),
+		APIURL:           getEnvCompat("APEX_CLAW_API_URL", "CLAWDECK_API_URL", DefaultAPIURL),
+		JoinToken:        getCompatEnv("APEX_CLAW_JOIN_TOKEN", "CLAWDECK_JOIN_TOKEN"),
+		AgentTokenPath:   getEnvCompat("APEX_CLAW_AGENT_TOKEN_PATH", "CLAWDECK_AGENT_TOKEN_PATH", ""),
 		HeartbeatDelay:   DefaultHeartbeatDelay,
 		TaskPollDelay:    DefaultTaskPollDelay,
 		CommandPollDelay: DefaultCommandPollDelay,
 		AgentInfo: AgentInfo{
-			Name:     getEnv("CLAWDECK_AGENT_NAME", "claw-agent"),
-			Hostname: getEnv("CLAWDECK_HOSTNAME", ""),
-			HostUID:  getEnv("CLAWDECK_HOST_UID", ""),
-			Platform: getEnv("CLAWDECK_PLATFORM", ""),
-			Version:  getEnv("CLAWDECK_VERSION", "0.1.0"),
+			Name:     getEnvCompat("APEX_CLAW_AGENT_NAME", "CLAWDECK_AGENT_NAME", "claw-agent"),
+			Hostname: getEnvCompat("APEX_CLAW_HOSTNAME", "CLAWDECK_HOSTNAME", ""),
+			HostUID:  getEnvCompat("APEX_CLAW_HOST_UID", "CLAWDECK_HOST_UID", ""),
+			Platform: getEnvCompat("APEX_CLAW_PLATFORM", "CLAWDECK_PLATFORM", ""),
+			Version:  getEnvCompat("APEX_CLAW_VERSION", "CLAWDECK_VERSION", "0.1.0"),
 		},
 	}
 
@@ -130,6 +130,20 @@ func (c *Config) ClearToken() error {
 
 func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}
+
+func getCompatEnv(primaryKey, legacyKey string) string {
+	if value := os.Getenv(primaryKey); value != "" {
+		return value
+	}
+	return os.Getenv(legacyKey)
+}
+
+func getEnvCompat(primaryKey, legacyKey, fallback string) string {
+	if value := getCompatEnv(primaryKey, legacyKey); value != "" {
 		return value
 	}
 	return fallback
