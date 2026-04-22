@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -95,20 +95,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.string "version"
+    t.text "instructions"
+    t.jsonb "custom_env", default: {}, null: false
+    t.jsonb "custom_args", default: [], null: false
+    t.string "model"
+    t.integer "max_concurrent_tasks", default: 1, null: false
+    t.datetime "archived_at"
+    t.bigint "archived_by_id"
     t.index ["last_heartbeat_at"], name: "index_agents_on_last_heartbeat_at"
     t.index ["user_id", "host_uid"], name: "index_agents_on_user_id_and_host_uid", unique: true
     t.index ["user_id", "status"], name: "index_agents_on_user_id_and_status"
     t.index ["user_id"], name: "index_agents_on_user_id"
+    t.index ["archived_at"], name: "index_agents_on_archived_at"
+    t.index ["user_id", "archived_at"], name: "index_agents_on_user_id_and_archived_at"
   end
 
   create_table "api_tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "last_used_at"
     t.string "name"
-    t.string "token", null: false
+    t.string "token_digest", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["token"], name: "index_api_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
@@ -120,6 +128,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.bigint "user_id", null: false
     t.index ["user_id", "month"], name: "index_api_usage_records_on_user_id_and_month", unique: true
     t.index ["user_id"], name: "index_api_usage_records_on_user_id"
+  end
+
+  create_table "counters", force: :cascade do |t|
+    t.string "key", null: false
+    t.integer "count", default: 0, null: false
+    t.integer "expires_at", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["key"], name: "index_counters_on_key", unique: true
+    t.index ["expires_at"], name: "index_counters_on_expires_at"
   end
 
   create_table "audit_logs", force: :cascade do |t|
@@ -394,11 +412,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.bigint "task_id", null: false
     t.bigint "to_agent_id", null: false
     t.datetime "updated_at", null: false
+    t.bigint "handoff_template_id"
+    t.boolean "escalation", default: false, null: false
+    t.string "reason"
     t.index ["from_agent_id"], name: "index_task_handoffs_on_from_agent_id"
     t.index ["status"], name: "index_task_handoffs_on_status"
     t.index ["task_id"], name: "index_task_handoffs_on_task_id"
     t.index ["task_id"], name: "index_task_handoffs_on_task_id_pending_unique", unique: true, where: "(status = 0)"
     t.index ["to_agent_id"], name: "index_task_handoffs_on_to_agent_id"
+    t.index ["handoff_template_id"], name: "index_task_handoffs_on_handoff_template_id"
   end
 
   create_table "task_lists", force: :cascade do |t|
@@ -421,6 +443,89 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.index ["tag_id"], name: "index_task_tags_on_tag_id"
     t.index ["task_id", "tag_id"], name: "index_task_tags_on_task_id_and_tag_id", unique: true
     t.index ["task_id"], name: "index_task_tags_on_task_id"
+  end
+
+  create_table "handoff_templates", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "context_template", null: false
+    t.bigint "agent_id"
+    t.boolean "auto_suggest", default: false, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["user_id"], name: "index_handoff_templates_on_user_id"
+    t.index ["agent_id"], name: "index_handoff_templates_on_agent_id"
+    t.index ["user_id", "name"], name: "index_handoff_templates_on_user_id_and_name", unique: true
+  end
+
+  create_table "routing_rules", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.integer "priority", default: 0, null: false
+    t.jsonb "conditions", default: {}, null: false
+    t.bigint "agent_id", null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["user_id"], name: "index_routing_rules_on_user_id"
+    t.index ["agent_id"], name: "index_routing_rules_on_agent_id"
+    t.index ["user_id", "active"], name: "index_routing_rules_on_user_id_and_active"
+  end
+
+  create_table "skills", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.text "body"
+    t.boolean "shared", default: false, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["user_id"], name: "index_skills_on_user_id"
+    t.index ["user_id", "name"], name: "index_skills_on_user_id_and_name", unique: true
+  end
+
+  create_table "agent_skills", force: :cascade do |t|
+    t.bigint "agent_id", null: false
+    t.bigint "skill_id", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["agent_id"], name: "index_agent_skills_on_agent_id"
+    t.index ["skill_id"], name: "index_agent_skills_on_skill_id"
+    t.index ["agent_id", "skill_id"], name: "index_agent_skills_on_agent_and_skill", unique: true
+  end
+
+  create_table "workflows", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "agent_id"
+    t.string "name", null: false
+    t.text "description"
+    t.integer "trigger_type", default: 0, null: false
+    t.jsonb "trigger_config", default: {}, null: false
+    t.integer "execution_mode", default: 0, null: false
+    t.jsonb "task_template", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "last_run_at"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["user_id"], name: "index_workflows_on_user_id"
+    t.index ["agent_id"], name: "index_workflows_on_agent_id"
+    t.index ["user_id", "status"], name: "index_workflows_on_user_id_and_status"
+    t.index ["trigger_type"], name: "index_workflows_on_trigger_type"
+  end
+
+  create_table "workflow_runs", force: :cascade do |t|
+    t.bigint "workflow_id", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "trigger_type", default: 0, null: false
+    t.jsonb "result", default: {}, null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["workflow_id"], name: "index_workflow_runs_on_workflow_id"
+    t.index ["workflow_id", "status"], name: "index_workflow_runs_on_workflow_id_and_status"
+    t.index ["created_at"], name: "index_workflow_runs_on_created_at"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -452,6 +557,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.bigint "task_list_id"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.string "required_skills", default: [], array: true
+    t.jsonb "escalation_config", default: {}
     t.index ["assigned_agent_id"], name: "index_tasks_on_assigned_agent_id"
     t.index ["assigned_to_agent"], name: "index_tasks_on_assigned_to_agent"
     t.index ["blocked"], name: "index_tasks_on_blocked"
@@ -462,6 +569,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
     t.index ["status"], name: "index_tasks_on_status"
     t.index ["task_list_id"], name: "index_tasks_on_task_list_id"
     t.index ["user_id"], name: "index_tasks_on_user_id"
+    t.index ["required_skills"], name: "index_tasks_on_required_skills", using: :gin
   end
 
   create_table "users", force: :cascade do |t|
@@ -497,6 +605,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
   add_foreign_key "agent_rate_limits", "agents"
   add_foreign_key "agent_tokens", "agents"
   add_foreign_key "agents", "users"
+  add_foreign_key "agents", "users", column: "archived_by_id", on_delete: :nullify
   add_foreign_key "api_tokens", "users"
   add_foreign_key "api_usage_records", "users"
   add_foreign_key "boards", "users"
@@ -520,6 +629,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
   add_foreign_key "task_handoffs", "agents", column: "from_agent_id"
   add_foreign_key "task_handoffs", "agents", column: "to_agent_id"
   add_foreign_key "task_handoffs", "tasks"
+  add_foreign_key "task_handoffs", "handoff_templates", column: "handoff_template_id", on_delete: :nullify
   add_foreign_key "task_lists", "projects"
   add_foreign_key "task_lists", "users"
   add_foreign_key "task_tags", "tags"
@@ -530,4 +640,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_17_081000) do
   add_foreign_key "tasks", "projects"
   add_foreign_key "tasks", "task_lists"
   add_foreign_key "tasks", "users"
+  add_foreign_key "handoff_templates", "users"
+  add_foreign_key "handoff_templates", "agents", column: "agent_id", on_delete: :nullify
+  add_foreign_key "routing_rules", "users"
+  add_foreign_key "routing_rules", "agents"
+  add_foreign_key "skills", "users"
+  add_foreign_key "agent_skills", "agents"
+  add_foreign_key "agent_skills", "skills"
+  add_foreign_key "workflows", "users"
+  add_foreign_key "workflows", "agents", column: "agent_id", on_delete: :nullify
+  add_foreign_key "workflow_runs", "workflows"
 end
