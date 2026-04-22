@@ -8,7 +8,7 @@ class WorkflowRunTest < ActiveSupport::TestCase
   end
 
   test "valid with workflow" do
-    run = WorkflowRun.new(workflow: @workflow, trigger_type: :manual)
+    run = WorkflowRun.new(workflow: @workflow, user: @user, trigger_type: :manual)
     assert run.valid?
   end
 
@@ -18,7 +18,7 @@ class WorkflowRunTest < ActiveSupport::TestCase
   end
 
   test "status enum" do
-    run = WorkflowRun.create!(workflow: @workflow, trigger_type: :manual)
+    run = WorkflowRun.create!(workflow: @workflow, user: @user, trigger_type: :manual)
     assert run.pending?
     run.running!
     assert run.running?
@@ -29,6 +29,7 @@ class WorkflowRunTest < ActiveSupport::TestCase
   test "duration returns time difference" do
     run = WorkflowRun.create!(
       workflow: @workflow,
+      user: @user,
       trigger_type: :manual,
       started_at: 1.hour.ago,
       completed_at: Time.current
@@ -37,13 +38,13 @@ class WorkflowRunTest < ActiveSupport::TestCase
   end
 
   test "duration nil when not completed" do
-    run = WorkflowRun.create!(workflow: @workflow, trigger_type: :manual, started_at: 1.hour.ago)
+    run = WorkflowRun.create!(workflow: @workflow, user: @user, trigger_type: :manual, started_at: 1.hour.ago)
     assert_nil run.duration
   end
 
   test "recent scope orders by created_at desc" do
-    older = WorkflowRun.create!(workflow: @workflow, trigger_type: :manual)
-    newer = WorkflowRun.create!(workflow: @workflow, trigger_type: :schedule)
+    older = WorkflowRun.create!(workflow: @workflow, user: @user, trigger_type: :manual)
+    newer = WorkflowRun.create!(workflow: @workflow, user: @user, trigger_type: :schedule)
     assert_equal [newer, older], @workflow.workflow_runs.recent.to_a
   end
 end
