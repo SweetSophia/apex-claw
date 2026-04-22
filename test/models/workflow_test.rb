@@ -31,8 +31,8 @@ class WorkflowTest < ActiveSupport::TestCase
 
   test "has many workflow_runs" do
     workflow = Workflow.create!(user: @user, agent: @agent, name: "Runs Test")
-    workflow.workflow_runs.create!(trigger_type: :manual)
-    workflow.workflow_runs.create!(trigger_type: :schedule)
+    workflow.workflow_runs.create!(user: @user, trigger_type: :manual)
+    workflow.workflow_runs.create!(user: @user, trigger_type: :schedule)
     assert_equal 2, workflow.workflow_runs.count
   end
 

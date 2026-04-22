@@ -518,10 +518,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
     t.bigint "user_id", null: false
     t.integer "status", default: 0, null: false
     t.integer "trigger_type", default: 0, null: false
-    t.jsonb "context", default: {}, null: false
-    t.text "result_summary"
+    t.jsonb "result", default: {}, null: false
+    t.text "error_message"
     t.datetime "started_at"
-    t.datetime "finished_at"
+    t.datetime "completed_at"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["workflow_id"], name: "index_workflow_runs_on_workflow_id"
@@ -653,4 +653,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
   add_foreign_key "workflows", "users"
   add_foreign_key "workflows", "agents", column: "agent_id", on_delete: :nullify
   add_foreign_key "workflow_runs", "workflows"
+  add_foreign_key "workflow_runs", "users"
 end
