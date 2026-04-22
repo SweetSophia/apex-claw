@@ -10,22 +10,23 @@ class RunExecutorTest < ActiveSupport::TestCase
 
   test "creates a task and assigns to agent" do
     run = @workflow.trigger!(trigger_type: :manual)
+    created_task = nil
 
     assert_difference "Task.count", 1 do
       Workflows::RunExecutor.new(run).execute!
+      created_task = Task.order(:created_at).last
     end
 
     run.reload
     assert run.completed?
-    task = Task.last
-    assert_equal "Auto task", task.name
-    assert_equal @agent, task.assigned_agent
+    assert_equal "Auto task", created_task.name
+    assert_equal @agent, created_task.assigned_agent
     assert run.result["task_id"].present?
   end
 
   test "marks failed when agent is not available" do
     @agent.update!(archived_at: Time.current, archived_by: @user)
-    run = @workflow.trigger!(trigger_type: :manual)
+    run = WorkflowRun.create!(workflow: @workflow, user: @user, trigger_type: :manual, status: :pending)
 
     Workflows::RunExecutor.new(run).execute!
 

@@ -51,10 +51,8 @@ class TaskHandoffs::EscalatorTest < ActiveSupport::TestCase
   test "creates escalation handoff for eligible task" do
     task = create_blocked_task(escalation_config: { enabled: true, block_timeout_minutes: 30 }, age_minutes: 31)
 
-    with_stubbed_suggester(@agent2) do
-      assert_difference "TaskHandoff.count", 1 do
-        assert_equal 1, TaskHandoffs::Escalator.new.run
-      end
+    assert_difference "TaskHandoff.count", 1 do
+      assert_equal 1, TaskHandoffs::Escalator.new.run
     end
 
     handoff = task.handoffs.order(:created_at).last
@@ -77,10 +75,8 @@ class TaskHandoffs::EscalatorTest < ActiveSupport::TestCase
   test "falls back to suggester when no configured target" do
     task = create_blocked_task(escalation_config: { enabled: true, block_timeout_minutes: 30 }, age_minutes: 31)
 
-    with_stubbed_suggester(@agent2) do
-      assert_difference "TaskHandoff.count", 1 do
-        assert_equal 1, TaskHandoffs::Escalator.new.run
-      end
+    assert_difference "TaskHandoff.count", 1 do
+      assert_equal 1, TaskHandoffs::Escalator.new.run
     end
 
     assert_equal @agent2, task.handoffs.order(:created_at).last.to_agent
@@ -131,17 +127,5 @@ class TaskHandoffs::EscalatorTest < ActiveSupport::TestCase
 
     task.update_columns(created_at: age_minutes.minutes.ago, updated_at: age_minutes.minutes.ago)
     task.reload
-  end
-
-  def with_stubbed_suggester(*agents)
-    suggestions = agents.map { |agent| { agent: agent } }
-    fake_suggester = Object.new
-    fake_suggester.define_singleton_method(:suggest) do |limit:|
-      suggestions.first(limit)
-    end
-
-    TaskHandoffs::Suggester.stub(:new, fake_suggester) do
-      yield
-    end
   end
 end

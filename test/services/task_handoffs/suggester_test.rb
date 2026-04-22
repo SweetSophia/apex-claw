@@ -44,10 +44,9 @@ class TaskHandoffs::SuggesterTest < ActiveSupport::TestCase
     create_task_for(best_agent, name: "Best completed workload", status: :done)
     create_task_for(capacity_agent, name: "Capacity task 1", status: :up_next)
     create_task_for(capacity_agent, name: "Capacity task 2", status: :in_progress)
+    @task.update!(required_skills: ["Ruby", "Rails"])
 
-    suggestions = @task.stub(:required_skills, [ "Ruby", "Rails" ]) do
-      TaskHandoffs::Suggester.new(@task).suggest(limit: 10)
-    end
+    suggestions = TaskHandoffs::Suggester.new(@task).suggest(limit: 10)
 
     assert_equal [ best_agent, partial_agent, capacity_agent ],
                  suggestions.map { |entry| entry[:agent] }
@@ -65,7 +64,7 @@ class TaskHandoffs::SuggesterTest < ActiveSupport::TestCase
   end
 
   test "suggest treats missing required skills as equal for all agents" do
-    task = Task.create!(user: @other_user, board: boards(:two), name: "No Skill Task")
+    task = Task.create!(user: @other_user, board: boards(:two), name: "No Skill Task", required_skills: [])
 
     alpha = create_agent("Alpha Agent", user: @other_user)
     beta = create_agent("Beta Agent", user: @other_user)
@@ -73,9 +72,7 @@ class TaskHandoffs::SuggesterTest < ActiveSupport::TestCase
     alpha_skill = Skill.create!(user: @other_user, name: "Go")
     add_skills(alpha, alpha_skill)
 
-    suggestions = task.stub(:required_skills, []) do
-      TaskHandoffs::Suggester.new(task).suggest(limit: 2)
-    end
+    suggestions = TaskHandoffs::Suggester.new(task).suggest(limit: 2)
 
     assert_equal [ alpha, beta ], suggestions.map { |entry| entry[:agent] }
     assert_equal suggestions.first[:score], suggestions.second[:score]
