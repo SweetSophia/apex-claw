@@ -99,9 +99,11 @@ module Api
       end
 
       def tasks
+        done_status = Task.statuses[:done]
+
         claimed = @agent.claimed_tasks
           .includes(:board)
-          .order(Arel.sql("CASE WHEN status = 'done' THEN 1 ELSE 0 END, completed_at DESC NULLS LAST, updated_at DESC"))
+          .order(Arel.sql("CASE WHEN status = #{done_status} THEN 1 ELSE 0 END, completed_at DESC NULLS LAST, updated_at DESC"))
           .limit(50)
         assigned = @agent.assigned_tasks
           .where.not(id: claimed.select(:id))
@@ -139,7 +141,7 @@ module Api
       private
 
       def set_agent
-        @agent = Agent.find(params[:id])
+        @agent = current_user.agents.find(params[:id])
       end
 
       def set_agent_for_heartbeat
@@ -182,23 +184,27 @@ module Api
       end
 
       def register_params
-        p = params.fetch(:agent, ActionController::Parameters.new).permit(
+        raw = params.fetch(:agent, ActionController::Parameters.new)
+        p = raw.permit(
           :name, :hostname, :host_uid, :platform, :version,
           :instructions, :model, :max_concurrent_tasks,
-          :custom_env, :custom_args,
           tags: [], metadata: {}
         )
+        p[:custom_env] = raw[:custom_env] if raw.key?(:custom_env)
+        p[:custom_args] = raw[:custom_args] if raw.key?(:custom_args)
         parse_json_fields(p)
         p
       end
 
       def update_params
-        p = params.fetch(:agent, ActionController::Parameters.new).permit(
+        raw = params.fetch(:agent, ActionController::Parameters.new)
+        p = raw.permit(
           :name, :status,
           :instructions, :model, :max_concurrent_tasks,
-          :custom_env, :custom_args,
           tags: [], metadata: {}
         )
+        p[:custom_env] = raw[:custom_env] if raw.key?(:custom_env)
+        p[:custom_args] = raw[:custom_args] if raw.key?(:custom_args)
         parse_json_fields(p)
         p
       end
@@ -212,11 +218,12 @@ module Api
           val = p[key]
           next if val.nil?
           p[key] = case val
+          when ActionController::Parameters then key == :custom_env ? val.to_unsafe_h : val.to_unsafe_h.values
           when Hash then val
           when Array then val
           when String
             val.strip.empty? ? (key == :custom_env ? {} : []) : JSON.parse(val)
-          else {}
+          else key == :custom_env ? {} : []
           end
         rescue JSON::ParserError
           raise InvalidJsonError

@@ -59,14 +59,10 @@ class RoutingRuleTest < ActiveSupport::TestCase
   end
 
   test "matches checks skills overlap" do
-    task = create_task
+    task = create_task(required_skills: ["Ruby"])
     rule = RoutingRule.create!(user: @user, agent: @agent, name: "Skill Match", conditions: { "skills" => [ "Ruby", "Rails" ] })
 
-    matches = task.stub(:required_skills, [ "Ruby" ]) do
-      rule.matches?(task)
-    end
-
-    assert matches
+    assert rule.matches?(task)
   end
 
   test "matches checks priority equality" do
@@ -91,7 +87,7 @@ class RoutingRuleTest < ActiveSupport::TestCase
   end
 
   test "matches returns false when conditions do not match" do
-    task = create_task(priority: :low, status: :inbox, tags: [ "frontend" ])
+    task = create_task(priority: :low, status: :inbox, tags: [ "frontend" ], required_skills: ["Python"])
     rule = RoutingRule.create!(
       user: @user,
       agent: @agent,
@@ -104,11 +100,7 @@ class RoutingRuleTest < ActiveSupport::TestCase
       }
     )
 
-    matches = task.stub(:required_skills, [ "Python" ]) do
-      rule.matches?(task)
-    end
-
-    assert_not matches
+    assert_not rule.matches?(task)
   end
 
   test "active scope filters correctly" do
@@ -129,14 +121,15 @@ class RoutingRuleTest < ActiveSupport::TestCase
 
   private
 
-  def create_task(priority: :none, status: :inbox, tags: [])
+  def create_task(priority: :none, status: :inbox, tags: [], required_skills: [])
     Task.create!(
       user: @user,
       board: @board,
       name: "Routing Task #{SecureRandom.hex(4)}",
       priority: priority,
       status: status,
-      tags: tags
+      tags: tags,
+      required_skills: required_skills
     )
   end
 end

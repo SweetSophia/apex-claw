@@ -7,7 +7,7 @@ class RoutingRule < ApplicationRecord
   belongs_to :agent
 
   validates :name, presence: true
-  validates :conditions, presence: true, allow_blank: true
+  validates :conditions, presence: true
   validate :conditions_schema
   validate :agent_belongs_to_user
 

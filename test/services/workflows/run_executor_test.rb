@@ -10,15 +10,14 @@ class RunExecutorTest < ActiveSupport::TestCase
 
   test "creates a task and assigns to agent" do
     run = @workflow.trigger!(trigger_type: :manual)
-    created_task = nil
 
     assert_difference "Task.count", 1 do
       Workflows::RunExecutor.new(run).execute!
-      created_task = Task.order(:created_at).last
     end
 
     run.reload
     assert run.completed?
+    created_task = Task.find(run.result["task_id"])
     assert_equal "Auto task", created_task.name
     assert_equal @agent, created_task.assigned_agent
     assert run.result["task_id"].present?
