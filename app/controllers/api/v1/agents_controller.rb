@@ -235,7 +235,7 @@ module Api
       end
 
       def heartbeat_interval_seconds
-        ENV.fetch("CLAWDECK_HEARTBEAT_INTERVAL_SECONDS", 30).to_i.clamp(MIN_HEARTBEAT_INTERVAL, MAX_HEARTBEAT_INTERVAL)
+        ENV.fetch("APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS", ENV.fetch("CLAWDECK_HEARTBEAT_INTERVAL_SECONDS", 30)).to_i.clamp(MIN_HEARTBEAT_INTERVAL, MAX_HEARTBEAT_INTERVAL)
       end
 
       def agent_json(agent)

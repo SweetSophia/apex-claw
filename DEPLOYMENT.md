@@ -64,7 +64,8 @@ Then set real values for at least:
 
 ```bash
 SECRET_KEY_BASE="$(openssl rand -hex 64)"
-CLAWDECK_DB_PASSWORD='choose-a-strong-password'
+APEX_CLAW_DB_PASSWORD='choose-a-strong-password'
+CLAWDECK_DB_PASSWORD='choose-a-strong-password'   # legacy fallback; optional during migration
 APP_HOST='100.111.85.48:3000'
 APP_PROTOCOL='http'
 APP_FORCE_SSL='false'
@@ -192,7 +193,7 @@ cp .env.production.example .env.production
 Fill in real values for at least:
 - `RAILS_MASTER_KEY`
 - `SECRET_KEY_BASE`
-- `CLAWDECK_DB_PASSWORD` or `DATABASE_URL`
+- `APEX_CLAW_DB_PASSWORD` (preferred) or `DATABASE_URL`
 - `APP_HOST`
 - `APP_ALLOWED_HOSTS`
 - `MAILER_FROM`
