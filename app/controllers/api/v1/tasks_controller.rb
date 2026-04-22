@@ -275,7 +275,12 @@ module Api
           agent_claimed_at: task.agent_claimed_at&.iso8601,
           claimed_by_agent_id: task.claimed_by_agent_id,
           board_id: task.board_id,
-          url: "https://clawdeck.io/boards/#{task.board_id}/tasks/#{task.id}",
+          url: board_task_url(
+            task.board,
+            task,
+            host: ENV.fetch("APP_HOST", request.host_with_port),
+            protocol: ENV.fetch("APP_PROTOCOL", request.protocol.delete_suffix("://"))
+          ),
           created_at: task.created_at.iso8601,
           updated_at: task.updated_at.iso8601
         }

@@ -245,7 +245,7 @@ module ApplicationHelper
     example_join_token = join_token.presence || "jt_xxx"
 
     [
-      "# ClawDeck multi-agent registration",
+      "# Apex Claw multi-agent registration",
       "",
       "IMPORTANT:",
       "- This join token is SINGLE-USE. Generate a fresh one for each new agent registration.",

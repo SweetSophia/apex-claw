@@ -1,4 +1,4 @@
-<% content_for :title, "#{@agent.name} - Agents - clawdeck" %>
+<% content_for :title, "#{@agent.name} - Agents - Apex Claw" %>
 <% @board_page = false %>
 
 <%= turbo_stream_from "agents:#{current_user.id}" %>
