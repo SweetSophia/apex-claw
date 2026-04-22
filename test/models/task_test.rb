@@ -116,7 +116,7 @@ class TaskTest < ActiveSupport::TestCase
 
   # Scopes
   test "eligible_for_agent returns up_next unblocked unclaimed tasks" do
-    agent = Agent.create!(user: @user, name: "Elig Agent")
+    agent = Agent.create!(user: @user, name: "Elig Agent", status: :online)
 
     eligible = Task.create!(user: @user, board: @board, name: "Eligible", status: :up_next, blocked: false)
     blocked = Task.create!(user: @user, board: @board, name: "Blocked", status: :up_next, blocked: true)
@@ -129,8 +129,8 @@ class TaskTest < ActiveSupport::TestCase
   end
 
   test "eligible_for_agent returns only tasks assigned to agent or unassigned" do
-    agent1 = Agent.create!(user: @user, name: "Agent 1")
-    agent2 = Agent.create!(user: @user, name: "Agent 2")
+    agent1 = Agent.create!(user: @user, name: "Agent 1", status: :online)
+    agent2 = Agent.create!(user: @user, name: "Agent 2", status: :online)
 
     assigned_to_1 = Task.create!(user: @user, board: @board, name: "A1 Task", status: :up_next, blocked: false, assigned_agent: agent1)
     assigned_to_2 = Task.create!(user: @user, board: @board, name: "A2 Task", status: :up_next, blocked: false, assigned_agent: agent2)

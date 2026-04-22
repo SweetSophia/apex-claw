@@ -9,7 +9,7 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     @task = tasks(:one)
     @auth_header = { "Authorization" => "Bearer #{@api_token.token}" }
 
-    @agent = Agent.create!(user: @user, name: "Worker One")
+    @agent = Agent.create!(user: @user, name: "Worker One", status: :online)
     @agent_token, @agent_plaintext_token = AgentToken.issue!(agent: @agent, name: "Primary")
     @agent_auth_header = { "Authorization" => "Bearer #{@agent_plaintext_token}" }
   end
@@ -59,7 +59,7 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
 
   # Index tests
   test "next claims different tasks for two agents" do
-    second_agent = Agent.create!(user: @user, name: "Worker Two")
+    second_agent = Agent.create!(user: @user, name: "Worker Two", status: :online)
     _token, second_plaintext_token = AgentToken.issue!(agent: second_agent, name: "Secondary")
 
     first_task = create_up_next_task(name: "First up")
@@ -81,7 +81,7 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "next returns assigned task only to assigned agent" do
-    other_agent = Agent.create!(user: @user, name: "Worker Two")
+    other_agent = Agent.create!(user: @user, name: "Worker Two", status: :online)
     _token, other_plaintext_token = AgentToken.issue!(agent: other_agent, name: "Secondary")
     assigned_task = create_up_next_task(name: "Assigned", assigned_agent: @agent)
 

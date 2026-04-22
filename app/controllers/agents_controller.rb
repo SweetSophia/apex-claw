@@ -177,6 +177,8 @@ class AgentsController < ApplicationController
   end
 
   def render_invalid_config_json
+    flash.now[:alert] = "Invalid JSON format in configuration fields"
+
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("panel-config", partial: "agents/show_config", locals: { agent: @agent }), status: :unprocessable_entity }
       format.html { render :show, status: :unprocessable_entity }

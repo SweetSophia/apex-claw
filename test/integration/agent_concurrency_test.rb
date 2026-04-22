@@ -6,16 +6,16 @@ class AgentConcurrencyTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     @board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
 
-    @agent1 = Agent.create!(user: @user, name: "Worker One")
-    @agent2 = Agent.create!(user: @user, name: "Worker Two")
-    @agent3 = Agent.create!(user: @user, name: "Worker Three")
+    @agent1 = Agent.create!(user: @user, name: "Worker One", status: :online)
+    @agent2 = Agent.create!(user: @user, name: "Worker Two", status: :online)
+    @agent3 = Agent.create!(user: @user, name: "Worker Three", status: :online)
 
     _, @token1 = AgentToken.issue!(agent: @agent1, name: "Primary")
     _, @token2 = AgentToken.issue!(agent: @agent2, name: "Primary")
     _, @token3 = AgentToken.issue!(agent: @agent3, name: "Primary")
 
     @other_user = users(:two)
-    @other_agent = Agent.create!(user: @other_user, name: "Other Worker")
+    @other_agent = Agent.create!(user: @other_user, name: "Other Worker", status: :online)
     _, @other_token = AgentToken.issue!(agent: @other_agent, name: "Primary")
   end
 

@@ -50,11 +50,14 @@ module Api
     end
 
     def update_agent_info_from_headers
-      # Legacy compatibility only: user-token requests may still send agent
-      # headers, but registered multi-agent state now lives in Agent records.
-      # We intentionally avoid mutating the user-level single-agent fields here
-      # so presence does not masquerade as a registered agent.
-      nil
+      agent_name = request.headers["X-Agent-Name"]
+      agent_emoji = request.headers["X-Agent-Emoji"]
+      return if agent_name.blank? && agent_emoji.blank?
+
+      updates = {}
+      updates[:agent_name] = agent_name if agent_name.present?
+      updates[:agent_emoji] = agent_emoji if agent_emoji.present?
+      current_user.update_columns(updates) if updates.any?
     end
   end
 end

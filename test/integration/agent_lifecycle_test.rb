@@ -8,6 +8,15 @@ class AgentLifecycleTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     @board = boards(:one)
     @user_auth_header = { "Authorization" => "Bearer #{api_tokens(:one).token}" }
+    @agent = Agent.create!(
+      user: @user,
+      name: "Lifecycle API Agent",
+      hostname: "lifecycle-api.local",
+      host_uid: "lifecycle-api-001",
+      platform: "linux",
+      version: "1.0.0",
+      status: :online
+    )
   end
 
   test "agent can register, heartbeat, claim next task, and complete it with output" do

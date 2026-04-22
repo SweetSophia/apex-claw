@@ -14,7 +14,8 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
       hostname: "worker-one.local",
       host_uid: "uid-worker-one",
       platform: "linux",
-      version: "1.0.0"
+      version: "1.0.0",
+      status: :online
     )
     @agent_token, @agent_plaintext_token = AgentToken.issue!(agent: @agent, name: "Primary")
 
@@ -24,7 +25,8 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
       hostname: "worker-two.local",
       host_uid: "uid-worker-two",
       platform: "linux",
-      version: "1.0.0"
+      version: "1.0.0",
+      status: :online
     )
     AgentToken.issue!(agent: @other_agent, name: "Secondary")
   end
