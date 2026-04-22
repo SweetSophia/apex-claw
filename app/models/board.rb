@@ -21,6 +21,7 @@ class Board < ApplicationRecord
   def self.create_onboarding_for(user)
     board = user.boards.create!(
       name: ONBOARDING_NAME,
+      onboarding_seeded: true,
       icon: "🚀",
       color: "blue"
     )
@@ -78,7 +79,7 @@ class Board < ApplicationRecord
   end
 
   def onboarding?
-    name == ONBOARDING_NAME
+    onboarding_seeded?
   end
 
   private

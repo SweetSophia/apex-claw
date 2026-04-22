@@ -101,9 +101,9 @@ module ApplicationHelper
   def command_bar_search_items(user, current_board: nil, tasks_scope: nil)
     return [] unless user
 
-    boards = user.boards.select(:id, :name, :icon, :color).limit(12).to_a
+    boards = user.boards.select(:id, :name, :icon, :color, :onboarding_seeded).limit(12).to_a
     done_status = command_bar_done_status
-    default_board = current_board || boards.first
+    default_board = current_board || boards.find { |board| !board.onboarding? } || boards.first
     items = []
 
     if default_board

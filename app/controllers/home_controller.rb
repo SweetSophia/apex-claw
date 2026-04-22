@@ -1,5 +1,8 @@
 class HomeController < ApplicationController
   def show
+    today = Date.current
+    start_of_today = Time.current.beginning_of_day
+
     @user = current_user
     @boards = current_user.boards
     @registered_agents = current_user.agents.active.order(last_heartbeat_at: :desc, created_at: :desc)
@@ -16,7 +19,7 @@ class HomeController < ApplicationController
 
     # Today's tasks: due today + active tasks (up_next, in_progress)
     @today_tasks = current_user.tasks
-      .where("due_date = ? OR status IN (?)", Date.today, [1, 2]) # up_next=1, in_progress=2
+      .where("due_date = ? OR status IN (?)", today, [1, 2]) # up_next=1, in_progress=2
       .where(completed: false)
       .includes(:board)
       .reorder(position: :asc)
@@ -25,7 +28,7 @@ class HomeController < ApplicationController
     # Also include recently completed today
     @completed_today = current_user.tasks
       .where(completed: true)
-      .where("completed_at >= ?", Date.today.beginning_of_day)
+      .where("completed_at >= ?", start_of_today)
       .includes(:board)
       .reorder(completed_at: :desc)
       .limit(5)
@@ -51,7 +54,7 @@ class HomeController < ApplicationController
 
     # Weekly stats — count tasks completed each day
     # "done" can be tracked via "moved" action with new_value="done" or "completed" action
-    week_start = Date.today.beginning_of_week(:monday)
+    week_start = today.beginning_of_week(:monday)
     @week_stats = (0..6).map do |i|
       date = week_start + i.days
       base = TaskActivity

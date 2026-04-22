@@ -78,7 +78,7 @@
   <div class="flex items-end justify-between pt-9 animate-fade-up">
     <div>
       <div class="text-[11px] font-semibold text-[#444] tracking-[0.06em] uppercase mb-2">
-        <%= Date.today.strftime("%A, %B %-d") %>
+        <%= Date.current.strftime("%A, %B %-d") %>
       </div>
       <h1 class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.03em] leading-[1.15]">
         <span id="time-greeting"><%= time_greeting %></span>
@@ -167,7 +167,7 @@
                 <% if task.due_date.present? %>
                   <span style="font-size: 10px; font-weight: 500; color: #555;
                                background: rgba(255,255,255,0.04); padding: 1px 6px; border-radius: 4px;">
-                    <%= task.due_date == Date.today ? "Today" : task.due_date.strftime("%-m/%-d") %>
+                    <%= task.due_date == Date.current ? "Today" : task.due_date.strftime("%-m/%-d") %>
                   </span>
                 <% end %>
               </div>
@@ -229,7 +229,7 @@
 
   <%# ─── This Week — Activity Chart ─── %>
   <% max_val = [@week_stats.map { |d| d[:you] + d[:agent] }.max || 1, 1].max %>
-  <% today_idx = (Date.today.cwday - 1) % 7 %>
+  <% today_idx = (Date.current.cwday - 1) % 7 %>
   <% total_you = @week_stats.sum { |d| d[:you] } %>
   <% total_agent = @week_stats.sum { |d| d[:agent] } %>
 
