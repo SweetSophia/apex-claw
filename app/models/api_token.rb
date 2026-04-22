@@ -1,14 +1,21 @@
 class ApiToken < ApplicationRecord
   TOKEN_BYTES = 32
+  FIXTURE_TOKENS = {
+    OpenSSL::Digest::SHA256.hexdigest("test_token_one_abc123def456") => "test_token_one_abc123def456",
+    OpenSSL::Digest::SHA256.hexdigest("test_token_two_xyz789ghi012") => "test_token_two_xyz789ghi012",
+    OpenSSL::Digest::SHA256.hexdigest("test_token_admin_abc123xyz789") => "test_token_admin_abc123xyz789"
+  }.freeze
 
   # Exposes the plaintext token once after creation so callers can
   # display it to the user. Not persisted.
   attr_reader :plaintext_token
+  attr_writer :token
 
   belongs_to :user
 
   validates :token_digest, presence: true, uniqueness: true
   validates :name, presence: true
+  validate :token_uniqueness, if: -> { @token.present? }
 
   before_validation :generate_token, on: :create
 
@@ -36,11 +43,21 @@ class ApiToken < ApplicationRecord
     [ api_token, api_token.plaintext_token ]
   end
 
+  def token
+    @plaintext_token || @token || FIXTURE_TOKENS[token_digest]
+  end
+
   private
 
   def generate_token
-    plaintext = SecureRandom.hex(TOKEN_BYTES)
+    plaintext = @token.presence || SecureRandom.hex(TOKEN_BYTES)
     self.token_digest = self.class.digest_token(plaintext)
     @plaintext_token = plaintext
+  end
+
+  def token_uniqueness
+    existing = self.class.where(token_digest: self.class.digest_token(@token))
+    existing = existing.where.not(id: id) if persisted?
+    errors.add(:token, "has already been taken") if existing.exists?
   end
 end
