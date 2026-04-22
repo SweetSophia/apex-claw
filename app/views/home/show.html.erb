@@ -15,7 +15,7 @@
         </div>
         <div class="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-right shrink-0">
           <div class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/70">Active systems</div>
-          <div class="text-[22px] font-extrabold text-amber-300"><%= [@registered_agents.count, @skills_count, @workflow_count, @handoff_templates_count, @routing_rules_count, @command_presets_count].count { |count| count.positive? } %></div>
+          <div class="text-[22px] font-extrabold text-amber-300"><%= [@registered_agents_count, @skills_count, @workflow_count, @handoff_templates_count, @routing_rules_count, @command_presets_count].count { |count| count.positive? } %></div>
         </div>
       </div>
 
@@ -42,7 +42,7 @@
             <div class="text-[12px] font-semibold text-[#ddd]">Agents online</div>
             <div class="text-[11px] text-[#666]">Registered workers with live heartbeat status</div>
           </div>
-          <div class="text-[20px] font-extrabold text-[#f0f0f0]"><%= @agent_online_count %>/<%= @registered_agents.count %></div>
+          <div class="text-[20px] font-extrabold text-[#f0f0f0]"><%= @agent_online_count %>/<%= @registered_agents_count %></div>
         </div>
         <div class="grid grid-cols-2 gap-3 text-center">
           <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
@@ -320,7 +320,7 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
       <% @active_projects.each_with_index do |board, i| %>
-        <% task_count = board.tasks.where(completed: false).count %>
+        <% task_count = @open_tasks_counts[board.id] || 0 %>
         <% is_onboarding = onboarding_board?(board) %>
         <%= link_to board_path(board),
             class: "flex items-center gap-3 animate-fade-up",

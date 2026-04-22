@@ -1,13 +1,15 @@
 class HomeController < ApplicationController
   def show
     @user = current_user
-    @boards = current_user.boards.includes(:tasks)
+    @boards = current_user.boards
     @registered_agents = current_user.agents.active.order(last_heartbeat_at: :desc, created_at: :desc)
+    @registered_agents_count = @registered_agents.count
     @skills_count = current_user.skills.count
     @workflow_count = current_user.workflows.count
     @command_presets_count = current_user.command_presets.count
     @handoff_templates_count = current_user.handoff_templates.count
     @routing_rules_count = current_user.routing_rules.count
+    @open_tasks_counts = current_user.tasks.reorder(nil).where(completed: false).group(:board_id).count
     @non_onboarding_boards = @boards.reject { |board| board.name == "Getting Started" }
     @active_projects = @non_onboarding_boards.presence || @boards
     @onboarding_boards = @boards.select { |board| board.name == "Getting Started" }
@@ -32,7 +34,10 @@ class HomeController < ApplicationController
 
     # Agent tasks currently being worked on
     @agent_tasks_count = current_user.tasks.where(assigned_to_agent: true, completed: false).count
-    @agent_online_count = @registered_agents.count(&:online?)
+    @agent_online_count = @registered_agents
+      .where(status: Agent.statuses[:online])
+      .where("last_heartbeat_at > ?", Agent::HEARTBEAT_STALE_AFTER.ago)
+      .count
 
     # Agent updates (last 24h)
     @agent_updates = TaskActivity
