@@ -19,7 +19,7 @@ module Api
       private
 
       def require_owner_token!
-        return if current_user
+        return if current_user && current_agent.nil?
 
         render json: { error: "Forbidden" }, status: :forbidden
       end
