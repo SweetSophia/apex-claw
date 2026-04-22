@@ -1,6 +1,78 @@
-<% content_for :title, "Home Dashboard - clawdeck" %>
+<% content_for :title, "Apex Claw Workspace" %>
 
-<div class="max-w-[540px] mx-auto px-5 pb-12">
+<div class="max-w-[920px] mx-auto px-5 pb-12">
+
+  <div class="grid gap-4 pt-8 mb-8 lg:grid-cols-[1.4fr,0.9fr]">
+    <section class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 animate-fade-up">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div class="text-[11px] font-semibold text-[#555] tracking-[0.08em] uppercase mb-2">Apex workspace</div>
+          <h1 class="text-[30px] font-extrabold text-[#f0f0f0] tracking-[-0.03em] leading-[1.1]">Agent operations, not hidden feature pages.</h1>
+          <p class="mt-3 text-[13px] leading-[1.6] text-[#999] max-w-[56ch]">
+            Your merged systems are here now: agents, skills, workflows, handoffs, routing rules, and command presets.
+            This workspace surfaces them directly so the product reads like the control plane described in your Apex notes.
+          </p>
+        </div>
+        <div class="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-right shrink-0">
+          <div class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/70">Active systems</div>
+          <div class="text-[22px] font-extrabold text-amber-300"><%= [@registered_agents.count, @skills_count, @workflow_count, @handoff_templates_count, @routing_rules_count, @command_presets_count].count { |count| count.positive? } %></div>
+        </div>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <% workspace_nav_items(current_user).each do |item| %>
+          <%= link_to item[:href], class: "group rounded-xl border border-white/[0.06] bg-[#1b1b1f] px-4 py-3 hover:border-white/[0.12] hover:bg-white/[0.05] transition-colors" do %>
+            <div class="flex items-start gap-3">
+              <div class="text-xl leading-none"><%= item[:icon] %></div>
+              <div class="min-w-0">
+                <div class="text-[13px] font-semibold text-[#e6e6e6] group-hover:text-white"><%= item[:title] %></div>
+                <div class="text-[11px] leading-[1.5] text-[#666] mt-1"><%= item[:subtitle] %></div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 animate-fade-up" style="animation-delay: 0.05s">
+      <div class="text-[11px] font-semibold text-[#555] tracking-[0.08em] uppercase mb-3">Workspace summary</div>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-4 py-3">
+          <div>
+            <div class="text-[12px] font-semibold text-[#ddd]">Agents online</div>
+            <div class="text-[11px] text-[#666]">Registered workers with live heartbeat status</div>
+          </div>
+          <div class="text-[20px] font-extrabold text-[#f0f0f0]"><%= @agent_online_count %>/<%= @registered_agents.count %></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
+            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @skills_count %></div>
+            <div class="text-[11px] text-[#666] mt-1">skills</div>
+          </div>
+          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
+            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @workflow_count %></div>
+            <div class="text-[11px] text-[#666] mt-1">workflows</div>
+          </div>
+          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
+            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @handoff_templates_count %></div>
+            <div class="text-[11px] text-[#666] mt-1">handoff templates</div>
+          </div>
+          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
+            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @routing_rules_count %></div>
+            <div class="text-[11px] text-[#666] mt-1">routing rules</div>
+          </div>
+        </div>
+        <% if @onboarding_boards.any? %>
+          <div class="rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3">
+            <div class="text-[12px] font-semibold text-amber-200">Onboarding content still exists</div>
+            <div class="text-[11px] leading-[1.5] text-amber-100/65 mt-1">
+              The old Getting Started board is still in the workspace, which is part of why the product still feels like the earlier demo state.
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  </div>
 
   <%# ─── Greeting + Progress ─── %>
   <div class="flex items-end justify-between pt-9 animate-fade-up">
@@ -237,21 +309,36 @@
 
   <%# ─── Boards (Projects) ─── %>
   <div class="mb-12">
-    <h2 class="text-sm font-bold animate-fade-up" style="color: #999; margin-bottom: 10px; animation-delay: 0.52s;">Boards</h2>
-    <div class="grid grid-cols-2 gap-1.5">
-      <% @boards.each_with_index do |board, i| %>
+    <div class="flex items-center justify-between gap-3 mb-3 animate-fade-up" style="animation-delay: 0.52s;">
+      <div>
+        <h2 class="text-sm font-bold" style="color: #999;">Projects & boards</h2>
+        <div class="text-[11px] text-[#555] mt-1">Non-onboarding work is prioritized first so the workspace feels like your real control plane.</div>
+      </div>
+      <% if @onboarding_boards.any? %>
+        <div class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/75">Legacy onboarding still present</div>
+      <% end %>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <% @active_projects.each_with_index do |board, i| %>
         <% task_count = board.tasks.where(completed: false).count %>
+        <% is_onboarding = onboarding_board?(board) %>
         <%= link_to board_path(board),
             class: "flex items-center gap-3 animate-fade-up",
             style: "padding: 14px 16px; border-radius: 12px;
-                    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+                    background: #{is_onboarding ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.035)'};
+                    border: 1px solid #{is_onboarding ? 'rgba(251,191,36,0.10)' : 'rgba(255,255,255,0.06)'};
                     transition: all 0.15s; animation-delay: #{(0.56 + i * 0.04).round(2)}s;",
-            onmouseenter: "this.style.background='rgba(255,255,255,0.055)'; this.style.borderColor='rgba(255,255,255,0.1)'",
-            onmouseleave: "this.style.background='rgba(255,255,255,0.035)'; this.style.borderColor='rgba(255,255,255,0.06)'" do %>
+            onmouseenter: "this.style.background='#{is_onboarding ? 'rgba(251,191,36,0.06)' : 'rgba(255,255,255,0.055)'}'; this.style.borderColor='#{is_onboarding ? 'rgba(251,191,36,0.16)' : 'rgba(255,255,255,0.1)'}'",
+            onmouseleave: "this.style.background='#{is_onboarding ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.035)'}'; this.style.borderColor='#{is_onboarding ? 'rgba(251,191,36,0.10)' : 'rgba(255,255,255,0.06)'}'" do %>
           <span class="text-xl"><%= board.icon %></span>
           <div class="flex-1 min-w-0">
-            <div style="font-size: 13px; font-weight: 600; color: #ccc;" class="truncate"><%= board.name %></div>
-            <div style="font-size: 11px; font-weight: 500; color: #444; margin-top: 1px;"><%= pluralize(task_count, "task") %></div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div style="font-size: 13px; font-weight: 600; color: #ccc;" class="truncate"><%= board.name %></div>
+              <% if is_onboarding %>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.08em] bg-amber-400/10 text-amber-200">Onboarding</span>
+              <% end %>
+            </div>
+            <div style="font-size: 11px; font-weight: 500; color: #444; margin-top: 1px;"><%= pluralize(task_count, "open task") %></div>
           </div>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="opacity: 0.2;">
             <path d="M6 4L10 8L6 12" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -26,6 +26,22 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     assert_equal helper_context.board_path(@board, new_task: 1), new_task[:href]
   end
 
+  test "workspace nav includes apex control plane destinations" do
+    items = helper_context.workspace_nav_items(@user)
+
+    assert_equal ["Home", "Agents", "Skills", "Workflows", "Handoffs", "Routing", "Presets", "Settings"], items.map { |item| item[:title] }
+  end
+
+  test "command bar exposes workspace nav pages" do
+    items = helper_context.command_bar_search_items(@user)
+
+    assert_includes items.map { |item| item[:href] }, helper_context.skills_path
+    assert_includes items.map { |item| item[:href] }, helper_context.workflows_path
+    assert_includes items.map { |item| item[:href] }, helper_context.handoff_templates_path
+    assert_includes items.map { |item| item[:href] }, helper_context.routing_rules_path
+    assert_includes items.map { |item| item[:href] }, helper_context.command_presets_path
+  end
+
   private
 
   def helper_context

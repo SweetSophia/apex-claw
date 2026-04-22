@@ -45,3 +45,7 @@
 /.kamal/secrets
 
 tpush/
+
+# Local agent bootstrap configs with live tokens
+/agent-config.json
+/cybera-agent-config.json
