@@ -16,7 +16,8 @@ services:
 
   app:
     build: .
-    command: bash -lc "bundle install && bin/rails db:prepare && bin/rails test test/helpers/application_helper_test.rb test/controllers/home_controller_test.rb test/controllers/pages_controller_test.rb"
+    user: appuser
+    command: bash -c "bin/rails db:prepare && bin/rails test test/helpers/application_helper_test.rb test/controllers/home_controller_test.rb test/controllers/pages_controller_test.rb"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/clawdeck_test
       RAILS_ENV: test
@@ -28,4 +29,3 @@ services:
 
 volumes:
   postgres_test_data:
-  bundle_cache_test:
