@@ -1,18 +1,18 @@
 # API Tokens fixtures
 one:
-  token: test_token_one_abc123def456
+  token_digest: 08c084328e5901c2c396bdf476d872fb865a3a0cfd1f3e1941573e05b7f4d0ba
   name: Test Token One
   user: one
   last_used_at: nil
 
 two:
-  token: test_token_two_xyz789ghi012
+  token_digest: 14dfa1d2bdf1b920092e9e74af8ba61720ead8e9ef82eaa167d46184eb359b7e
   name: Test Token Two
   user: two
   last_used_at: nil
 
 admin:
-  token: test_token_admin_abc123xyz789
+  token_digest: 0bd81e4cd8d531eb47045b146b20cd73e656d889ef3826da09c8861c17e7f6b2
   name: Admin Token
   user: admin
   last_used_at: nil
