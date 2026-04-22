@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
 )
 
 const (
@@ -45,7 +47,7 @@ type persistedToken struct {
 func Load() (*Config, error) {
 	cfg := &Config{
 		APIURL:           getEnvCompat("APEX_CLAW_API_URL", "CLAWDECK_API_URL", DefaultAPIURL),
-		JoinToken:        getCompatEnv("APEX_CLAW_JOIN_TOKEN", "CLAWDECK_JOIN_TOKEN"),
+		JoinToken:        getEnvCompat("APEX_CLAW_JOIN_TOKEN", "CLAWDECK_JOIN_TOKEN", ""),
 		AgentTokenPath:   getEnvCompat("APEX_CLAW_AGENT_TOKEN_PATH", "CLAWDECK_AGENT_TOKEN_PATH", ""),
 		HeartbeatDelay:   DefaultHeartbeatDelay,
 		TaskPollDelay:    DefaultTaskPollDelay,
@@ -128,23 +130,14 @@ func (c *Config) ClearToken() error {
 	return nil
 }
 
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
-}
+// envLookup is a getenv function bound to os.Getenv for use with envcompat.FirstEnv.
+var envLookup = os.Getenv
 
-func getCompatEnv(primaryKey, legacyKey string) string {
-	if value := os.Getenv(primaryKey); value != "" {
-		return value
-	}
-	return os.Getenv(legacyKey)
-}
-
+// getEnvCompat returns the first non-empty value among primary, legacy, then fallback.
+// It delegates trimming/empty-check logic to the shared envcompat package.
 func getEnvCompat(primaryKey, legacyKey, fallback string) string {
-	if value := getCompatEnv(primaryKey, legacyKey); value != "" {
-		return value
+	if v := envcompat.FirstEnv(envLookup, primaryKey, legacyKey); v != "" {
+		return v
 	}
 	return fallback
 }
