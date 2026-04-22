@@ -531,8 +531,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000004) do
     t.index ["created_at"], name: "index_workflow_runs_on_created_at"
   end
 
-  add_foreign_key "workflow_runs", "users", on_delete: :cascade
-
   create_table "tasks", force: :cascade do |t|
     t.datetime "agent_claimed_at"
     t.text "agent_hint"
