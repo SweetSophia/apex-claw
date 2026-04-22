@@ -29,30 +29,6 @@ class WorkflowRun < ApplicationRecord
     completed_at - started_at
   end
 
-  def completed_at
-    finished_at
-  end
-
-  def completed_at=(value)
-    self.finished_at = value
-  end
-
-  def result
-    context.is_a?(Hash) ? context["result"] : nil
-  end
-
-  def result=(value)
-    self.context = (context || {}).merge("result" => value)
-  end
-
-  def error_message
-    context.is_a?(Hash) ? context["error_message"] : nil
-  end
-
-  def error_message=(value)
-    self.context = (context || {}).merge("error_message" => value)
-  end
-
   private
 
   def assign_user_from_workflow
