@@ -10,9 +10,9 @@ class HomeController < ApplicationController
     @handoff_templates_count = current_user.handoff_templates.count
     @routing_rules_count = current_user.routing_rules.count
     @open_tasks_counts = current_user.tasks.reorder(nil).where(completed: false).group(:board_id).count
-    @non_onboarding_boards = @boards.reject { |board| board.name == "Getting Started" }
+    @non_onboarding_boards = @boards.reject(&:onboarding?)
     @active_projects = @non_onboarding_boards.presence || @boards
-    @onboarding_boards = @boards.select { |board| board.name == "Getting Started" }
+    @onboarding_boards = @boards.select(&:onboarding?)
 
     # Today's tasks: due today + active tasks (up_next, in_progress)
     @today_tasks = current_user.tasks

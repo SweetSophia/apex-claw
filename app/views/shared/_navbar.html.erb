@@ -41,7 +41,7 @@
           <%# Workspace nav %>
           <% active_path = request.path %>
           <% workspace_nav_items(current_user).each do |item| %>
-            <% is_active_nav = active_path == item[:href] || (item[:href] != home_path && active_path.start_with?(item[:href])) %>
+            <% is_active_nav = nav_item_active?(item, active_path) %>
             <%= link_to item[:href],
                 class: "flex items-start gap-2.5 w-full px-2.5 py-[9px] rounded-lg transition-colors #{is_active_nav ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'}",
                 data: { turbo_frame: "_top" } do %>

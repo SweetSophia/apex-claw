@@ -67,25 +67,35 @@ module ApplicationHelper
     return [] unless user
 
     items = [
-      { title: "Home", subtitle: "Workspace overview", href: home_path, icon: "🏠" },
-      { title: "Agents", subtitle: "Fleet status and controls", href: agents_path, icon: "🤖" },
-      { title: "Skills", subtitle: "Reusable knowledge blocks", href: skills_path, icon: "🧠" },
-      { title: "Workflows", subtitle: "Triggers, runs, and automation", href: workflows_path, icon: "🪄" },
-      { title: "Handoffs", subtitle: "Transfer templates", href: handoff_templates_path, icon: "🔁" },
-      { title: "Routing", subtitle: "Auto-routing rules", href: routing_rules_path, icon: "🧭" },
-      { title: "Presets", subtitle: "Reusable command presets", href: command_presets_path, icon: "🧰" },
-      { title: "Settings", subtitle: "Profile and OpenClaw integration", href: settings_path, icon: "⚙️" }
+      { title: "Home", subtitle: "Workspace overview", href: home_path, icon: "🏠", keywords: %w[home workspace dashboard overview] },
+      { title: "Agents", subtitle: "Fleet status and controls", href: agents_path, icon: "🤖", keywords: %w[agents agent fleet status controls] },
+      { title: "Skills", subtitle: "Reusable knowledge blocks", href: skills_path, icon: "🧠", keywords: %w[skills skill knowledge reusable blocks] },
+      { title: "Workflows", subtitle: "Triggers runs and automation", href: workflows_path, icon: "🪄", keywords: %w[workflows workflow triggers runs automation] },
+      { title: "Handoffs", subtitle: "Transfer templates", href: handoff_templates_path, icon: "🔁", keywords: %w[handoffs handoff transfer templates] },
+      { title: "Routing", subtitle: "Auto-routing rules", href: routing_rules_path, icon: "🧭", keywords: %w[routing auto-routing rules router] },
+      { title: "Presets", subtitle: "Reusable command presets", href: command_presets_path, icon: "🧰", keywords: %w[presets preset commands command reusable] },
+      { title: "Settings", subtitle: "Profile and OpenClaw integration", href: settings_path, icon: "⚙️", keywords: %w[settings profile openclaw integration api token] }
     ]
 
     if user.admin?
-      items << { title: "Audit Logs", subtitle: "Admin activity trail", href: admin_audit_logs_path, icon: "🧾" }
+      items << { title: "Audit Logs", subtitle: "Admin activity trail", href: admin_audit_logs_path, icon: "🧾", keywords: %w[audit logs admin activity trail] }
     end
 
     items
   end
 
   def onboarding_board?(board)
-    board.present? && board.name == "Getting Started"
+    board.present? && board.onboarding?
+  end
+
+  def nav_item_active?(item, active_path)
+    return false if item.blank? || active_path.blank?
+
+    href = item[:href].to_s
+    return false if href.blank?
+    return active_path == href if href == home_path
+
+    active_path == href || active_path.start_with?("#{href}/")
   end
 
   def command_bar_search_items(user, current_board: nil, tasks_scope: nil)
@@ -147,7 +157,7 @@ module ApplicationHelper
         subtitle: item[:subtitle],
         href: item[:href],
         icon: item[:icon],
-        keywords: [item[:title].downcase, item[:subtitle].downcase],
+        keywords: Array(item[:keywords]).presence || [item[:title], item[:subtitle]],
         featured: true
       }
     end

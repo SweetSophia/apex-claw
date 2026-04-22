@@ -42,6 +42,23 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     assert_includes items.map { |item| item[:href] }, helper_context.command_presets_path
   end
 
+  test "workspace nav keeps explicit search keywords for command bar items" do
+    items = helper_context.command_bar_search_items(@user)
+    settings_item = items.find { |item| item[:kind] == "nav" && item[:href] == helper_context.settings_path }
+
+    assert_not_nil settings_item
+    assert_includes settings_item[:keywords], "api"
+    assert_includes settings_item[:keywords], "token"
+  end
+
+  test "nav item active check requires exact match or path boundary" do
+    agents_item = helper_context.workspace_nav_items(@user).find { |item| item[:href] == helper_context.agents_path }
+
+    assert helper_context.nav_item_active?(agents_item, "/agents")
+    assert helper_context.nav_item_active?(agents_item, "/agents/123")
+    assert_not helper_context.nav_item_active?(agents_item, "/agents-logs")
+  end
+
   private
 
   def helper_context
