@@ -1,8 +1,8 @@
-# ClawDeck
+# Apex Claw
 
 Mission control for AI agents, built with Rails and a Go agent runtime.
 
-This repository is **SweetSophia/clawdeck**, an independently maintained AI agent orchestration platform with multi-board task management, agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and live dashboard updates.
+This repository is **SweetSophia/clawdeck**, home of **Apex Claw**, an independently maintained multi-agent operations platform with multi-board task management, agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and live dashboard updates.
 
 ## Current Status
 
@@ -65,7 +65,7 @@ Implemented in this codebase today:
 
 ### Option A: Docker development
 
-This is the easiest and most reliable way to run ClawDeck locally.
+This is the easiest and most reliable way to run Apex Claw locally.
 
 ```bash
 git clone https://github.com/SweetSophia/clawdeck.git
@@ -152,11 +152,11 @@ node script/playwright/command_bar_smoke.mjs
 
 Environment variables:
 
-- `CLAWDECK_BASE_URL` — app URL (default `http://127.0.0.1:3000`)
-- `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` — login credentials
-- `CLAWDECK_BOARD_ID` — optional explicit board id override for the board-page inline-add leg
-- `CLAWDECK_HEADLESS=false` — run headed for debugging
-- `CLAWDECK_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when `playwright` is not otherwise resolvable
+- `APEX_CLAW_BASE_URL` — app URL (default `http://127.0.0.1:3000`; legacy `CLAWDECK_BASE_URL` still works)
+- `APEX_CLAW_EMAIL` / `APEX_CLAW_PASSWORD` — login credentials (legacy `CLAWDECK_EMAIL` / `CLAWDECK_PASSWORD` still work)
+- `APEX_CLAW_BOARD_ID` — optional explicit board id override for the board-page inline-add leg (legacy `CLAWDECK_BOARD_ID` still works)
+- `APEX_CLAW_HEADLESS=false` — run headed for debugging (legacy `CLAWDECK_HEADLESS` still works)
+- `APEX_CLAW_PLAYWRIGHT_MODULE` — optional path to Playwright's `index.js` when `playwright` is not otherwise resolvable (legacy `CLAWDECK_PLAYWRIGHT_MODULE` still works)
 
 ## Core Product Flow
 
@@ -169,7 +169,7 @@ Environment variables:
 
 ## API Surface
 
-ClawDeck exposes a Rails JSON API under `/api/v1`.
+Apex Claw exposes a Rails JSON API under `/api/v1`.
 
 Key resources:
 - `agents`
@@ -226,6 +226,7 @@ Please keep PRs focused and update docs when behavior changes.
 ## Project
 
 - repository: <https://github.com/SweetSophia/clawdeck>
+- product name: **Apex Claw**
 - status: independently maintained and actively expanded
 
 ## License

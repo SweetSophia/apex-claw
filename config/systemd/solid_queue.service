@@ -1,6 +1,6 @@
 # Template rendered by script/install_services.sh
 [Unit]
-Description=Solid Queue Worker for ClawDeck
+Description=Solid Queue Worker for Apex Claw
 After=network.target postgresql.service puma.service
 Requires=postgresql.service
 
@@ -20,10 +20,10 @@ RestartSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ReadWritePaths=__APP_ROOT__/storage __APP_ROOT__/tmp /var/log/clawdeck
-StandardOutput=append:/var/log/clawdeck/solid_queue.log
-StandardError=append:/var/log/clawdeck/solid_queue_error.log
-SyslogIdentifier=clawdeck-solid-queue
+ReadWritePaths=__APP_ROOT__/storage __APP_ROOT__/tmp /var/log/apex-claw
+StandardOutput=append:/var/log/apex-claw/solid_queue.log
+StandardError=append:/var/log/apex-claw/solid_queue_error.log
+SyslogIdentifier=apex-claw-solid-queue
 
 [Install]
 WantedBy=multi-user.target

@@ -82,8 +82,8 @@ func TestScriptExecutor_WritesToTempFile(t *testing.T) {
 	if !result.Completed {
 		t.Fatalf("expected completed: %v", result.Error)
 	}
-	// $0 should contain the temp file path (contains "clawdeck-script-")
-	if !strings.Contains(result.Output, "clawdeck-script-") {
+	// $0 should contain the temp file path (contains "apex-claw-script-")
+	if !strings.Contains(result.Output, "apex-claw-script-") {
 		t.Fatalf("expected temp file path in output, got: %q", result.Output)
 	}
 	// Verify file was cleaned up

@@ -30,8 +30,8 @@ Defaults if you do not override them:
 - rbenv installed under `/home/clawdeck/.rbenv`
 - PostgreSQL running locally
 - nginx terminating TLS
-- primary hostname: `clawdeck.io`
-- alias hostname: none by default (set `APP_DOMAIN_ALIASES` if you want extras such as `www.clawdeck.io`)
+- primary hostname: `apexclaw.local` by default (set your real domain before production use)
+- alias hostname: none by default (set `APP_DOMAIN_ALIASES` if you want extras such as `www.example.com`)
 
 You can override the important values with environment variables when running the scripts.
 
@@ -64,7 +64,8 @@ Then set real values for at least:
 
 ```bash
 SECRET_KEY_BASE="$(openssl rand -hex 64)"
-CLAWDECK_DB_PASSWORD='choose-a-strong-password'
+APEX_CLAW_DB_PASSWORD='choose-a-strong-password'
+CLAWDECK_DB_PASSWORD='choose-a-strong-password'   # legacy fallback; optional during migration
 APP_HOST='100.111.85.48:3000'
 APP_PROTOCOL='http'
 APP_FORCE_SSL='false'
@@ -149,8 +150,8 @@ export DATABASE_USER='clawdeck'            # optional override
 Before running the service installer:
 
 ```bash
-export APP_DOMAIN='clawdeck.io'
-export APP_DOMAIN_ALIASES='www.clawdeck.io'   # optional, comma-separated; leave unset for no aliases
+export APP_DOMAIN='apexclaw.local'
+export APP_DOMAIN_ALIASES='www.example.com'   # optional, comma-separated; leave unset for no aliases
 export CERTBOT_EMAIL='you@example.com'
 export APP_PORT='3000'                     # optional override
 ```
@@ -192,7 +193,7 @@ cp .env.production.example .env.production
 Fill in real values for at least:
 - `RAILS_MASTER_KEY`
 - `SECRET_KEY_BASE`
-- `CLAWDECK_DB_PASSWORD` or `DATABASE_URL`
+- `APEX_CLAW_DB_PASSWORD` (preferred) or `DATABASE_URL`
 - `APP_HOST`
 - `APP_ALLOWED_HOSTS`
 - `MAILER_FROM`
@@ -314,15 +315,15 @@ docker compose --env-file .env.production -f docker-compose.prod.yml restart app
 ### Check Puma logs
 
 ```bash
-tail -f /var/log/clawdeck/puma.log
-tail -f /var/log/clawdeck/puma_error.log
+tail -f /var/log/apex-claw/puma.log
+tail -f /var/log/apex-claw/puma_error.log
 ```
 
 ### Check Solid Queue logs
 
 ```bash
-tail -f /var/log/clawdeck/solid_queue.log
-tail -f /var/log/clawdeck/solid_queue_error.log
+tail -f /var/log/apex-claw/solid_queue.log
+tail -f /var/log/apex-claw/solid_queue_error.log
 ```
 
 ### Check nginx config

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
 )
 
 const defaultShellAllowlist = "pwd,echo,whoami,date,df,free,uptime"
@@ -109,8 +110,8 @@ func validateShellCommand(binary string, args []string) error {
 }
 
 func shellAllowedCommands() []string {
-	value := os.Getenv("CLAWDECK_SHELL_ALLOWED")
-	if strings.TrimSpace(value) == "" {
+	value := envcompat.FirstEnv(os.Getenv, "APEX_CLAW_SHELL_ALLOWED", "CLAWDECK_SHELL_ALLOWED")
+	if value == "" {
 		value = defaultShellAllowlist
 	}
 

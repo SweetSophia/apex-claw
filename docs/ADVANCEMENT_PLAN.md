@@ -36,7 +36,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 
 ### 1.4 Structured Logging ✅ (commit `3233fe9`)
 - [x] JSON log format with timestamp, level, agent_id, task_id
-- [x] Log level configuration via `CLAWDECK_LOG_LEVEL`
+- [x] Log level configuration via `APEX_CLAW_LOG_LEVEL` (legacy `CLAWDECK_LOG_LEVEL` still supported)
 - [x] Global logger via `InitLogger(agentID)`
 
 ---

@@ -1,6 +1,6 @@
-# Contributing to ClawDeck
+# Contributing to Apex Claw
 
-Thank you for your interest in contributing to ClawDeck.
+Thank you for your interest in contributing to Apex Claw.
 
 ## Getting Started
 
@@ -78,4 +78,4 @@ If you touch API or agent behavior, also review:
 
 Open a GitHub issue or discussion in the repository.
 
-Thanks for helping improve ClawDeck.
+Thanks for helping improve Apex Claw.

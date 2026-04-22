@@ -28,8 +28,8 @@ class Board < ApplicationRecord
 
     tasks = [
       {
-        name: "👋 Welcome to ClawDeck!",
-        description: "Your mission control for AI agents. Drag tasks between columns, and your agent picks up what you assign. Think of it as a shared kanban with your AI coworker.",
+        name: "👋 Welcome to Apex Claw!",
+        description: "Your operator workspace for multi-agent systems. Drag tasks between columns, and your agent picks up what you assign. Think of it as a shared kanban with your AI coworker.",
         status: "up_next",
         position: 0
       },

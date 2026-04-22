@@ -1,6 +1,6 @@
-# ClawDeck Quick Start
+# Apex Claw Quick Start
 
-Fastest path to a running local ClawDeck instance.
+Fastest path to a running local Apex Claw instance.
 
 ## Recommended: Docker development
 
@@ -105,7 +105,7 @@ If you run the production Docker stack, Propshaft assets must be precompiled. Th
 
 ```bash
 cp .env.production.example .env.production
-# then set at least SECRET_KEY_BASE and CLAWDECK_DB_PASSWORD in .env.production
+# then set at least SECRET_KEY_BASE and APEX_CLAW_DB_PASSWORD in .env.production
 # for internal/Tailscale-only HTTP deploys also set APP_PROTOCOL=http and APP_FORCE_SSL=false
 
 docker compose --env-file .env.production -f docker-compose.prod.yml build

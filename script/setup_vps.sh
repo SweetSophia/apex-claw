@@ -22,7 +22,7 @@ if [[ ! ${DATABASE_USER} =~ ^[a-z_][a-z0-9_]*$ ]]; then
   exit 1
 fi
 
-echo "==> ClawDeck VPS Setup Script"
+echo "==> Apex Claw VPS Setup Script"
 echo "==> Installing Ruby, PostgreSQL, nginx, and a dedicated app runtime user"
 
 echo "==> Updating system packages..."
@@ -64,7 +64,7 @@ EOF
 
 echo "==> Creating deployment directories..."
 install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT"
-install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
+install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/apex-claw
 install -d -o "$APP_USER" -g "$APP_GROUP" "$APP_ROOT/shared"
 
 if [[ -d "$APP_ROOT" ]]; then
@@ -104,10 +104,10 @@ for database_name in \
 
 echo "==> Optimizing PostgreSQL for a small VPS..."
 PG_CONF=$(runuser -u postgres -- psql -t -P format=unaligned -c 'SHOW config_file;')
-if ! grep -q "# ClawDeck low-memory tuning" "$PG_CONF"; then
+if ! grep -q "# Apex Claw low-memory tuning" "$PG_CONF"; then
   cat >> "$PG_CONF" <<'EOF'
 
-# ClawDeck low-memory tuning
+# Apex Claw low-memory tuning
 shared_buffers = 128MB
 effective_cache_size = 256MB
 maintenance_work_mem = 32MB

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
 	"github.com/SweetSophia/clawdeck/agent/internal/logging"
 )
 
@@ -18,9 +19,10 @@ func (h *ConfigReloadHandler) Handle(ctx context.Context, cmd *clawdeck.Command)
 	_ = ctx
 	_ = cmd
 
+	first := envcompat.FirstEnv
 	cfg := map[string]any{
-		"executor":  os.Getenv("CLAWDECK_EXECUTOR"),
-		"log_level": os.Getenv("CLAWDECK_LOG_LEVEL"),
+		"executor":  first(os.Getenv, "APEX_CLAW_EXECUTOR", "CLAWDECK_EXECUTOR"),
+		"log_level": first(os.Getenv, "APEX_CLAW_LOG_LEVEL", "CLAWDECK_LOG_LEVEL"),
 	}
 	logging.Global().Info("config status reported", cfg)
 

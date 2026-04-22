@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
 )
 
 type Level int
@@ -42,7 +44,7 @@ type entry struct {
 
 var (
 	globalMu     sync.RWMutex
-	globalLogger = NewLogger(os.Stderr, parseLevel(os.Getenv("CLAWDECK_LOG_LEVEL")), 0)
+	globalLogger = NewLogger(os.Stderr, parseLevel(envcompat.FirstEnv(os.Getenv, "APEX_CLAW_LOG_LEVEL", "CLAWDECK_LOG_LEVEL")), 0)
 )
 
 func NewLogger(w io.Writer, level Level, agentID int64) *Logger {
@@ -59,7 +61,7 @@ func NewLogger(w io.Writer, level Level, agentID int64) *Logger {
 func InitLogger(agentID int64) {
 	globalMu.Lock()
 	defer globalMu.Unlock()
-	globalLogger = NewLogger(os.Stderr, parseLevel(os.Getenv("CLAWDECK_LOG_LEVEL")), agentID)
+	globalLogger = NewLogger(os.Stderr, parseLevel(envcompat.FirstEnv(os.Getenv, "APEX_CLAW_LOG_LEVEL", "CLAWDECK_LOG_LEVEL")), agentID)
 }
 
 func Global() *Logger {

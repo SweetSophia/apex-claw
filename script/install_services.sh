@@ -8,11 +8,11 @@ fi
 
 APP_USER=${APP_USER:-clawdeck}
 APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
-APP_DOMAIN=${APP_DOMAIN:-clawdeck.io}
+APP_DOMAIN=${APP_DOMAIN:-apexclaw.local}
 APP_DOMAIN_ALIASES=${APP_DOMAIN_ALIASES:-}
 APP_PORT=${APP_PORT:-3000}
 CERTBOT_EMAIL=${CERTBOT_EMAIL:-}
-NGINX_SITE_NAME=${NGINX_SITE_NAME:-clawdeck}
+NGINX_SITE_NAME=${NGINX_SITE_NAME:-apex-claw}
 
 if [[ -z "$CERTBOT_EMAIL" ]]; then
   echo "CERTBOT_EMAIL must be set before running this script." >&2
@@ -52,12 +52,12 @@ render_template() {
     "$template_path" > "$destination_path"
 }
 
-echo "==> Installing ClawDeck services for $APP_DOMAIN"
+echo "==> Installing Apex Claw services for $APP_DOMAIN"
 if [[ -n "$APP_DOMAIN_ALIASES" ]]; then
   echo "==> Additional certificate/server aliases: $APP_DOMAIN_ALIASES"
 fi
-install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/clawdeck
-chown -R "$APP_USER:$APP_GROUP" /var/log/clawdeck
+install -d -o "$APP_USER" -g "$APP_GROUP" /var/log/apex-claw
+chown -R "$APP_USER:$APP_GROUP" /var/log/apex-claw
 install -d /var/www/certbot
 
 echo "==> Rendering systemd units..."

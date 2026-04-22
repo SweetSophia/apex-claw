@@ -13,8 +13,10 @@ class AgentRateLimiter
     return @app.call(env) unless agent_token
 
     agent = agent_token.agent
-    env["clawdeck.current_agent"] = agent
-    env["clawdeck.current_user"] = agent.user
+    # Set both new apex_claw.* and legacy clawdeck.* keys for backward compatibility
+    # during rolling deploys. Legacy keys can be removed once all consumers are updated.
+    env["apex_claw.current_agent"] = env["clawdeck.current_agent"] = agent
+    env["apex_claw.current_user"] = env["clawdeck.current_user"] = agent.user
 
     rate_limit = agent.agent_rate_limit
     window_seconds = rate_limit&.window_seconds || DEFAULT_WINDOW_SECONDS

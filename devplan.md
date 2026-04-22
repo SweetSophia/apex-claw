@@ -1,4 +1,4 @@
-# ClawDeck Development Notes
+# Apex Claw Development Notes
 
 This file replaces the old local-only **UberClawControl** planning manifest that no longer reflects the state of this repository.
 
@@ -30,6 +30,6 @@ As of **April 20, 2026**:
 
 ## Historical note
 
-The previous contents of this file described a local-first future fork plan under the name **UberClawControl**. That document became misleading once ClawDeck was adopted as the independently maintained primary repository and the multi-phase implementation work was completed here.
+The previous contents of this file described a local-first future fork plan under the name **UberClawControl**. That document became misleading once Apex Claw emerged as the product surface for the independently maintained repository and the multi-phase implementation work was completed here.
 
 Keeping this file as a short redirect is intentional, so readers do not mistake the old manifest for the current roadmap.

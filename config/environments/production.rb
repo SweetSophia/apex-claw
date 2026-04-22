@@ -4,7 +4,7 @@ require "ipaddr"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  app_host = ENV.fetch("APP_HOST", "clawdeck.io")
+  app_host = ENV.fetch("APP_HOST", "apexclaw.local")
   app_protocol = ENV.fetch("APP_PROTOCOL", "https")
   ssl_enabled = ActiveModel::Type::Boolean.new.cast(
     ENV.fetch("APP_FORCE_SSL", (app_protocol == "https").to_s)
@@ -12,7 +12,7 @@ Rails.application.configure do
 
   default_hosts = [ app_host ]
   default_hosts << "www.#{app_host}" unless app_host.start_with?("www.")
-  default_hosts.concat([ "clawdeck.onrender.com", "app.clawdeck.io", ".clawdeck.io", "127.0.0.1", "::1" ])
+  default_hosts.concat([ "127.0.0.1", "::1" ])
 
   configured_hosts = ENV.fetch("APP_ALLOWED_HOSTS", default_hosts.join(","))
     .split(",")

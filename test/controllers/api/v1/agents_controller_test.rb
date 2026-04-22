@@ -97,8 +97,22 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 30, response.parsed_body["heartbeat_interval_seconds"]
   end
 
-  test "heartbeat can override interval via env" do
+  test "heartbeat can override interval via apex env" do
+    previous = ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = "45"
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal 45, response.parsed_body["heartbeat_interval_seconds"]
+  ensure
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = previous
+  end
+
+  test "heartbeat falls back to legacy interval env" do
     previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
+    previous_apex = ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV.delete("APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS")
     ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "45"
 
     post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
@@ -107,30 +121,31 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 45, response.parsed_body["heartbeat_interval_seconds"]
   ensure
     ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = previous_apex
   end
 
   test "heartbeat clamps interval env to safe bounds" do
-    previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
-    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "1"
+    previous = ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = "1"
 
     post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
 
     assert_response :success
     assert_equal 5, response.parsed_body["heartbeat_interval_seconds"]
   ensure
-    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = previous
   end
 
   test "heartbeat clamps interval env to upper bound" do
-    previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
-    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "1000"
+    previous = ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = "1000"
 
     post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
 
     assert_response :success
     assert_equal 300, response.parsed_body["heartbeat_interval_seconds"]
   ensure
-    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = previous
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = previous
   end
 
   test "heartbeat flags token rotation when token expires soon" do
@@ -140,6 +155,21 @@ class Api::V1::AgentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal true, response.parsed_body["token_rotation_required"]
+  end
+
+  test "heartbeat falls back to legacy env when apex env is empty string" do
+    apex_previous = ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"]
+    legacy_previous = ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"]
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = ""
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = "60"
+
+    post "/api/v1/agents/#{@agent.id}/heartbeat", headers: auth_header(@agent_plaintext_token)
+
+    assert_response :success
+    assert_equal 60, response.parsed_body["heartbeat_interval_seconds"]
+  ensure
+    ENV["APEX_CLAW_HEARTBEAT_INTERVAL_SECONDS"] = apex_previous
+    ENV["CLAWDECK_HEARTBEAT_INTERVAL_SECONDS"] = legacy_previous
   end
 
   test "heartbeat defaults status to online" do
