@@ -244,7 +244,7 @@ export default class extends Controller {
 
   renderDefaultState() {
     const featuredActions = this.searchItemsValue.filter(item => item.kind === "action" && item.featured)
-    const navigation = this.searchItemsValue.filter(item => item.kind === "nav").slice(0, 4)
+    const navigation = this.searchItemsValue.filter(item => item.kind === "nav")
     const boards = this.searchItemsValue.filter(item => item.kind === "board").slice(0, 5)
     const recentTasks = this.searchItemsValue.filter(item => item.kind === "task").slice(0, 5)
 
@@ -254,7 +254,7 @@ export default class extends Controller {
     this.actionsPanelTarget.classList.remove("hidden")
     this.renderActionsPanel([
       { label: "Actions", items: featuredActions },
-      { label: "Jump to", items: navigation },
+      { label: "Workspace", items: navigation },
       { label: "Boards", items: boards },
       { label: "Recent tasks", items: recentTasks },
     ])

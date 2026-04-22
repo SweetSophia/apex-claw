@@ -63,12 +63,47 @@ module ApplicationHelper
       '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3 text-content-secondary"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>'.html_safe
     end
   end
+  def workspace_nav_items(user)
+    return [] unless user
+
+    items = [
+      { title: "Home", subtitle: "Workspace overview", href: home_path, icon: "🏠", keywords: %w[home workspace dashboard overview] },
+      { title: "Agents", subtitle: "Fleet status and controls", href: agents_path, icon: "🤖", keywords: %w[agents agent fleet status controls] },
+      { title: "Skills", subtitle: "Reusable knowledge blocks", href: skills_path, icon: "🧠", keywords: %w[skills skill knowledge reusable blocks] },
+      { title: "Workflows", subtitle: "Triggers runs and automation", href: workflows_path, icon: "🪄", keywords: %w[workflows workflow triggers runs automation] },
+      { title: "Handoffs", subtitle: "Transfer templates", href: handoff_templates_path, icon: "🔁", keywords: %w[handoffs handoff transfer templates] },
+      { title: "Routing", subtitle: "Auto-routing rules", href: routing_rules_path, icon: "🧭", keywords: %w[routing auto-routing rules router] },
+      { title: "Presets", subtitle: "Reusable command presets", href: command_presets_path, icon: "🧰", keywords: %w[presets preset commands command reusable] },
+      { title: "Settings", subtitle: "Profile and OpenClaw integration", href: settings_path, icon: "⚙️", keywords: %w[settings profile openclaw integration api token] }
+    ]
+
+    if user.admin?
+      items << { title: "Audit Logs", subtitle: "Admin activity trail", href: admin_audit_logs_path, icon: "🧾", keywords: %w[audit logs admin activity trail] }
+    end
+
+    items
+  end
+
+  def onboarding_board?(board)
+    board.present? && board.onboarding?
+  end
+
+  def nav_item_active?(item, active_path)
+    return false if item.blank? || active_path.blank?
+
+    href = item[:href].to_s
+    return false if href.blank?
+    return active_path == href if href == home_path
+
+    active_path == href || active_path.start_with?("#{href}/")
+  end
+
   def command_bar_search_items(user, current_board: nil, tasks_scope: nil)
     return [] unless user
 
-    boards = user.boards.select(:id, :name, :icon, :color).limit(12).to_a
+    boards = user.boards.select(:id, :name, :icon, :color, :onboarding_seeded).limit(12).to_a
     done_status = command_bar_done_status
-    default_board = current_board || boards.first
+    default_board = current_board || boards.find { |board| !board.onboarding? } || boards.first
     items = []
 
     if default_board
@@ -115,12 +150,16 @@ module ApplicationHelper
       featured: true
     }
 
-    items << { kind: "nav", title: "Home", subtitle: "Dashboard", href: home_path, icon: "🏠", keywords: ["home", "dashboard"], featured: true }
-    items << { kind: "nav", title: "Agents", subtitle: "Fleet status and controls", href: agents_path, icon: "🤖", keywords: ["agents", "fleet"], featured: true }
-    items << { kind: "nav", title: "Settings", subtitle: "Profile and OpenClaw integration", href: settings_path, icon: "⚙️", keywords: ["settings", "profile", "api", "token"], featured: true }
-
-    if user.admin?
-      items << { kind: "nav", title: "Audit Logs", subtitle: "Admin activity trail", href: admin_audit_logs_path, icon: "🧾", keywords: ["admin", "audit", "logs"], featured: true }
+    workspace_nav_items(user).each do |item|
+      items << {
+        kind: "nav",
+        title: item[:title],
+        subtitle: item[:subtitle],
+        href: item[:href],
+        icon: item[:icon],
+        keywords: Array(item[:keywords]).presence || [item[:title], item[:subtitle]],
+        featured: true
+      }
     end
 
     board_ids = boards.map(&:id)

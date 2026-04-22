@@ -1,4 +1,6 @@
 class Board < ApplicationRecord
+  ONBOARDING_NAME = "Getting Started".freeze
+
   belongs_to :user
   has_many :tasks, dependent: :destroy
 
@@ -18,7 +20,8 @@ class Board < ApplicationRecord
 
   def self.create_onboarding_for(user)
     board = user.boards.create!(
-      name: "Getting Started",
+      name: ONBOARDING_NAME,
+      onboarding_seeded: true,
       icon: "🚀",
       color: "blue"
     )
@@ -73,6 +76,10 @@ class Board < ApplicationRecord
     end
 
     board
+  end
+
+  def onboarding?
+    onboarding_seeded?
   end
 
   private
