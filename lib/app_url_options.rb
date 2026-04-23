@@ -12,10 +12,10 @@ module AppUrlOptions
   # `host_with_port`, which keeps this safe to use from controllers and helpers.
   #
   # Keep the distinction between the host helpers clear:
-  # - `resolved_app_host` returns the canonical host value without URL-only
-  #   transformations so callers can still inspect or compare the raw host.
-  # - `resolved_app_url_host` returns a host that is safe to embed in absolute
-  #   URLs, including bracketed IPv6 literals.
+  # - `resolved_app_host` returns the configured or request-supplied host verbatim
+  #   (port included), without applying URL authority formatting.
+  # - `resolved_app_url_host` returns a host safe to interpolate into absolute
+  #   URLs, including bare IPv6 literals wrapped in brackets.
 
   # Returns the externally visible protocol without a trailing `://`.
   #
@@ -27,10 +27,12 @@ module AppUrlOptions
     ENV["APP_PROTOCOL"].presence&.delete_suffix("://") || fallback_app_protocol(request: request)
   end
 
-  # Returns the canonical host value for the app.
+  # Returns the canonical host value for the app, as-set or as-requested.
   #
-  # This preserves the raw configured host so non-URL callers do not pick up
-  # URL-specific formatting such as IPv6 brackets.
+  # The value is returned verbatim from the configured host or the current
+  # request (non-production), including any port. Only bare IPv6 literals
+  # are left unbracketed here; use `resolved_app_url_host` to guarantee
+  # URL-safe bracketing for all IPv6 literals.
   def resolved_app_host(request: nil)
     ENV["APP_HOST"].presence || fallback_app_host(request: request)
   end
