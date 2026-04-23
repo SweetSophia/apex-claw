@@ -1,4 +1,5 @@
 module ApplicationHelper
+  include AppUrlOptions
   COMMAND_BAR_STATUS_LABELS = {
     "inbox" => "Inbox",
     "up_next" => "Up Next",
@@ -38,6 +39,19 @@ module ApplicationHelper
       "Good evening"
     end
   end
+
+  def marketing_protocol(request: nil)
+    resolved_app_protocol(request: request)
+  end
+
+  def marketing_host(request: nil)
+    resolved_app_host(request: request)
+  end
+
+  def marketing_base_url(request: nil)
+    resolved_app_base_url(request: request)
+  end
+
   def activity_icon_bg(activity)
     case activity.action
     when "created"

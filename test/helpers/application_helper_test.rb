@@ -31,6 +31,46 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     assert_equal "Create in Real Project", new_task[:subtitle]
   end
 
+  test "marketing base url uses request when env overrides are missing" do
+    request = Struct.new(:protocol, :host_with_port).new("https://", "example.test:4000")
+
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV.delete("APP_HOST")
+    ENV.delete("APP_PROTOCOL")
+
+    assert_equal "https://example.test:4000", helper_context.marketing_base_url(request: request)
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
+  test "marketing base url prefers env overrides" do
+    request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
+
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV["APP_HOST"] = "apex.example"
+    ENV["APP_PROTOCOL"] = "https"
+
+    assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
+  test "marketing base url falls back to default when request is nil" do
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV.delete("APP_HOST")
+    ENV.delete("APP_PROTOCOL")
+
+    assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: nil)
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
   test "workspace nav includes apex control plane destinations" do
     items = helper_context.workspace_nav_items(@user)
 

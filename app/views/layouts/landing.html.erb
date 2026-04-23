@@ -1,30 +1,28 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <% marketing_protocol = ENV["APP_PROTOCOL"].presence || request.protocol.delete_suffix("://") %>
-    <% marketing_host = ENV["APP_HOST"].presence || request.host_with_port %>
-    <% marketing_base_url = "#{marketing_protocol}://#{marketing_host}" %>
+    <% marketing_site_url = marketing_base_url(request: request) %>
 
     <title>Apex Claw - Multi-Agent Operations Workspace</title>
     <meta name="description" content="Operator workspace for managing, monitoring, and orchestrating multi-agent systems with OpenClaw.">
 
     <%# Open Graph / Facebook %>
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<%= marketing_base_url %>/">
+    <meta property="og:url" content="<%= marketing_site_url %>/">
     <meta property="og:title" content="Apex Claw - Multi-Agent Operations Workspace">
     <meta property="og:description" content="Operator workspace for managing, monitoring, and orchestrating multi-agent systems with OpenClaw.">
     <meta property="og:image" content="<%= image_url('og-image.png') %>">
 
     <%# Twitter %>
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="<%= marketing_base_url %>/">
+    <meta property="twitter:url" content="<%= marketing_site_url %>/">
     <meta property="twitter:title" content="Apex Claw - Multi-Agent Operations Workspace">
     <meta property="twitter:description" content="Operator workspace for managing, monitoring, and orchestrating multi-agent systems with OpenClaw.">
     <meta property="twitter:image" content="<%= image_url('og-image.png') %>">
     <meta name="twitter:creator" content="@andresmax">
 
     <%# Canonical URL %>
-    <link rel="canonical" href="<%= marketing_base_url %>/">
+    <link rel="canonical" href="<%= marketing_site_url %>/">
 
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,7 +48,7 @@
         "priceCurrency": "USD"
       },
       "description": "Operator workspace for managing, monitoring, and orchestrating multi-agent systems with OpenClaw.",
-      "url": "<%= marketing_base_url %>/"
+      "url": "<%= marketing_site_url %>/"
     }
     </script>
 
