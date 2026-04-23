@@ -55,6 +55,14 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "marketing base url brackets ipv6 app host override" do
+    request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
+
+    with_env("APP_HOST" => "::1", "APP_PROTOCOL" => "https") do
+      assert_equal "https://[::1]", helper_context.marketing_base_url(request: request)
+    end
+  end
+
   test "marketing base url uses configured allowed host in production when app host is unset" do
     request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
 
@@ -91,6 +99,16 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => ".apex.test,public.apex.test") do
       with_rails_env("production") do
         assert_equal "https://public.apex.test", helper_context.marketing_base_url(request: request)
+      end
+    end
+  end
+
+  test "marketing base url brackets ipv6 allowed host in production" do
+    request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
+
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => "::1,127.0.0.1") do
+      with_rails_env("production") do
+        assert_equal "https://[::1]", helper_context.marketing_base_url(request: request)
       end
     end
   end
