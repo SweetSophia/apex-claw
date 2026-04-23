@@ -85,6 +85,16 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "marketing base url skips wildcard entries in APP_ALLOWED_HOSTS and falls back to local default" do
+    request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
+
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => ".apex.test,127.0.0.1") do
+      Rails.stub(:env, ActiveSupport::StringInquirer.new("production")) do
+        assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: request)
+      end
+    end
+  end
+
   test "marketing base url falls back to default when request is nil" do
     with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil) do
       assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: nil)

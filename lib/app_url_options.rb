@@ -33,7 +33,14 @@ module AppUrlOptions
     request&.host_with_port || configured_allowed_host || "apexclaw.local"
   end
 
+  # Returns the first APP_ALLOWED_HOSTS entry that looks like a concrete hostname
+  # suitable for outbound URL generation. Rejects wildcard/pattern entries (leading
+  # dot or asterisk) that are valid for Rails host matching but not for URL building.
   def configured_allowed_host
-    ENV["APP_ALLOWED_HOSTS"].to_s.split(",").map(&:strip).reject(&:empty?).first
+    ENV["APP_ALLOWED_HOSTS"].to_s
+      .split(",")
+      .map(&:strip)
+      .reject(&:empty?)
+      .find { |host| !host.start_with?(".", "*") }
   end
 end

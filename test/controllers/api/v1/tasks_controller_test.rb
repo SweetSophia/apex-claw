@@ -268,6 +268,17 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "show skips wildcard allowed host entries and falls back to local default in production" do
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => ".apex.test,127.0.0.1") do
+      Rails.stub(:env, ActiveSupport::StringInquirer.new("production")) do
+        get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "attacker.test" }
+
+        assert_response :success
+        assert_equal board_task_url(@task.board, @task, host: "apexclaw.local", protocol: "https"), response.parsed_body["url"]
+      end
+    end
+  end
+
   # Update tests
   test "update updates task and audit log" do
     assert_difference "AuditLog.count", 1 do
