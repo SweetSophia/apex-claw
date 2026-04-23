@@ -23,6 +23,8 @@ Checked into the repo:
 
 The VPS scripts are intentionally opinionated, but they are no longer tied to root-owned app services or a single hardcoded domain.
 
+This guide still contains intentional `clawdeck` runtime identifiers such as filesystem paths, usernames, nginx template names, and database defaults. Those values reflect the current checked-in deployment/runtime surface and are not meant to imply that the product name is still ClawDeck.
+
 Defaults if you do not override them:
 - Ubuntu VPS
 - deployment path: `/var/www/clawdeck`
