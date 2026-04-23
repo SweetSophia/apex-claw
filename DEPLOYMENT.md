@@ -93,6 +93,7 @@ Notes:
 - the production container startup runs `db:create db:migrate && assets:precompile` before booting Rails
 - the first boot after a rebuild can take a little longer because Propshaft/Tailwind assets are compiled there
 - if you change app code or asset inputs, rebuild the image before restarting
+- **`--env-file` is required**: `docker-compose.prod.yml` uses `${VARIABLE}` interpolation in the `environment:` block. Docker Compose resolves these from the host shell or a `.env` file in the project root — **not** from the `env_file:` directive inside the compose file. Always pass `--env-file .env.production` on the command line, or create a `.env` file in the project root with the required variables (Docker Compose auto-loads this). Omitting this causes `SECRET_KEY_BASE` to be empty, which crashes Rails on boot with `ArgumentError: secret_key_base for production environment must be a type of String`.
 
 ### 3. Verify the app
 
