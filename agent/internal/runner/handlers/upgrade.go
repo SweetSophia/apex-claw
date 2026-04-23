@@ -3,8 +3,8 @@ package handlers
 import (
 	"context"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/logging"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/logging"
 )
 
 // UpgradeHandler is a stub for future agent self-upgrade capability.
@@ -12,7 +12,7 @@ import (
 // requires a package manager or deployment pipeline integration.
 type UpgradeHandler struct{}
 
-func (h *UpgradeHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (h *UpgradeHandler) Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	_ = ctx
 	logging.Global().Info("received upgrade command (stub)", map[string]any{"command_id": cmd.ID, "payload": cmd.Payload})
 	return map[string]any{

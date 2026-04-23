@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestHealthCheckHandlerReturnsDiagnostics(t *testing.T) {
@@ -15,7 +15,7 @@ func TestHealthCheckHandlerReturnsDiagnostics(t *testing.T) {
 		TaskActiveFunc: func() bool { return true },
 	}
 
-	result, err := h.Handle(context.Background(), &clawdeck.Command{Kind: "health_check"})
+	result, err := h.Handle(context.Background(), &apexclaw.Command{Kind: "health_check"})
 	if err != nil {
 		t.Fatalf("Handle returned error: %v", err)
 	}

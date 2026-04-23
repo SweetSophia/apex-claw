@@ -5,12 +5,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/logging"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/logging"
 )
 
 type TaskRunner struct {
-	client      *clawdeck.Client
+	client      *apexclaw.Client
 	interval    time.Duration
 	executor    Executor
 	retryConfig RetryConfig
@@ -18,7 +18,7 @@ type TaskRunner struct {
 	draining    atomic.Bool
 }
 
-func NewTaskRunner(client *clawdeck.Client, interval time.Duration, executor Executor) *TaskRunner {
+func NewTaskRunner(client *apexclaw.Client, interval time.Duration, executor Executor) *TaskRunner {
 	if interval == 0 {
 		interval = 5 * time.Second
 	}
@@ -117,7 +117,7 @@ func (t *TaskRunner) pollAndExecute(ctx context.Context) {
 	}
 }
 
-func (t *TaskRunner) executeWithRetry(ctx context.Context, task *clawdeck.Task) (ExecutionResult, int) {
+func (t *TaskRunner) executeWithRetry(ctx context.Context, task *apexclaw.Task) (ExecutionResult, int) {
 	logger := logging.Global()
 	maxAttempts := t.retryConfig.MaxRetries + 1
 	if maxAttempts < 1 {
@@ -157,13 +157,13 @@ func (t *TaskRunner) executeWithRetry(ctx context.Context, task *clawdeck.Task) 
 	return ExecutionResult{}, maxAttempts
 }
 
-func (t *TaskRunner) markTaskRetrying(task *clawdeck.Task, attempt int, delay time.Duration, execErr error) {
+func (t *TaskRunner) markTaskRetrying(task *apexclaw.Task, attempt int, delay time.Duration, execErr error) {
 	status := "retrying"
 	note := execErr.Error()
 	if delay > 0 {
 		note = note + "; retrying in " + delay.String()
 	}
-	_, err := t.client.UpdateTask(task.ID, clawdeck.TaskUpdateRequest{
+	_, err := t.client.UpdateTask(task.ID, apexclaw.TaskUpdateRequest{
 		Status:       &status,
 		ActivityNote: &note,
 	})
@@ -176,10 +176,10 @@ func (t *TaskRunner) markTaskRetrying(task *clawdeck.Task, attempt int, delay ti
 	}
 }
 
-func (t *TaskRunner) reportTaskFailure(task *clawdeck.Task, attempts int, execErr error) {
+func (t *TaskRunner) reportTaskFailure(task *apexclaw.Task, attempts int, execErr error) {
 	status := "failed"
 	note := execErr.Error()
-	_, err := t.client.UpdateTask(task.ID, clawdeck.TaskUpdateRequest{
+	_, err := t.client.UpdateTask(task.ID, apexclaw.TaskUpdateRequest{
 		Status:       &status,
 		ActivityNote: &note,
 	})

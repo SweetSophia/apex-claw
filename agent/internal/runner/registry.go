@@ -5,7 +5,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
+	"github.com/SweetSophia/apex-claw/agent/internal/envcompat"
 )
 
 // ExecutorFactory creates a new Executor instance.

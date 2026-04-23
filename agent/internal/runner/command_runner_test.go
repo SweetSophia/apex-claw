@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestCommandRunnerPollDispatchAckCompleteFlow(t *testing.T) {
@@ -20,26 +20,26 @@ func TestCommandRunnerPollDispatchAckCompleteFlow(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/agent_commands/next":
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, Kind: "health_check", State: "pending", Payload: map[string]any{}})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 7, Kind: "health_check", State: "pending", Payload: map[string]any{}})
 		case "/api/v1/agent_commands/7/ack":
 			acked.Store(true)
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, State: "acknowledged"})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 7, State: "acknowledged"})
 		case "/api/v1/agent_commands/7/complete":
 			completed.Store(true)
 			defer r.Body.Close()
-			var req clawdeck.CommandCompleteRequest
+			var req apexclaw.CommandCompleteRequest
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				t.Fatalf("decode complete request: %v", err)
 			}
 			result = req.Result
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 7, State: "completed", Result: req.Result})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 7, State: "completed", Result: req.Result})
 		default:
 			http.NotFound(w, r)
 		}
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(42)
 
@@ -71,7 +71,7 @@ func TestCommandRunnerRetriesAck(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/agent_commands/next":
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, Kind: "health_check", State: "pending", Payload: map[string]any{}})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 8, Kind: "health_check", State: "pending", Payload: map[string]any{}})
 		case "/api/v1/agent_commands/8/ack":
 			attempt := ackAttempts.Add(1)
 			if attempt < 3 {
@@ -79,17 +79,17 @@ func TestCommandRunnerRetriesAck(t *testing.T) {
 				json.NewEncoder(w).Encode(map[string]any{"error": "try again"})
 				return
 			}
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, State: "acknowledged"})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 8, State: "acknowledged"})
 		case "/api/v1/agent_commands/8/complete":
 			completed.Store(true)
-			json.NewEncoder(w).Encode(clawdeck.Command{ID: 8, State: "completed"})
+			json.NewEncoder(w).Encode(apexclaw.Command{ID: 8, State: "completed"})
 		default:
 			http.NotFound(w, r)
 		}
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(42)
 

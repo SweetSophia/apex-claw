@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/envcompat"
 )
 
 const defaultShellAllowlist = "pwd,echo,whoami,date,df,free,uptime"
 
 type ShellHandler struct{}
 
-func (h *ShellHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (h *ShellHandler) Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	command, _ := cmd.Payload["command"].(string)
 	command = strings.TrimSpace(command)
 	if command == "" {

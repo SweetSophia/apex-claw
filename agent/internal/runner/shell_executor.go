@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 // ShellExecutor executes single shell commands from task descriptions.
@@ -29,7 +29,7 @@ func NewShellExecutor() *ShellExecutor {
 
 func (s *ShellExecutor) Name() string { return "shell" }
 
-func (s *ShellExecutor) Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult {
+func (s *ShellExecutor) Execute(ctx context.Context, task *apexclaw.Task) ExecutionResult {
 	command := strings.TrimSpace(task.Description)
 	if command == "" {
 		return ExecutionResult{

@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestScriptExecutor_Success(t *testing.T) {
 	e := NewScriptExecutor()
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "#!/bin/bash\necho hello from script",
 	})
 
@@ -26,7 +26,7 @@ func TestScriptExecutor_Success(t *testing.T) {
 
 func TestScriptExecutor_Failure(t *testing.T) {
 	e := NewScriptExecutor()
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "#!/bin/bash\nexit 42",
 	})
 
@@ -42,7 +42,7 @@ func TestScriptExecutor_Cleanup(t *testing.T) {
 	e := NewScriptExecutor()
 	// Execute and check temp file is cleaned up by looking at output.
 	// We verify indirectly: if temp files accumulated, /tmp would fill up.
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "echo cleanup test",
 	})
 	if !result.Completed {
@@ -52,7 +52,7 @@ func TestScriptExecutor_Cleanup(t *testing.T) {
 
 func TestScriptExecutor_EmptyScript(t *testing.T) {
 	e := NewScriptExecutor()
-	result := e.Execute(context.Background(), &clawdeck.Task{Description: ""})
+	result := e.Execute(context.Background(), &apexclaw.Task{Description: ""})
 	if result.Completed {
 		t.Fatal("expected failure for empty script")
 	}
@@ -63,7 +63,7 @@ func TestScriptExecutor_Timeout(t *testing.T) {
 		Timeout: 100 * time.Millisecond,
 	}
 
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "sleep 10",
 	})
 
@@ -76,7 +76,7 @@ func TestScriptExecutor_WritesToTempFile(t *testing.T) {
 	// Verify the script actually executes from a file (not inline).
 	e := NewScriptExecutor()
 	script := "echo $0"
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: script,
 	})
 	if !result.Completed {

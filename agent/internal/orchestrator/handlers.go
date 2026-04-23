@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
-func HandleDrain(ctx context.Context, cmd *clawdeck.Command) map[string]any {
+func HandleDrain(ctx context.Context, cmd *apexclaw.Command) map[string]any {
 	log.Printf("handling drain command: %+v", cmd.Payload)
 	return map[string]any{
 		"success": true,
@@ -15,7 +15,7 @@ func HandleDrain(ctx context.Context, cmd *clawdeck.Command) map[string]any {
 	}
 }
 
-func HandleResume(ctx context.Context, cmd *clawdeck.Command) map[string]any {
+func HandleResume(ctx context.Context, cmd *apexclaw.Command) map[string]any {
 	log.Printf("handling resume command: %+v", cmd.Payload)
 	return map[string]any{
 		"success": true,
@@ -23,7 +23,7 @@ func HandleResume(ctx context.Context, cmd *clawdeck.Command) map[string]any {
 	}
 }
 
-func HandleRestart(ctx context.Context, cmd *clawdeck.Command) map[string]any {
+func HandleRestart(ctx context.Context, cmd *apexclaw.Command) map[string]any {
 	log.Printf("handling restart command: %+v", cmd.Payload)
 	return map[string]any{
 		"success": false,
@@ -31,7 +31,7 @@ func HandleRestart(ctx context.Context, cmd *clawdeck.Command) map[string]any {
 	}
 }
 
-func HandleUpgrade(ctx context.Context, cmd *clawdeck.Command) map[string]any {
+func HandleUpgrade(ctx context.Context, cmd *apexclaw.Command) map[string]any {
 	log.Printf("handling upgrade command: %+v", cmd.Payload)
 	version, _ := cmd.Payload["version"].(string)
 	if version == "" {

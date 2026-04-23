@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
+	"github.com/SweetSophia/apex-claw/agent/internal/envcompat"
 )
 
 type Level int

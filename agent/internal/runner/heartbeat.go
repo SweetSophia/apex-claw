@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 const (
@@ -25,7 +25,7 @@ type ShutdownRequest struct {
 // HeartbeatRunner periodically sends heartbeat requests to the ClawDeck API
 // and processes desired_state actions from the server.
 type HeartbeatRunner struct {
-	client   *clawdeck.Client
+	client   *apexclaw.Client
 	interval time.Duration
 	agentID  int64
 
@@ -44,7 +44,7 @@ type HeartbeatRunner struct {
 	ShutdownCh chan ShutdownRequest
 }
 
-func NewHeartbeatRunner(client *clawdeck.Client, agentID int64, interval time.Duration) *HeartbeatRunner {
+func NewHeartbeatRunner(client *apexclaw.Client, agentID int64, interval time.Duration) *HeartbeatRunner {
 	return &HeartbeatRunner{
 		client:     client,
 		interval:   normalizeHeartbeatInterval(interval),
