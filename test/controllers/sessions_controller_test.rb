@@ -24,7 +24,12 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post session_path, params: { email_address: @user.email_address, password: "password123" }
 
     assert_redirected_to boards_path
-    assert_match(/; secure;/i, response.headers["Set-Cookie"])
+
+    set_cookie_headers = response.headers.get_all("Set-Cookie")
+    session_cookie_header = set_cookie_headers.find { |header| header.include?("session_id=") }
+
+    assert session_cookie_header, "expected session_id cookie in Set-Cookie headers: #{set_cookie_headers.inspect}"
+    assert_match(/; secure;/i, session_cookie_header)
   ensure
     ENV["APP_PROTOCOL"] = previous_protocol
     ENV["APP_FORCE_SSL"] = previous_force_ssl
