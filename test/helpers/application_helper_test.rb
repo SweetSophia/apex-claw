@@ -71,6 +71,14 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "marketing host brackets ipv6 app host override" do
+    request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
+
+    with_env("APP_HOST" => "::1", "APP_PROTOCOL" => "https") do
+      assert_equal "[::1]", helper_context.marketing_host(request: request)
+    end
+  end
+
   test "marketing base url uses configured allowed host in production when app host is unset" do
     request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
 
