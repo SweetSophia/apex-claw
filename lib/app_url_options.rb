@@ -10,30 +10,58 @@ module AppUrlOptions
   #
   # Callers may pass any request-like object that responds to `protocol` and
   # `host_with_port`, which keeps this safe to use from controllers and helpers.
+  #
+  # Keep the distinction between the host helpers clear:
+  # - `resolved_app_host` returns the configured or request-supplied host verbatim
+  #   (port included), without applying URL authority formatting.
+  # - `resolved_app_url_host` returns a host safe to interpolate into absolute
+  #   URLs, including bare IPv6 literals wrapped in brackets.
+
+  # Returns the externally visible protocol without a trailing `://`.
+  #
+  # Resolution order:
+  # 1. `APP_PROTOCOL`, normalized to strip any accidental scheme suffix
+  # 2. non-production request protocol when available
+  # 3. hard fallback (`https` in all environments)
   def resolved_app_protocol(request: nil)
     ENV["APP_PROTOCOL"].presence&.delete_suffix("://") || fallback_app_protocol(request: request)
   end
 
+  # Returns the canonical host value for the app, as-set or as-requested.
+  #
+  # The value is returned verbatim from the configured host or the current
+  # request (non-production), including any port. Only bare IPv6 literals
+  # are left unbracketed here; use `resolved_app_url_host` to guarantee
+  # URL-safe bracketing for all IPv6 literals.
   def resolved_app_host(request: nil)
     ENV["APP_HOST"].presence || fallback_app_host(request: request)
   end
 
+  # Returns a host value that is safe to interpolate into absolute URLs.
+  #
+  # IPv6 literals are bracketed here so Rails URL helpers and manual URL
+  # interpolation both produce valid authorities.
   def resolved_app_url_host(request: nil)
     format_host_for_url(resolved_app_host(request: request))
   end
 
+  # Returns the full externally visible base URL used by helpers and API output.
   def resolved_app_base_url(request: nil)
     "#{resolved_app_protocol(request: request)}://#{resolved_app_url_host(request: request)}"
   end
 
   private
 
+  # Production never trusts the inbound request protocol for outbound URLs.
+  # Other environments may fall back to the request when `APP_PROTOCOL` is unset.
   def fallback_app_protocol(request: nil)
     return "https" if Rails.env.production?
 
     request&.protocol&.delete_suffix("://") || "https"
   end
 
+  # Production falls back only to deploy-time host config, never to the request.
+  # Other environments may use the current request host for local convenience.
   def fallback_app_host(request: nil)
     return configured_allowed_host || "apexclaw.local" if Rails.env.production?
 
@@ -51,6 +79,11 @@ module AppUrlOptions
       .find { |host| !host.start_with?(".", "*") }
   end
 
+  # Formats a host for URL usage without changing ordinary DNS names.
+  #
+  # Already-bracketed IPv6 literals pass through unchanged, which keeps the
+  # transformation idempotent when callers or environment config already include
+  # brackets.
   def format_host_for_url(host)
     return host if host.blank? || host.start_with?("[")
     return "[#{host}]" if ipv6_literal?(host)
@@ -58,6 +91,8 @@ module AppUrlOptions
     host
   end
 
+  # Detects bare IPv6 literals while ignoring normal hostnames and host:port strings
+  # that are already valid authorities for URL generation.
   def ipv6_literal?(host)
     return false unless host.include?(":")
 
