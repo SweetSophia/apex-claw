@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const PROJECTS = [
-  { id: "clawdeck", name: "ClawDeck Cloud", emoji: "🦞", color: "#ef4444" },
+  { id: "apex-claw", name: "Apex Claw", emoji: "🦞", color: "#ef4444" },
   { id: "tini", name: "tini.bio", emoji: "🔗", color: "#34d399" },
   { id: "gratu", name: "Gratu", emoji: "🙏", color: "#fbbf24" },
   { id: "nod", name: "nod.so", emoji: "📬", color: "#60a5fa" },
@@ -9,18 +9,18 @@ const PROJECTS = [
 ];
 
 const BOARDS = [
-  { id: "clawdeck-cloud", name: "ClawDeck Cloud", emoji: "🦞", color: "#ef4444" },
+  { id: "apex-claw", name: "Apex Claw", emoji: "🦞", color: "#ef4444" },
   { id: "personal", name: "Personal", emoji: "🏠", color: "#60a5fa" },
   { id: "mx-works", name: "mx.works", emoji: "⚡", color: "#a78bfa" },
   { id: "client-projects", name: "Client Projects", emoji: "💼", color: "#34d399" },
 ];
 
 const TODAY_TASKS = [
-  { id: 1, title: "Integrate Polar.sh payments", project: "clawdeck", time: "Morning", subtasks: { done: 1, total: 3 }, agent: true, agentStatus: "working" },
+  { id: 1, title: "Integrate Polar.sh payments", project: "apex-claw", time: "Morning", subtasks: { done: 1, total: 3 }, agent: true, agentStatus: "working" },
   { id: 2, title: "Record 2-min video guide", project: "tini", time: "11 AM", subtasks: null, agent: false, agentStatus: null },
   { id: 3, title: "Finalize RevenueCat integration", project: "gratu", time: "Afternoon", subtasks: { done: 0, total: 2 }, agent: false, agentStatus: null },
   { id: 4, title: "Create sample profiles for businesses", project: "tini", time: "", subtasks: null, agent: false, agentStatus: null },
-  { id: 5, title: "Set up billing settings page", project: "clawdeck", time: "", subtasks: { done: 4, total: 5 }, agent: true, agentStatus: "done" },
+  { id: 5, title: "Set up billing settings page", project: "apex-claw", time: "", subtasks: { done: 4, total: 5 }, agent: true, agentStatus: "done" },
 ];
 
 const AGENT_UPDATES = [

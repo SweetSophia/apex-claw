@@ -7,8 +7,8 @@
 
 Apex Claw is a Rails app with Tailwind CSS. The current UI works but needs to be updated to match the new design system defined in `DESIGN_SYSTEM.md`. Two reference prototypes exist as React files:
 
-- `clawdeck-home-v4.jsx` — the target home screen
-- `clawdeck-board-v3.jsx` — the target board screen with card detail panel
+- `apex-claw-home-v4.jsx` — the target home screen
+- `apex-claw-board-v3.jsx` — the target board screen with card detail panel
 
 These are NOT to be used as React components. They are **visual references** for how the final ERB + Tailwind + Stimulus implementation should look and behave.
 

@@ -207,7 +207,7 @@ Useful references:
 - production-oriented path: bare-metal VPS scripts plus systemd/nginx
 - current deployment guide: `DEPLOYMENT.md`
 
-There is no checked-in production Docker stack in this repo yet.
+A checked-in production Docker stack is available via `docker-compose.prod.yml`; see `DEPLOYMENT.md` for the supported production paths and caveats.
 
 ## Documentation Map
 

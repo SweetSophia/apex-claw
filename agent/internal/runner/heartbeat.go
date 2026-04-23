@@ -22,7 +22,7 @@ type ShutdownRequest struct {
 	Action string // "restart" or "shutdown"
 }
 
-// HeartbeatRunner periodically sends heartbeat requests to the ClawDeck API
+// HeartbeatRunner periodically sends heartbeat requests to the Apex Claw API
 // and processes desired_state actions from the server.
 type HeartbeatRunner struct {
 	client   *apexclaw.Client

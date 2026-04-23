@@ -23,7 +23,7 @@ Checked into the repo:
 
 The VPS scripts are intentionally opinionated, but they are no longer tied to root-owned app services or a single hardcoded domain.
 
-This guide still contains intentional `clawdeck` repository identifiers such as the current GitHub clone URL. Those values reflect the current repository slug and are not meant to imply that the product name is still ClawDeck.
+This guide still contains intentional `clawdeck` repository identifiers such as the current GitHub clone URL. Those values reflect the current repository slug and do not imply that the product name has reverted.
 
 Defaults if you do not override them:
 - Ubuntu VPS

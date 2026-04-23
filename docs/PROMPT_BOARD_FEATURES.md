@@ -1,7 +1,7 @@
 # Add Missing Board Features
 
 ## Context
-Read `DESIGN_SYSTEM.md` for all design tokens. Read `clawdeck-board-v3.jsx` as the visual reference for how each feature should look and behave. The board view already exists with columns, cards, card detail panel, priority dots, agent assign, and activity feed. These are the features that still need to be added.
+Read `DESIGN_SYSTEM.md` for all design tokens. Read `apex-claw-board-v3.jsx` as the visual reference for how each feature should look and behave. The board view already exists with columns, cards, card detail panel, priority dots, agent assign, and activity feed. These are the features that still need to be added.
 
 ---
 
