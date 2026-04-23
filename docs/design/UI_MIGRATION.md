@@ -1,11 +1,11 @@
-# ClawDeck UI Migration Plan
+# Apex Claw UI Migration Plan
 ### From current UI → Design System v2
 
 ---
 
 ## Context
 
-ClawDeck is a Rails app with Tailwind CSS. The current UI works but needs to be updated to match the new design system defined in `DESIGN_SYSTEM.md`. Two reference prototypes exist as React files:
+Apex Claw is a Rails app with Tailwind CSS. The current UI works but needs to be updated to match the new design system defined in `DESIGN_SYSTEM.md`. Two reference prototypes exist as React files:
 
 - `clawdeck-home-v4.jsx` — the target home screen
 - `clawdeck-board-v3.jsx` — the target board screen with card detail panel
