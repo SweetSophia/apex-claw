@@ -25,7 +25,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to boards_path
 
-    set_cookie_headers = response.headers.get_all("Set-Cookie")
+    set_cookie_headers = Array(response.headers.to_h["set-cookie"] || response.headers["Set-Cookie"])
     session_cookie_header = set_cookie_headers.find { |header| header.include?("session_id=") }
 
     assert session_cookie_header, "expected session_id cookie in Set-Cookie headers: #{set_cookie_headers.inspect}"
