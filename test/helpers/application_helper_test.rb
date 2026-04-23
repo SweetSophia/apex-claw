@@ -55,6 +55,36 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     end
   end
 
+  test "marketing base url uses configured allowed host in production when app host is unset" do
+    request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
+
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => "public.apex.test,127.0.0.1") do
+      Rails.stub(:env, ActiveSupport::StringInquirer.new("production")) do
+        assert_equal "https://public.apex.test", helper_context.marketing_base_url(request: request)
+      end
+    end
+  end
+
+  test "marketing base url ignores request protocol in production when app protocol is unset" do
+    request = Struct.new(:protocol, :host_with_port).new("http://", "public.apex.test")
+
+    with_env("APP_HOST" => "public.apex.test", "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => nil) do
+      Rails.stub(:env, ActiveSupport::StringInquirer.new("production")) do
+        assert_equal "https://public.apex.test", helper_context.marketing_base_url(request: request)
+      end
+    end
+  end
+
+  test "marketing base url falls back to local default in production when no host config is present" do
+    request = Struct.new(:protocol, :host_with_port).new("https://", "attacker.test")
+
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => nil) do
+      Rails.stub(:env, ActiveSupport::StringInquirer.new("production")) do
+        assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: request)
+      end
+    end
+  end
+
   test "marketing base url falls back to default when request is nil" do
     with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil) do
       assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: nil)
