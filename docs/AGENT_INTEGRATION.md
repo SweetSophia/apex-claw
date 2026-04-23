@@ -187,6 +187,6 @@ Use these docs for exact behavior:
 The agent platform phases are complete.
 
 The remaining follow-up work is now limited to:
-- merge PR #13 for configurable heartbeat interval
+- continue low-risk rebrand and documentation cleanup work
 - real VPS deployment/runtime audit
 - remaining non-deployment security cleanup review

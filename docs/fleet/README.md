@@ -90,6 +90,6 @@ For day-to-day work, pair this file with:
 The core fleet implementation is complete.
 
 Remaining follow-ups are now limited to:
-- routine maintenance and future fleet/runtime improvements
+- continue low-risk rebrand and documentation cleanup work
 - auditing deployment/runtime assumptions on a real VPS
 - reviewing the remaining lower-priority security cleanup items outside the deployment path
