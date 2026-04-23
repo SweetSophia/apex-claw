@@ -2,7 +2,7 @@
 
 Fastest path to a running local Apex Claw instance.
 
-The product name is **Apex Claw**, but the GitHub repository and local checkout directory still use `clawdeck` today because the repository itself has not been renamed.
+The product is **Apex Claw**, but the repository and local checkout directory still use `clawdeck` because the repository itself has not been renamed.
 
 ## Recommended: Docker development
 
