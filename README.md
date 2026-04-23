@@ -1,51 +1,65 @@
 # Apex Claw
 
-Mission control for AI agents, built with Rails and a Go agent runtime.
+Mission control for AI agents — built with Rails and a Go agent runtime.
 
-This repository is **SweetSophia/clawdeck**, home of **Apex Claw**, an independently maintained multi-agent operations platform with multi-board task management, agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and live dashboard updates.
+Apex Claw is a multi-agent operations platform for registering, monitoring, commanding, and coordinating AI agents at scale. It provides multi-board task management, real-time dashboards, agent-to-agent handoffs, full audit trails, and a Go-based agent runtime.
 
-## Rebrand Boundaries
+## Apex Claw Features
 
-The product surface is **Apex Claw**, but some lower-level identifiers intentionally still use `clawdeck` today.
+### Task Management
+- **Multi-board kanban** — create unlimited boards, each with its own task pipeline
+- **Task lifecycle** — inbox → up next → in progress → in review → done
+- **Subtasks** — break tasks into smaller pieces
+- **Priority levels** — none, low, medium, high
+- **Task claiming & assignment** — agents claim tasks or get assigned by operators
+- **Task timeline / Gantt view** — 14–90 day window, tag filtering, due-date markers
+- **Task artifacts** — upload and download files attached to any task
+- **Task activity log** — full history of every change
 
-These are not accidental leftovers:
-- the GitHub repository remains `SweetSophia/clawdeck`
-- some deployment/runtime defaults still use `clawdeck` paths, usernames, or database names
-- legacy `CLAWDECK_*` environment variable fallbacks still work during the migration
+### Agent Runtime
+- **Agent registration** — join tokens (single-use, SHA-256 digested)
+- **Heartbeat-based presence** — live online/draining/offline status with configurable intervals
+- **Agent commands** — drain, resume, restart, shell, config reload, health check, upgrade hooks
+- **Command presets** — reusable named command templates for common operations
+- **Concurrent task claiming** — `FOR UPDATE SKIP LOCKED` for safe parallel agents
+- **Go agent binary** — standalone Go client with heartbeat, task, and command goroutines
 
-Those runtime-facing identifiers are higher-risk rename work and are being handled separately from the low-risk product/docs rebrand passes.
+### Agent-to-Agent Coordination
+- **Task handoffs** — agents can transfer tasks to other agents with accept/reject/expire flow
+- **Handoff templates** — predefined handoff configurations for common transfer patterns
+- **Routing rules** — configurable rules for automatic task-to-agent assignment
 
-## Current Status
+### Skills & Workflows
+- **Skills** — declare agent capabilities; filter tasks by required skill
+- **Agent-skill bindings** — attach skills to individual agents
+- **Workflows** — multi-step automated sequences with workflow runs
+- **Workflow runs** — track execution state of each workflow instance
 
-As of **April 23, 2026**:
+### Real-Time Dashboard
+- **Live agent cards** — health status, uptime, error rates, last heartbeat
+- **Section-specific Turbo Stream broadcasts** — only affected dashboard sections update
+- **SSE event stream** — `/api/v1/events` for programmatic consumption
+- **Dashboard metrics** — agent counts, task counts, recent activity
+- **Command bar** — server-seeded command palette with keyboard navigation and deep links
 
-- all four advancement phases are complete
-- Sprint A through Sprint E are complete
-- ops hardening is complete
-- the previously final planned backlog item, **configurable heartbeat interval**, shipped in **PR #13** (`3c51cc7`)
-- the remaining open work is now limited to lower-priority follow-ups such as:
-  - real VPS deployment/runtime audit
-  - review of remaining non-deployment security cleanup items
+### Security & Operations
+- **API authentication** — Bearer tokens (agent tokens + API tokens)
+- **Token rotation & revocation** — rotate secrets without downtime
+- **Per-agent rate limiting** — configurable request limits per agent
+- **Audit logging** — every significant action recorded with actor, target, and metadata
+- **Admin audit log UI** — browse and filter audit events in the dashboard
+- **Admin namespace** — admin-only pages for users and audit logs
 
-## Current Capabilities
+### Authentication
+- **Email/password signup and login** — built-in credentials with `has_secure_password`
+- **GitHub OAuth** — one-click login via GitHub
+- **Password reset flow** — token-based password recovery
+- **Profile management** — update email, password, and agent settings
 
-Implemented in this codebase today:
-
-- multi-board kanban task management
-- task timeline / Gantt view
-- server-seeded command palette with keyboard navigation and deep links
-- agent registration with join tokens
-- heartbeat-based agent presence and metadata
-- agent commands: drain, resume, restart, shell, config reload, health check, upgrade hooks
-- task claiming and assignment flows
-- task artifact upload and download
-- agent-to-agent task handoff flow
-- token rotation and revocation
-- per-agent API rate limiting
-- audit logging plus admin audit log UI
-- Turbo Streams + SSE real-time updates
-- dashboard health metrics for agents
-- dedicated-user VPS deployment scripts with env-driven nginx and systemd templates
+### Deployment
+- **Docker Compose production stack** — `docker-compose.prod.yml` with PostgreSQL 16 and Puma
+- **Bare-metal VPS deployment** — env-driven nginx and systemd templates
+- **Health checks** — built-in `/up` endpoint for load balancer probes
 
 ## Stack
 
@@ -79,8 +93,8 @@ Implemented in this codebase today:
 This is the easiest and most reliable way to run Apex Claw locally.
 
 ```bash
-git clone https://github.com/SweetSophia/clawdeck.git
-cd clawdeck
+git clone https://github.com/SweetSophia/apex-claw.git
+cd apex-claw
 docker compose up --build
 ```
 
@@ -103,8 +117,6 @@ docker compose up -d app
 
 Native setup works, but Docker is the smoother path for this repo.
 
-The local directory name remains `clawdeck` because the repository itself has not been renamed.
-
 Requirements:
 - Ruby 4.0.3
 - PostgreSQL 16
@@ -114,8 +126,8 @@ Requirements:
 Setup:
 
 ```bash
-git clone https://github.com/SweetSophia/clawdeck.git
-cd clawdeck
+git clone https://github.com/SweetSophia/apex-claw.git
+cd apex-claw
 bin/setup --skip-server
 bin/dev
 ```
@@ -238,7 +250,7 @@ Please keep PRs focused and update docs when behavior changes.
 
 ## Project
 
-- repository: <https://github.com/SweetSophia/clawdeck>
+- repository: <https://github.com/SweetSophia/apex-claw>
 - product name: **Apex Claw**
 - status: independently maintained and actively expanded
 
