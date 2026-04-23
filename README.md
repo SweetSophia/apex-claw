@@ -4,6 +4,17 @@ Mission control for AI agents, built with Rails and a Go agent runtime.
 
 This repository is **SweetSophia/clawdeck**, home of **Apex Claw**, an independently maintained multi-agent operations platform with multi-board task management, agent registration, heartbeats, command delivery, task artifacts, handoffs, audit logs, rate limiting, and live dashboard updates.
 
+## Rebrand Boundaries
+
+The product surface is **Apex Claw**, but some lower-level identifiers intentionally still use `clawdeck` today.
+
+These are not accidental leftovers:
+- the GitHub repository remains `SweetSophia/clawdeck`
+- some deployment/runtime defaults still use `clawdeck` paths, usernames, or database names
+- legacy `CLAWDECK_*` environment variable fallbacks still work during the migration
+
+Those runtime-facing identifiers are higher-risk rename work and are being handled separately from the low-risk product/docs rebrand passes.
+
 ## Current Status
 
 As of **April 23, 2026**:
@@ -91,6 +102,8 @@ docker compose up -d app
 ### Option B: Native development
 
 Native setup works, but Docker is the smoother path for this repo.
+
+The local directory name remains `clawdeck` because the repository itself has not been renamed.
 
 Requirements:
 - Ruby 4.0.3

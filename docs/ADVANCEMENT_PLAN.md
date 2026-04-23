@@ -136,6 +136,8 @@ Transform Apex Claw from a basic fleet skeleton into a production-grade AI agent
 
 There are **no open phases** left in the plan.
 
+The remaining work intentionally excludes the higher-risk runtime rename surfaces that still use `clawdeck` identifiers today (for example repo naming, deployment paths, runtime usernames, database names, and compatibility fallbacks). Those are deferred rebrand tasks, not missing low-risk doc cleanup.
+
 What remains is narrower than phase work:
 
 1. Audit production/runtime behavior on a real VPS
