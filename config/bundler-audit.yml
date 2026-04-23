@@ -1,2 +1,3 @@
 # No currently ignored advisories.
 # If bundler-audit reports new findings, address them or document the ignore here.
+ignore: []
