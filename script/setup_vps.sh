@@ -6,10 +6,10 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 
-APP_USER=${APP_USER:-clawdeck}
-APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
+APP_USER=${APP_USER:-apexclaw}
+APP_ROOT=${APP_ROOT:-/var/www/apex-claw}
 RUBY_VERSION=${RUBY_VERSION:-4.0.3}
-DATABASE_USER=${DATABASE_USER:-clawdeck}
+DATABASE_USER=${DATABASE_USER:-apexclaw}
 : "${DB_PASSWORD:?DB_PASSWORD must be set before running this script}"
 
 if [[ ! ${APP_USER} =~ ^[a-z_][a-z0-9_-]*$ ]]; then
@@ -92,10 +92,10 @@ ALTER ROLE ${DATABASE_USER} CREATEDB;
 SQL
 
 for database_name in \
-  clawdeck_production \
-  clawdeck_cache_production \
-  clawdeck_queue_production \
-  clawdeck_cable_production
+  apex_claw_production \
+  apex_claw_cache_production \
+  apex_claw_queue_production \
+  apex_claw_cable_production
   do
     if ! runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='${database_name}'" | grep -q 1; then
       runuser -u postgres -- createdb -O "$DATABASE_USER" "$database_name"

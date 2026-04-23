@@ -15,7 +15,7 @@ Checked into the repo:
 - `script/install_services.sh` — renders systemd/nginx templates, enables services, and provisions TLS with certbot
 - `config/systemd/puma.service` — template rendered during install
 - `config/systemd/solid_queue.service` — template rendered during install
-- `config/nginx/clawdeck.conf` — nginx bootstrap template rendered during install
+- `config/nginx/apex-claw.conf` — nginx bootstrap template rendered during install
 - `docker-compose.prod.yml` — production Docker Compose for a single-host deployment
 - `.env.production.example`
 
@@ -23,13 +23,13 @@ Checked into the repo:
 
 The VPS scripts are intentionally opinionated, but they are no longer tied to root-owned app services or a single hardcoded domain.
 
-This guide still contains intentional `clawdeck` runtime identifiers such as filesystem paths, usernames, nginx template names, and database defaults. Those values reflect the current checked-in deployment/runtime surface and are not meant to imply that the product name is still ClawDeck.
+This guide still contains intentional `clawdeck` repository identifiers such as the current GitHub clone URL. Those values reflect the current repository slug and are not meant to imply that the product name is still ClawDeck.
 
 Defaults if you do not override them:
 - Ubuntu VPS
-- deployment path: `/var/www/clawdeck`
-- dedicated runtime user: `clawdeck`
-- rbenv installed under `/home/clawdeck/.rbenv`
+- deployment path: `/var/www/apex-claw`
+- dedicated runtime user: `apexclaw`
+- rbenv installed under `/home/apexclaw/.rbenv`
 - PostgreSQL running locally
 - nginx terminating TLS
 - primary hostname: `apexclaw.local` by default (set your real domain before production use)
@@ -144,9 +144,9 @@ Before running the setup script:
 
 ```bash
 export DB_PASSWORD='choose-a-strong-password'
-export APP_USER='clawdeck'                 # optional override
-export APP_ROOT='/var/www/clawdeck'        # optional override
-export DATABASE_USER='clawdeck'            # optional override
+export APP_USER='apexclaw'                 # optional override
+export APP_ROOT='/var/www/apex-claw'       # optional override
+export DATABASE_USER='apexclaw'            # optional override
 ```
 
 Before running the service installer:

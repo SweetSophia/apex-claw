@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: clawdeck_development
+      POSTGRES_DB: apex_claw_development
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -23,7 +23,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/clawdeck_development
+      DATABASE_URL: postgres://postgres:postgres@db:5432/apex_claw_development
       RAILS_ENV: development
       SECRET_KEY_BASE: dev_secret_key_base_for_docker_development_only
       NODE_ENV: development

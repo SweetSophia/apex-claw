@@ -6,8 +6,8 @@ if [[ ${EUID} -ne 0 ]]; then
   exit 1
 fi
 
-APP_USER=${APP_USER:-clawdeck}
-APP_ROOT=${APP_ROOT:-/var/www/clawdeck}
+APP_USER=${APP_USER:-apexclaw}
+APP_ROOT=${APP_ROOT:-/var/www/apex-claw}
 APP_DOMAIN=${APP_DOMAIN:-apexclaw.local}
 APP_DOMAIN_ALIASES=${APP_DOMAIN_ALIASES:-}
 APP_PORT=${APP_PORT:-3000}
@@ -68,7 +68,7 @@ systemctl daemon-reload
 systemctl enable puma solid_queue
 
 echo "==> Installing nginx bootstrap config..."
-render_template "$APP_ROOT/config/nginx/clawdeck.conf" "/etc/nginx/sites-available/$NGINX_SITE_NAME"
+render_template "$APP_ROOT/config/nginx/apex-claw.conf" "/etc/nginx/sites-available/$NGINX_SITE_NAME"
 ln -sf "/etc/nginx/sites-available/$NGINX_SITE_NAME" "/etc/nginx/sites-enabled/$NGINX_SITE_NAME"
 rm -f /etc/nginx/sites-enabled/default
 

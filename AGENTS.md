@@ -68,11 +68,11 @@ systemctl status puma
 systemctl status solid_queue
 systemctl restart puma
 systemctl restart solid_queue
-tail -f /var/log/clawdeck/puma.log
-tail -f /var/log/clawdeck/solid_queue.log
+tail -f /var/log/apex-claw/puma.log
+tail -f /var/log/apex-claw/solid_queue.log
 ```
 
-Production bootstrap now assumes a dedicated app user, default `clawdeck`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow and required environment variables.
+Production bootstrap now assumes a dedicated app user, default `apexclaw`, rather than root-owned app services. Domain aliases are opt-in via `APP_DOMAIN_ALIASES`. See `DEPLOYMENT.md` for the current env-driven install flow and required environment variables.
 
 ## Architecture
 
