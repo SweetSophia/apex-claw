@@ -1,10 +1,10 @@
-# ClawDeck Fleet Security Notes
+# Apex Claw Fleet Security Notes
 
-This document covers the current security posture of ClawDeck's agent and fleet surface.
+This document covers the current security posture of Apex Claw's agent and fleet surface.
 
 ## Current security model
 
-ClawDeck separates human and agent access clearly:
+Apex Claw separates human and agent access clearly:
 
 - **user API tokens** authenticate the owning user
 - **agent tokens** authenticate a specific registered agent

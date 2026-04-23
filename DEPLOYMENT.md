@@ -1,4 +1,4 @@
-# ClawDeck Deployment Guide
+# Apex Claw Deployment Guide
 
 This repository currently ships three operational paths:
 

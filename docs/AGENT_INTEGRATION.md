@@ -1,6 +1,6 @@
 # Agent Integration Guide
 
-This document explains the workflow and semantics of integrating an agent with ClawDeck.
+This document explains the workflow and semantics of integrating an agent with Apex Claw.
 
 For exact request and response shapes, use:
 
@@ -11,7 +11,7 @@ Use this file for the higher-level lifecycle and behavioral expectations.
 
 ## Overview
 
-ClawDeck is a Rails control plane plus a Go agent runtime.
+Apex Claw is a Rails control plane plus a Go agent runtime.
 
 The product flow is:
 
@@ -24,7 +24,7 @@ The product flow is:
 
 ## Authentication Modes
 
-ClawDeck supports two bearer-token modes:
+Apex Claw supports two bearer-token modes:
 
 ### User API token
 
@@ -92,7 +92,7 @@ The heartbeat response also carries:
 - `desired_state`
 - `token_rotation_required`
 
-As of **April 20, 2026**, configurable heartbeat interval is implemented in **PR #13** and awaiting merge.
+As of **April 23, 2026**, configurable heartbeat interval has shipped in **PR #13** (`3c51cc7`).
 
 ### 3. Poll for tasks
 

@@ -1,4 +1,4 @@
-# ClawDeck API Reference
+# Apex Claw API Reference
 
 Base path: `/api/v1`
 
@@ -7,7 +7,7 @@ It is based on the live route table and controller behavior in the codebase.
 
 ## Authentication
 
-ClawDeck supports two bearer-token modes:
+Apex Claw supports two bearer-token modes:
 
 1. **User API token**
    - authenticates as a user

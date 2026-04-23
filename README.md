@@ -6,13 +6,13 @@ This repository is **SweetSophia/clawdeck**, home of **Apex Claw**, an independe
 
 ## Current Status
 
-As of **April 20, 2026**:
+As of **April 23, 2026**:
 
 - all four advancement phases are complete
 - Sprint A through Sprint E are complete
 - ops hardening is complete
-- the final planned backlog item, **configurable heartbeat interval**, is implemented in **PR #13** and awaiting merge
-- the remaining open work is now limited to two lower-priority follow-ups:
+- the previously final planned backlog item, **configurable heartbeat interval**, shipped in **PR #13** (`3c51cc7`)
+- the remaining open work is now limited to lower-priority follow-ups such as:
   - real VPS deployment/runtime audit
   - review of remaining non-deployment security cleanup items
 
