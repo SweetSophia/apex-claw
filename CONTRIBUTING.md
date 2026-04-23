@@ -5,7 +5,7 @@ Thank you for your interest in contributing to Apex Claw.
 ## Getting Started
 
 1. Clone the repository: `git clone https://github.com/SweetSophia/clawdeck.git`
-2. Note: the local checkout directory remains `clawdeck` because the repository itself has not been renamed yet.
+2. Note: the repository and local checkout directory both still use `clawdeck` because the repository itself has not been renamed yet.
 3. Create a branch: `git checkout -b feature/your-feature`
 4. Make your changes
 5. Run checks: `bin/ci`
