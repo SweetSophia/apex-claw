@@ -3,6 +3,8 @@ require "concurrent"
 
 class AgentConcurrencyTest < ActionDispatch::IntegrationTest
   setup do
+    Rails.cache.clear
+
     @user = users(:one)
     @board = @user.boards.first || @user.boards.create!(name: "Test Board", icon: "📋", color: "gray")
 

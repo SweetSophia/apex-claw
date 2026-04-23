@@ -15,6 +15,28 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert cookies[:session_id]
   end
 
+  test "create marks session cookie secure when APP_PROTOCOL includes scheme suffix" do
+    previous_protocol = ENV["APP_PROTOCOL"]
+    previous_force_ssl = ENV["APP_FORCE_SSL"]
+    previous_https = https?
+    ENV["APP_PROTOCOL"] = "https://"
+    ENV.delete("APP_FORCE_SSL")
+    https!
+
+    post session_path, params: { email_address: @user.email_address, password: "password123" }
+
+    assert_redirected_to boards_path
+
+    session_cookie = cookies.instance_variable_get(:@cookies).find { |cookie| cookie.name == "session_id" }
+
+    assert session_cookie, "expected session_id cookie in cookie jar"
+    assert session_cookie.secure?
+  ensure
+    ENV["APP_PROTOCOL"] = previous_protocol
+    ENV["APP_FORCE_SSL"] = previous_force_ssl
+    https!(previous_https)
+  end
+
   test "create with invalid password shows error" do
     post session_path, params: { email_address: @user.email_address, password: "wrongpassword" }
 

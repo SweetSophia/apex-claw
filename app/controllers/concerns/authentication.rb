@@ -71,8 +71,10 @@ module Authentication
     end
 
     def ssl_session_cookie?
+      configured_protocol = ENV.fetch("APP_PROTOCOL", Rails.env.production? ? "https" : "http").delete_suffix("://")
+
       ActiveModel::Type::Boolean.new.cast(
-        ENV.fetch("APP_FORCE_SSL", ENV.fetch("APP_PROTOCOL", Rails.env.production? ? "https" : "http") == "https" ? "true" : "false")
+        ENV.fetch("APP_FORCE_SSL", configured_protocol == "https" ? "true" : "false")
       )
     end
 

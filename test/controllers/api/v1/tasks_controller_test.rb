@@ -208,6 +208,21 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal @task.name, task["name"]
   end
 
+  test "show returns task url using app host and protocol overrides" do
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV["APP_HOST"] = "api.apexclaw.test"
+    ENV["APP_PROTOCOL"] = "https"
+
+    get api_v1_task_url(@task), headers: @auth_header
+
+    assert_response :success
+    assert_equal board_task_url(@task.board, @task, host: "api.apexclaw.test", protocol: "https"), response.parsed_body["url"]
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
   test "show returns not found for non-existent task" do
     get api_v1_task_url(id: 999999), headers: @auth_header
     assert_response :not_found
@@ -217,6 +232,36 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     other_task = tasks(:two)
     get api_v1_task_url(other_task), headers: @auth_header
     assert_response :not_found
+  end
+
+  test "show falls back to request host and protocol when app env overrides are unset" do
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV.delete("APP_HOST")
+    ENV.delete("APP_PROTOCOL")
+
+    get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "request.test:3000" }
+
+    assert_response :success
+    assert_equal board_task_url(@task.board, @task, host: "request.test:3000", protocol: "https"), response.parsed_body["url"]
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
+  test "show falls back to request host and protocol when app env overrides are blank" do
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV["APP_HOST"] = ""
+    ENV["APP_PROTOCOL"] = ""
+
+    get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "blank.test:3000" }
+
+    assert_response :success
+    assert_equal board_task_url(@task.board, @task, host: "blank.test:3000", protocol: "https"), response.parsed_body["url"]
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
   end
 
   # Update tests

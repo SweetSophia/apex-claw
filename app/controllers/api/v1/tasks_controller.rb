@@ -278,8 +278,8 @@ module Api
           url: board_task_url(
             task.board,
             task,
-            host: ENV.fetch("APP_HOST", request.host_with_port),
-            protocol: ENV.fetch("APP_PROTOCOL", request.protocol.delete_suffix("://"))
+            host: resolved_app_host(request: request),
+            protocol: resolved_app_protocol(request: request)
           ),
           created_at: task.created_at.iso8601,
           updated_at: task.updated_at.iso8601

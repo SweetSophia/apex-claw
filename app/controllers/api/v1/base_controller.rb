@@ -2,6 +2,7 @@ module Api
   module V1
     class BaseController < ActionController::API
       include Api::TokenAuthentication
+      include AppUrlOptions
 
       before_action :set_current_audit_context
       around_action :with_current_context
