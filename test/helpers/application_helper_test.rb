@@ -34,55 +34,31 @@ class ApplicationHelperTest < ActiveSupport::TestCase
   test "marketing base url uses request when env overrides are missing" do
     request = Struct.new(:protocol, :host_with_port).new("https://", "example.test:4000")
 
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV.delete("APP_HOST")
-    ENV.delete("APP_PROTOCOL")
-
-    assert_equal "https://example.test:4000", helper_context.marketing_base_url(request: request)
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil) do
+      assert_equal "https://example.test:4000", helper_context.marketing_base_url(request: request)
+    end
   end
 
   test "marketing base url prefers env overrides" do
     request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
 
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV["APP_HOST"] = "apex.example"
-    ENV["APP_PROTOCOL"] = "https"
-
-    assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+    with_env("APP_HOST" => "apex.example", "APP_PROTOCOL" => "https") do
+      assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
+    end
   end
 
   test "marketing base url strips protocol suffix from env override" do
     request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
 
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV["APP_HOST"] = "apex.example"
-    ENV["APP_PROTOCOL"] = "https://"
-
-    assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+    with_env("APP_HOST" => "apex.example", "APP_PROTOCOL" => "https://") do
+      assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
+    end
   end
 
   test "marketing base url falls back to default when request is nil" do
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV.delete("APP_HOST")
-    ENV.delete("APP_PROTOCOL")
-
-    assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: nil)
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil) do
+      assert_equal "https://apexclaw.local", helper_context.marketing_base_url(request: nil)
+    end
   end
 
   test "workspace nav includes apex control plane destinations" do
