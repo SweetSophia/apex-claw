@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestShellHandlerAllowlistEnforcement(t *testing.T) {
 	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "echo")
 	h := &ShellHandler{}
 
-	_, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "pwd"}})
+	_, err := h.Handle(context.Background(), &apexclaw.Command{Payload: map[string]any{"command": "pwd"}})
 	if err == nil {
 		t.Fatal("expected allowlist error")
 	}
@@ -27,7 +27,7 @@ func TestShellHandlerExecution(t *testing.T) {
 	t.Cleanup(func() { os.Unsetenv("APEX_CLAW_SHELL_ALLOWED") })
 
 	h := &ShellHandler{}
-	result, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "echo hello", "timeout": 5}})
+	result, err := h.Handle(context.Background(), &apexclaw.Command{Payload: map[string]any{"command": "echo hello", "timeout": 5}})
 	if err != nil {
 		t.Fatalf("Handle returned error: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestShellHandlerRejectsDisallowedArguments(t *testing.T) {
 	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "df")
 	h := &ShellHandler{}
 
-	_, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "df /"}})
+	_, err := h.Handle(context.Background(), &apexclaw.Command{Payload: map[string]any{"command": "df /"}})
 	if err == nil {
 		t.Fatal("expected argument validation error")
 	}
@@ -59,7 +59,7 @@ func TestShellHandlerSupportsSingleQuotedArguments(t *testing.T) {
 	t.Setenv("APEX_CLAW_SHELL_ALLOWED", "echo")
 	h := &ShellHandler{}
 
-	result, err := h.Handle(context.Background(), &clawdeck.Command{Payload: map[string]any{"command": "echo 'hello world'", "timeout": 5}})
+	result, err := h.Handle(context.Background(), &apexclaw.Command{Payload: map[string]any{"command": "echo 'hello world'", "timeout": 5}})
 	if err != nil {
 		t.Fatalf("Handle returned error: %v", err)
 	}

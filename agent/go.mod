@@ -1,9 +1,3 @@
-module github.com/SweetSophia/clawdeck/agent
+module github.com/SweetSophia/apex-claw/agent
 
 go 1.22
-
-require (
-	golang.org/x/term v0.17.0
-)
-
-require golang.org/x/sys v0.17.0 // indirect

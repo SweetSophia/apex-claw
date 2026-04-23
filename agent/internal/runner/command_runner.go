@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/logging"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/logging"
 )
 
 type CommandRunner struct {
-	client     *clawdeck.Client
+	client     *apexclaw.Client
 	interval   time.Duration
 	dispatcher *CommandDispatcher
 }
 
-func NewCommandRunner(client *clawdeck.Client, interval time.Duration, dispatcher *CommandDispatcher) *CommandRunner {
+func NewCommandRunner(client *apexclaw.Client, interval time.Duration, dispatcher *CommandDispatcher) *CommandRunner {
 	if interval == 0 {
 		interval = 5 * time.Second
 	}
@@ -97,7 +97,7 @@ func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	logger.Info("completed command", map[string]any{"command_id": cmd.ID, "kind": cmd.Kind, "success": result["success"]})
 }
 
-func (c *CommandRunner) ackWithRetry(ctx context.Context, commandID int64) (*clawdeck.Command, error) {
+func (c *CommandRunner) ackWithRetry(ctx context.Context, commandID int64) (*apexclaw.Command, error) {
 	var lastErr error
 	backoff := 200 * time.Millisecond
 

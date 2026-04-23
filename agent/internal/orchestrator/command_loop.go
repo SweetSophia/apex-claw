@@ -5,18 +5,18 @@ import (
 	"log"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 type CommandRunner struct {
-	client   *clawdeck.Client
+	client   *apexclaw.Client
 	interval time.Duration
 	handlers map[string]CommandHandler
 }
 
-type CommandHandler func(ctx context.Context, cmd *clawdeck.Command) map[string]any
+type CommandHandler func(ctx context.Context, cmd *apexclaw.Command) map[string]any
 
-func NewCommandRunner(client *clawdeck.Client, interval time.Duration) *CommandRunner {
+func NewCommandRunner(client *apexclaw.Client, interval time.Duration) *CommandRunner {
 	if interval == 0 {
 		interval = 5 * time.Second
 	}
@@ -74,7 +74,7 @@ func (c *CommandRunner) pollAndHandle(ctx context.Context) {
 	log.Printf("completed command id=%d", cmd.ID)
 }
 
-func (c *CommandRunner) dispatch(ctx context.Context, cmd *clawdeck.Command) map[string]any {
+func (c *CommandRunner) dispatch(ctx context.Context, cmd *apexclaw.Command) map[string]any {
 	handler, ok := c.handlers[cmd.Kind]
 	if !ok {
 		log.Printf("no handler for command kind=%s", cmd.Kind)

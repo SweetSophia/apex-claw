@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 type CommandHandler interface {
-	Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error)
+	Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error)
 }
 
 type CommandDispatcher struct {
@@ -27,7 +27,7 @@ func (d *CommandDispatcher) Register(kind string, handler CommandHandler) {
 	d.handlers[kind] = handler
 }
 
-func (d *CommandDispatcher) Dispatch(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (d *CommandDispatcher) Dispatch(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	if cmd == nil {
 		return nil, fmt.Errorf("command is nil")
 	}

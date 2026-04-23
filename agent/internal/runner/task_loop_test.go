@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestTaskRunner_DrainingSkipsPoll(t *testing.T) {
@@ -19,7 +19,7 @@ func TestTaskRunner_DrainingSkipsPoll(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 
 	executor := &noopExecutor{}
@@ -61,6 +61,6 @@ func TestTaskRunner_ActiveTracking(t *testing.T) {
 type noopExecutor struct{}
 
 func (e *noopExecutor) Name() string { return "noop" }
-func (e *noopExecutor) Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult {
+func (e *noopExecutor) Execute(ctx context.Context, task *apexclaw.Task) ExecutionResult {
 	return ExecutionResult{Completed: true}
 }

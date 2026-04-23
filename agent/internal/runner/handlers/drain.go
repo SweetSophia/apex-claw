@@ -3,14 +3,14 @@ package handlers
 import (
 	"context"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 type DrainHandler struct {
 	SetDraining func(bool)
 }
 
-func (h *DrainHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (h *DrainHandler) Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	_ = ctx
 	_ = cmd
 	if h != nil && h.SetDraining != nil {

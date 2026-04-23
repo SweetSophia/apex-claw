@@ -2,8 +2,8 @@
 
 The Go agent client lives in:
 
-- `agent/internal/clawdeck/client.go`
-- `agent/internal/clawdeck/types.go`
+- `agent/internal/apexclaw/client.go`
+- `agent/internal/apexclaw/types.go`
 
 It wraps the ClawDeck `/api/v1` surface used by the bundled agent runtime.
 
@@ -63,13 +63,13 @@ package main
 import (
 	"log"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func main() {
-	client := clawdeck.NewClient("http://localhost:3000")
+	client := apexclaw.NewClient("http://localhost:3000")
 
-	resp, err := client.Register("jt_example", clawdeck.AgentInfo{
+	resp, err := client.Register("jt_example", apexclaw.AgentInfo{
 		Name:     "builder-1",
 		Hostname: "builder-1.local",
 		HostUID:  "abc-123",

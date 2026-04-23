@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 const maxScriptSize = 1 * 1024 * 1024 // 1MB
@@ -30,7 +30,7 @@ func NewScriptExecutor() *ScriptExecutor {
 
 func (s *ScriptExecutor) Name() string { return "script" }
 
-func (s *ScriptExecutor) Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult {
+func (s *ScriptExecutor) Execute(ctx context.Context, task *apexclaw.Task) ExecutionResult {
 	script := task.Description
 	if script == "" {
 		return ExecutionResult{

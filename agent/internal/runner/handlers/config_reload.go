@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/envcompat"
-	"github.com/SweetSophia/clawdeck/agent/internal/logging"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/envcompat"
+	"github.com/SweetSophia/apex-claw/agent/internal/logging"
 )
 
 // ConfigReloadHandler reports current environment configuration.
@@ -15,7 +15,7 @@ import (
 // would require restarting the agent process.
 type ConfigReloadHandler struct{}
 
-func (h *ConfigReloadHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (h *ConfigReloadHandler) Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	_ = ctx
 	_ = cmd
 

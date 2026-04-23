@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 type HealthCheckHandler struct {
@@ -13,7 +13,7 @@ type HealthCheckHandler struct {
 	TaskActiveFunc func() bool
 }
 
-func (h *HealthCheckHandler) Handle(ctx context.Context, cmd *clawdeck.Command) (map[string]any, error) {
+func (h *HealthCheckHandler) Handle(ctx context.Context, cmd *apexclaw.Command) (map[string]any, error) {
 	_ = ctx
 	_ = cmd
 

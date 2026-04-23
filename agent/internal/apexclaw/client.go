@@ -1,4 +1,4 @@
-package clawdeck
+package apexclaw
 
 import (
 	"bytes"

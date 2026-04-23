@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestShellExecutor_AllowedCommand(t *testing.T) {
@@ -15,7 +15,7 @@ func TestShellExecutor_AllowedCommand(t *testing.T) {
 		Timeout:         10 * time.Second,
 	}
 
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "echo hello world",
 	})
 
@@ -33,7 +33,7 @@ func TestShellExecutor_DeniedCommand(t *testing.T) {
 		Timeout:         10 * time.Second,
 	}
 
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "rm -rf /",
 	})
 
@@ -54,7 +54,7 @@ func TestShellExecutor_Timeout(t *testing.T) {
 		Timeout:         100 * time.Millisecond,
 	}
 
-	result := e.Execute(context.Background(), &clawdeck.Task{
+	result := e.Execute(context.Background(), &apexclaw.Task{
 		Description: "sleep 10",
 	})
 
@@ -78,7 +78,7 @@ func TestShellExecutor_ContextCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	result := e.Execute(ctx, &clawdeck.Task{
+	result := e.Execute(ctx, &apexclaw.Task{
 		Description: "sleep 10",
 	})
 
@@ -89,7 +89,7 @@ func TestShellExecutor_ContextCancellation(t *testing.T) {
 
 func TestShellExecutor_EmptyCommand(t *testing.T) {
 	e := NewShellExecutor()
-	result := e.Execute(context.Background(), &clawdeck.Task{Description: ""})
+	result := e.Execute(context.Background(), &apexclaw.Task{Description: ""})
 	if result.Completed {
 		t.Fatal("expected failure for empty command")
 	}

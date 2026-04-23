@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 // --- helpers ---
 
-func newTestHeartbeatRunner(t *testing.T, handler http.HandlerFunc) (*HeartbeatRunner, *clawdeck.Client) {
+func newTestHeartbeatRunner(t *testing.T, handler http.HandlerFunc) (*HeartbeatRunner, *apexclaw.Client) {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
@@ -60,15 +60,15 @@ func TestHeartbeatRunner_NormalizeInterval(t *testing.T) {
 
 func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := clawdeck.HeartbeatResponse{
-			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
-			DesiredState: clawdeck.DesiredState{Action: "drain"},
+		resp := apexclaw.HeartbeatResponse{
+			Agent:        apexclaw.Agent{ID: 1, Status: "online"},
+			DesiredState: apexclaw.DesiredState{Action: "drain"},
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
@@ -88,15 +88,15 @@ func TestHeartbeatRunner_DesiredStateDrain(t *testing.T) {
 
 func TestHeartbeatRunner_DesiredStateShutdown(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := clawdeck.HeartbeatResponse{
-			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
-			DesiredState: clawdeck.DesiredState{Action: "shutdown"},
+		resp := apexclaw.HeartbeatResponse{
+			Agent:        apexclaw.Agent{ID: 1, Status: "online"},
+			DesiredState: apexclaw.DesiredState{Action: "shutdown"},
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
@@ -115,15 +115,15 @@ func TestHeartbeatRunner_DesiredStateShutdown(t *testing.T) {
 
 func TestHeartbeatRunner_DesiredStateRestart(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := clawdeck.HeartbeatResponse{
-			Agent:        clawdeck.Agent{ID: 1, Status: "online"},
-			DesiredState: clawdeck.DesiredState{Action: "restart"},
+		resp := apexclaw.HeartbeatResponse{
+			Agent:        apexclaw.Agent{ID: 1, Status: "online"},
+			DesiredState: apexclaw.DesiredState{Action: "restart"},
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
@@ -181,16 +181,16 @@ func TestHeartbeatRunner_DesiredStateNone(t *testing.T) {
 
 func TestHeartbeatRunner_LogsTokenRotationRequirement(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := clawdeck.HeartbeatResponse{
-			Agent:                 clawdeck.Agent{ID: 1, Status: "online"},
-			DesiredState:          clawdeck.DesiredState{Action: "none"},
+		resp := apexclaw.HeartbeatResponse{
+			Agent:                 apexclaw.Agent{ID: 1, Status: "online"},
+			DesiredState:          apexclaw.DesiredState{Action: "none"},
 			TokenRotationRequired: true,
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 50*time.Millisecond)
@@ -206,16 +206,16 @@ func TestHeartbeatRunner_LogsTokenRotationRequirement(t *testing.T) {
 
 func TestHeartbeatRunner_UpdatesIntervalFromServer(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := clawdeck.HeartbeatResponse{
-			Agent:                    clawdeck.Agent{ID: 1, Status: "online"},
-			DesiredState:             clawdeck.DesiredState{Action: "none"},
+		resp := apexclaw.HeartbeatResponse{
+			Agent:                    apexclaw.Agent{ID: 1, Status: "online"},
+			DesiredState:             apexclaw.DesiredState{Action: "none"},
 			HeartbeatIntervalSeconds: 90,
 		}
 		json.NewEncoder(w).Encode(resp)
 	}))
 	defer srv.Close()
 
-	client := clawdeck.NewClient(srv.URL)
+	client := apexclaw.NewClient(srv.URL)
 	client.SetToken("test-token")
 	client.SetAgentID(1)
 	hr := NewHeartbeatRunner(client, 1, 30*time.Second)

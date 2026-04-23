@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
-	"github.com/SweetSophia/clawdeck/agent/internal/config"
-	"github.com/SweetSophia/clawdeck/agent/internal/runner"
-	"github.com/SweetSophia/clawdeck/agent/internal/runner/handlers"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
+	"github.com/SweetSophia/apex-claw/agent/internal/config"
+	"github.com/SweetSophia/apex-claw/agent/internal/runner"
+	"github.com/SweetSophia/apex-claw/agent/internal/runner/handlers"
 )
 
 var (
@@ -38,7 +38,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	client := clawdeck.NewClient(cfg.APIURL)
+	client := apexclaw.NewClient(cfg.APIURL)
 
 	agentID, token, err := cfg.LoadPersistedToken()
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 		log.Printf("using persisted token for agent %d", agentID)
 	} else {
 		log.Printf("registering agent with join token")
-		resp, err := client.Register(cfg.JoinToken, clawdeck.AgentInfo{
+		resp, err := client.Register(cfg.JoinToken, apexclaw.AgentInfo{
 			Name:     cfg.AgentInfo.Name,
 			Hostname: cfg.AgentInfo.Hostname,
 			HostUID:  cfg.AgentInfo.HostUID,

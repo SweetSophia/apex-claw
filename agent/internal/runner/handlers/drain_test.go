@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 func TestDrainHandlerSetsFlag(t *testing.T) {
 	var draining bool
 	h := &DrainHandler{SetDraining: func(v bool) { draining = v }}
 
-	result, err := h.Handle(context.Background(), &clawdeck.Command{Kind: "drain"})
+	result, err := h.Handle(context.Background(), &apexclaw.Command{Kind: "drain"})
 	if err != nil {
 		t.Fatalf("Handle returned error: %v", err)
 	}

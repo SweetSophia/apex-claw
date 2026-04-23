@@ -3,7 +3,7 @@ package runner
 import (
 	"context"
 
-	"github.com/SweetSophia/clawdeck/agent/internal/clawdeck"
+	"github.com/SweetSophia/apex-claw/agent/internal/apexclaw"
 )
 
 // ExecutionResult holds the outcome of a task execution.
@@ -18,5 +18,5 @@ type Executor interface {
 	// Name returns the executor identifier (e.g. "shell", "script").
 	Name() string
 	// Execute runs the given task and returns the result.
-	Execute(ctx context.Context, task *clawdeck.Task) ExecutionResult
+	Execute(ctx context.Context, task *apexclaw.Task) ExecutionResult
 }
