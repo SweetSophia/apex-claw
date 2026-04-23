@@ -391,7 +391,7 @@ function ProjectCard({ project, count, index }) {
   );
 }
 
-export default function ClawDeckHome() {
+export default function ApexClawHome() {
   const [greeting, setGreeting] = useState("");
   const [dateStr, setDateStr] = useState("");
   const [completedToday, setCompletedToday] = useState(2);
@@ -406,7 +406,7 @@ export default function ClawDeckHome() {
   }, []);
 
   const progress = completedToday / total;
-  const projectCounts = { clawdeck: 7, tini: 9, gratu: 5, nod: 4, mx: 3 };
+  const projectCounts = { "apex-claw": 7, tini: 9, gratu: 5, nod: 4, mx: 3 };
 
   return (
     <div style={{

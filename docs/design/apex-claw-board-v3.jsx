@@ -331,7 +331,7 @@ function CommandBar({ tasks, onClose, onSelectTask, onAddCard }) {
         response = "Here's a draft for tini.bio:\n\n\"🔗 Built this for founders who hate bloated link-in-bio tools.\n\ntini.bio — dead simple. Beautifully minimal.\n\nNo templates. No analytics dashboards. Just your links.\n\nFree → tini.bio\"\n\nWant me to tweak the tone or make it longer?";
       }
       if (text.toLowerCase().includes("recap") || text.toLowerCase().includes("week") || text.toLowerCase().includes("summary")) {
-        response = "This week across your projects:\n\n🦞 ClawDeck — 7 cards completed, billing flow nearly done\n🔗 tini.bio — 2 cards moved forward, AppSumo still in inbox\n🙏 Gratu — RevenueCat blocked, needs your attention\n📬 nod.so — 1 card, pricing research queued\n\nBiggest win: the agent knocked out 5 ClawDeck tasks autonomously.";
+        response = "This week across your projects:\n\n🦞 Apex Claw — 7 cards completed, billing flow nearly done\n🔗 tini.bio — 2 cards moved forward, AppSumo still in inbox\n🙏 Gratu — RevenueCat blocked, needs your attention\n📬 nod.so — 1 card, pricing research queued\n\nBiggest win: the agent knocked out 5 Apex Claw tasks autonomously.";
       }
 
       setAgentMessages(p => [...p, { type: "agent", text: response }]);
@@ -998,7 +998,7 @@ function DetailPanel({ task, onClose, onToggleSubtask, onUpdateNotes, onMoveColu
 }
 
 // ─── Main ────────────────────────────────────────────────
-export default function ClawDeckBoard() {
+export default function ApexClawBoard() {
   const [tasks, setTasks] = useState(INIT_TASKS);
   const [selectedId, setSelectedId] = useState(null);
   const [dragId, setDragId] = useState(null);
