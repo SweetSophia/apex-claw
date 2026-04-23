@@ -209,18 +209,12 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show returns task url using app host and protocol overrides" do
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV["APP_HOST"] = "api.apexclaw.test"
-    ENV["APP_PROTOCOL"] = "https"
+    with_env("APP_HOST" => "api.apexclaw.test", "APP_PROTOCOL" => "https") do
+      get api_v1_task_url(@task), headers: @auth_header
 
-    get api_v1_task_url(@task), headers: @auth_header
-
-    assert_response :success
-    assert_equal board_task_url(@task.board, @task, host: "api.apexclaw.test", protocol: "https"), response.parsed_body["url"]
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+      assert_response :success
+      assert_equal board_task_url(@task.board, @task, host: "api.apexclaw.test", protocol: "https"), response.parsed_body["url"]
+    end
   end
 
   test "show returns not found for non-existent task" do
@@ -235,33 +229,21 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show falls back to request host and protocol when app env overrides are unset" do
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV.delete("APP_HOST")
-    ENV.delete("APP_PROTOCOL")
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil) do
+      get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "request.test:3000" }
 
-    get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "request.test:3000" }
-
-    assert_response :success
-    assert_equal board_task_url(@task.board, @task, host: "request.test:3000", protocol: "https"), response.parsed_body["url"]
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+      assert_response :success
+      assert_equal board_task_url(@task.board, @task, host: "request.test:3000", protocol: "https"), response.parsed_body["url"]
+    end
   end
 
   test "show falls back to request host and protocol when app env overrides are blank" do
-    previous_host = ENV["APP_HOST"]
-    previous_protocol = ENV["APP_PROTOCOL"]
-    ENV["APP_HOST"] = ""
-    ENV["APP_PROTOCOL"] = ""
+    with_env("APP_HOST" => "", "APP_PROTOCOL" => "") do
+      get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "blank.test:3000" }
 
-    get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "blank.test:3000" }
-
-    assert_response :success
-    assert_equal board_task_url(@task.board, @task, host: "blank.test:3000", protocol: "https"), response.parsed_body["url"]
-  ensure
-    ENV["APP_HOST"] = previous_host
-    ENV["APP_PROTOCOL"] = previous_protocol
+      assert_response :success
+      assert_equal board_task_url(@task.board, @task, host: "blank.test:3000", protocol: "https"), response.parsed_body["url"]
+    end
   end
 
   # Update tests
