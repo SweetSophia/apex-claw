@@ -4,9 +4,9 @@ This file provides guidance to Claude Code and other AI agents when working with
 
 ## Project Overview
 
-ClawDeck is a Rails 8.1 AI agent orchestration platform with a Rails control plane and a Go agent runtime. It combines multi-board task management, agent registration, heartbeats, command delivery, artifacts, handoffs, audit logging, rate limiting, and live dashboard updates.
+Apex Claw is a Rails 8.1 AI agent orchestration platform with a Rails control plane and a Go agent runtime. It combines multi-board task management, agent registration, heartbeats, command delivery, artifacts, handoffs, audit logging, rate limiting, and live dashboard updates.
 
-As of April 20, 2026, all four advancement phases and Sprint A through Sprint E are complete. Ops hardening is merged. The last planned backlog item, configurable heartbeat interval, is implemented in PR #13 and awaiting merge.
+As of April 23, 2026, all four advancement phases and Sprint A through Sprint E are complete. Ops hardening is merged. The previously final planned backlog item, configurable heartbeat interval, shipped in PR #13 (`3c51cc7`).
 
 ## Development Commands
 
@@ -218,7 +218,7 @@ Local CI command (`bin/ci`) runs:
 ## Agent Integration
 
 ### Overview
-ClawDeck is designed for human-agent collaboration:
+Apex Claw is designed for human-agent collaboration:
 1. Human assigns tasks to agent via UI
 2. Agent polls for assigned work via API
 3. Agent updates task status and adds activity notes

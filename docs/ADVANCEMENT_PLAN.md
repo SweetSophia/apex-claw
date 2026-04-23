@@ -1,12 +1,12 @@
-# ClawDeck Advancement Plan
+# Apex Claw Advancement Plan
 
 **Created**: 2026-04-16  
-**Status**: All four phases are complete. The final planned backlog item, configurable heartbeat interval, is implemented in **PR #13** and awaiting merge as of **2026-04-20**.  
+**Status**: All four phases are complete. The previously final planned backlog item, configurable heartbeat interval, shipped in **PR #13** (`3c51cc7`).  
 **Repo**: SweetSophia/clawdeck (independently maintained)
 
 ## Overview
 
-Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent orchestration platform.
+Transform Apex Claw from a basic fleet skeleton into a production-grade AI agent orchestration platform.
 
 ---
 
@@ -21,7 +21,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 - [x] Context propagation through executor chain
 - [x] Tests for each executor
 
-### 1.2 Enhanced Heartbeat ✅ (commit `d6be91f`, follow-up in PR #13)
+### 1.2 Enhanced Heartbeat ✅ (commits `d6be91f`, `3c51cc7`)
 - [x] Handle `desired_state` actions: drain, restart, shutdown
 - [x] Drain mode: stop accepting tasks, finish current, idle
 - [x] Graceful shutdown on SIGTERM/SIGINT
@@ -117,7 +117,7 @@ Transform ClawDeck from a basic fleet skeleton into a production-grade AI agent 
 ## Post-Phase Backlog
 
 ### Product backlog
-- [x] Configurable heartbeat interval via API response *(implemented in PR #13, open as of 2026-04-20)*
+- [x] Configurable heartbeat interval via API response *(shipped in PR #13 / `3c51cc7`)*
 
 ### Ops hardening
 - [x] Remove root-owned app service defaults from checked-in systemd units
@@ -138,8 +138,9 @@ There are **no open phases** left in the plan.
 
 What remains is narrower than phase work:
 
-1. Merge **PR #13** (`feat/configurable-heartbeat-interval`)
-2. Optionally complete the two lower-priority follow-ups above
+1. Audit production/runtime behavior on a real VPS
+2. Review remaining non-deployment security cleanup items
+3. Continue low-risk rebrand and documentation cleanup work
 
 ---
 
@@ -165,4 +166,4 @@ What remains is narrower than phase work:
 | 2026-04-19 | Sprint D admin audit log UI | ✅ | merged to main in `93b4c0d` |
 | 2026-04-19 | Sprint E command palette | ✅ | merged across PR #9 / #10 / #11 |
 | 2026-04-20 | Ops hardening | ✅ | merged in PR #12 |
-| 2026-04-20 | Configurable heartbeat interval | ✅ | implemented in `feat/configurable-heartbeat-interval`, PR #13 open |
+| 2026-04-23 | Configurable heartbeat interval | ✅ | shipped in PR #13 (`3c51cc7`) |

@@ -5,7 +5,7 @@ The Go agent client lives in:
 - `agent/internal/apexclaw/client.go`
 - `agent/internal/apexclaw/types.go`
 
-It wraps the ClawDeck `/api/v1` surface used by the bundled agent runtime.
+It wraps the Apex Claw `/api/v1` surface used by the bundled agent runtime.
 
 ## What the client already supports
 

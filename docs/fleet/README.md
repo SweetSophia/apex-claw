@@ -1,10 +1,10 @@
-# ClawDeck Fleet Architecture
+# Apex Claw Fleet Architecture
 
-This document summarizes the current fleet architecture for ClawDeck.
+This document summarizes the current fleet architecture for Apex Claw.
 
 ## Goal
 
-ClawDeck acts as a control plane for managing AI agents that register, heartbeat, receive commands, claim work, and report results safely.
+Apex Claw acts as a control plane for managing AI agents that register, heartbeat, receive commands, claim work, and report results safely.
 
 ## Control Plane vs Data Plane
 
@@ -43,7 +43,7 @@ The Go agent runtime owns:
 - heartbeat endpoint
 - desired-state response payload
 - richer metadata tracking such as uptime and runner state
-- configurable heartbeat interval implemented in PR #13 and awaiting merge as of 2026-04-20
+- configurable heartbeat interval shipped in PR #13 (`3c51cc7`)
 
 ### Task execution surface
 - agent-scoped `/tasks/next`
@@ -90,6 +90,6 @@ For day-to-day work, pair this file with:
 The core fleet implementation is complete.
 
 Remaining follow-ups are now limited to:
-- merging PR #13 for configurable heartbeat interval
+- continue low-risk rebrand and documentation cleanup work
 - auditing deployment/runtime assumptions on a real VPS
 - reviewing the remaining lower-priority security cleanup items outside the deployment path
