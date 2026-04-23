@@ -19,6 +19,19 @@ module EnvTestHelper
     end
   end
 
+  def with_rails_env(name)
+    rails_singleton = Rails.singleton_class
+    original_env = rails_singleton.instance_method(:env)
+
+    rails_singleton.send(:define_method, :env) do
+      ActiveSupport::StringInquirer.new(name.to_s)
+    end
+
+    yield
+  ensure
+    rails_singleton.send(:define_method, :env, original_env) if original_env
+  end
+
   private
 
   def normalize_env_overrides(overrides)

@@ -263,6 +263,10 @@ Production host configuration is env-driven:
 - `APP_ALLOWED_HOSTS` — comma-separated host allowlist for Rails host authorization
 - `MAILER_FROM` — Action Mailer sender address
 
+Set `APP_HOST` explicitly in production. External URL helpers now avoid deriving
+canonical URLs from the inbound request host when `APP_HOST` is unset, so deploy
+configuration remains the source of truth for generated links.
+
 ### Database wiring
 
 Production supports both:

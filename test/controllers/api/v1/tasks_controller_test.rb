@@ -246,6 +246,39 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "show uses configured allowed host in production when app host is unset" do
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => "public.apex.test,127.0.0.1") do
+      with_rails_env("production") do
+        get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "attacker.test" }
+
+        assert_response :success
+        assert_equal board_task_url(@task.board, @task, host: "public.apex.test", protocol: "https"), response.parsed_body["url"]
+      end
+    end
+  end
+
+  test "show ignores request protocol in production when app protocol is unset" do
+    with_env("APP_HOST" => "public.apex.test", "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => nil) do
+      with_rails_env("production") do
+        get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "off", "HTTP_HOST" => "public.apex.test" }
+
+        assert_response :success
+        assert_equal board_task_url(@task.board, @task, host: "public.apex.test", protocol: "https"), response.parsed_body["url"]
+      end
+    end
+  end
+
+  test "show skips wildcard allowed host entries and uses the first concrete host in production" do
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => ".apex.test,public.apex.test") do
+      with_rails_env("production") do
+        get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "attacker.test" }
+
+        assert_response :success
+        assert_equal board_task_url(@task.board, @task, host: "public.apex.test", protocol: "https"), response.parsed_body["url"]
+      end
+    end
+  end
+
   # Update tests
   test "update updates task and audit log" do
     assert_difference "AuditLog.count", 1 do
