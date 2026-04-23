@@ -1,4 +1,4 @@
-# ClawDeck Design System
+# Apex Claw Design System
 ### For implementation in Rails + Tailwind CSS
 
 > Reference prototypes: `clawdeck-home-v4.jsx` and `clawdeck-board-v3.jsx`
@@ -72,7 +72,7 @@ fontFamily: {
 These are the accent colors assigned per project. Used for: project pills, progress bars, column dots, card detail accents.
 | Project | Color | Hex |
 |---------|-------|-----|
-| ClawDeck | Red | `#ef4444` |
+| Apex Claw | Red | `#ef4444` |
 | tini.bio | Green | `#34d399` |
 | Gratu | Amber | `#fbbf24` |
 | nod.so | Blue | `#60a5fa` |
