@@ -271,7 +271,7 @@ Used for real-time updates:
 Before making UI changes, read:
 - `docs/design/DESIGN_SYSTEM.md` - Design tokens, colors, spacing
 - `docs/design/UI_MIGRATION.md` - Migration plan from current to design system
-- `docs/design/clawdeck-board-v3.jsx` and `clawdeck-home-v4.jsx` - Visual reference (ERB patterns, not React)
+- `docs/design/apex-claw-board-v3.jsx` and `apex-claw-home-v4.jsx` - Visual reference (ERB patterns, not React)
 
 Key design tokens:
 - Background: `#0c0c0f` (base), `#161619` (board), `#1e1e22` (card)

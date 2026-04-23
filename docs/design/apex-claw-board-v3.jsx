@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const PROJECTS = [
-  { id: "clawdeck", name: "ClawDeck Cloud", emoji: "🦞", color: "#ef4444" },
+  { id: "apex-claw", name: "Apex Claw", emoji: "🦞", color: "#ef4444" },
   { id: "tini", name: "tini.bio", emoji: "🔗", color: "#34d399" },
   { id: "gratu", name: "Gratu", emoji: "🙏", color: "#fbbf24" },
   { id: "nod", name: "nod.so", emoji: "📬", color: "#60a5fa" },
@@ -17,7 +17,7 @@ const COLUMNS = [
 ];
 
 const BOARDS = [
-  { id: "clawdeck-cloud", name: "ClawDeck Cloud", emoji: "🦞", color: "#ef4444" },
+  { id: "apex-claw", name: "Apex Claw", emoji: "🦞", color: "#ef4444" },
   { id: "personal", name: "Personal", emoji: "🏠", color: "#60a5fa" },
   { id: "mx-works", name: "mx.works", emoji: "⚡", color: "#a78bfa" },
   { id: "client-projects", name: "Client Projects", emoji: "💼", color: "#34d399" },
@@ -38,7 +38,7 @@ const INIT_TASKS = [
     { type: "priority", from: "none", to: "low", time: "2 days ago" },
     { type: "created", time: "4 days ago" },
   ]},
-  { id: 3, title: "Integrate Polar.sh payments", project: "clawdeck", column: "up_next", subtasks: [
+  { id: 3, title: "Integrate Polar.sh payments", project: "apex-claw", column: "up_next", subtasks: [
     { id: "3a", title: "Set up Polar.sh account", done: true },
     { id: "3b", title: "Implement webhook handler", done: false },
     { id: "3c", title: "Create billing settings page", done: false },
@@ -48,7 +48,7 @@ const INIT_TASKS = [
     { type: "priority", from: "medium", to: "high", time: "3 days ago" },
     { type: "created", time: "5 days ago" },
   ]},
-  { id: 4, title: "Create subscription expiry job", project: "clawdeck", column: "up_next", subtasks: [
+  { id: 4, title: "Create subscription expiry job", project: "apex-claw", column: "up_next", subtasks: [
     { id: "4a", title: "Define expiry logic", done: false },
     { id: "4b", title: "Add background worker", done: false },
   ], agent: false, agentStatus: null, notes: "", agentHint: null, priority: 2, priorityLevel: "medium", activity: [
@@ -73,7 +73,7 @@ const INIT_TASKS = [
     { type: "moved", from: "Inbox", to: "Up Next", time: "1 day ago" },
     { type: "created", time: "4 days ago" },
   ]},
-  { id: 8, title: "Set up billing settings page", project: "clawdeck", column: "in_progress", subtasks: [
+  { id: 8, title: "Set up billing settings page", project: "apex-claw", column: "in_progress", subtasks: [
     { id: "8a", title: "Create settings UI", done: true },
     { id: "8b", title: "Wire up API endpoints", done: true },
     { id: "8c", title: "Add plan display component", done: true },
@@ -86,7 +86,7 @@ const INIT_TASKS = [
     { type: "priority", from: "medium", to: "high", time: "2 days ago" },
     { type: "created", time: "7 days ago" },
   ]},
-  { id: 9, title: "Add board limit enforcement", project: "clawdeck", column: "in_review", subtasks: [
+  { id: 9, title: "Add board limit enforcement", project: "apex-claw", column: "in_review", subtasks: [
     { id: "9a", title: "Enforce free tier limits", done: true },
     { id: "9b", title: "Show upgrade prompt", done: true },
   ], agent: true, agentStatus: "done", notes: "Agent completed — needs review", agentHint: null, priority: 1, priorityLevel: "medium", activity: [
@@ -96,28 +96,28 @@ const INIT_TASKS = [
     { type: "moved", from: "Up Next", to: "In Progress", time: "1 day ago" },
     { type: "created", time: "6 days ago" },
   ]},
-  { id: 10, title: "Create upgrade prompt component", project: "clawdeck", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 1, priorityLevel: "medium", activity: [
+  { id: 10, title: "Create upgrade prompt component", project: "apex-claw", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 1, priorityLevel: "medium", activity: [
     { type: "moved", from: "In Review", to: "Done", time: "1 day ago" },
     { type: "agent", action: "finished", time: "2 days ago" },
     { type: "created", time: "8 days ago" },
   ]},
-  { id: 11, title: "Add API rate limiting", project: "clawdeck", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 2, priorityLevel: "low", activity: [
+  { id: 11, title: "Add API rate limiting", project: "apex-claw", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 2, priorityLevel: "low", activity: [
     { type: "moved", from: "In Review", to: "Done", time: "2 days ago" },
     { type: "created", time: "10 days ago" },
   ]},
-  { id: 12, title: "Create API usage tracking table", project: "clawdeck", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 3, priorityLevel: "none", activity: [
+  { id: 12, title: "Create API usage tracking table", project: "apex-claw", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 3, priorityLevel: "none", activity: [
     { type: "moved", from: "In Progress", to: "Done", time: "3 days ago" },
     { type: "created", time: "10 days ago" },
   ]},
-  { id: 13, title: "Add subscription fields to User model", project: "clawdeck", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 4, priorityLevel: "none", activity: [
+  { id: 13, title: "Add subscription fields to User model", project: "apex-claw", column: "done", subtasks: null, agent: true, agentStatus: "done", notes: "", agentHint: null, priority: 4, priorityLevel: "none", activity: [
     { type: "moved", from: "Inbox", to: "Done", time: "5 days ago" },
     { type: "created", time: "10 days ago" },
   ]},
-  { id: 14, title: "Add terms of service", project: "clawdeck", column: "done", subtasks: null, agent: false, agentStatus: null, notes: "", agentHint: null, priority: 5, priorityLevel: "none", activity: [
+  { id: 14, title: "Add terms of service", project: "apex-claw", column: "done", subtasks: null, agent: false, agentStatus: null, notes: "", agentHint: null, priority: 5, priorityLevel: "none", activity: [
     { type: "moved", from: "Inbox", to: "Done", time: "4 days ago" },
     { type: "created", time: "12 days ago" },
   ]},
-  { id: 15, title: "Set up admin emails", project: "clawdeck", column: "done", subtasks: null, agent: false, agentStatus: null, notes: "", agentHint: null, priority: 6, priorityLevel: "none", activity: [
+  { id: 15, title: "Set up admin emails", project: "apex-claw", column: "done", subtasks: null, agent: false, agentStatus: null, notes: "", agentHint: null, priority: 6, priorityLevel: "none", activity: [
     { type: "moved", from: "Inbox", to: "Done", time: "5 days ago" },
     { type: "created", time: "14 days ago" },
   ]},
@@ -331,7 +331,7 @@ function CommandBar({ tasks, onClose, onSelectTask, onAddCard }) {
         response = "Here's a draft for tini.bio:\n\n\"🔗 Built this for founders who hate bloated link-in-bio tools.\n\ntini.bio — dead simple. Beautifully minimal.\n\nNo templates. No analytics dashboards. Just your links.\n\nFree → tini.bio\"\n\nWant me to tweak the tone or make it longer?";
       }
       if (text.toLowerCase().includes("recap") || text.toLowerCase().includes("week") || text.toLowerCase().includes("summary")) {
-        response = "This week across your projects:\n\n🦞 ClawDeck — 7 cards completed, billing flow nearly done\n🔗 tini.bio — 2 cards moved forward, AppSumo still in inbox\n🙏 Gratu — RevenueCat blocked, needs your attention\n📬 nod.so — 1 card, pricing research queued\n\nBiggest win: the agent knocked out 5 ClawDeck tasks autonomously.";
+        response = "This week across your projects:\n\n🦞 Apex Claw — 7 cards completed, billing flow nearly done\n🔗 tini.bio — 2 cards moved forward, AppSumo still in inbox\n🙏 Gratu — RevenueCat blocked, needs your attention\n📬 nod.so — 1 card, pricing research queued\n\nBiggest win: the agent knocked out 5 Apex Claw tasks autonomously.";
       }
 
       setAgentMessages(p => [...p, { type: "agent", text: response }]);
@@ -534,7 +534,7 @@ function CommandBar({ tasks, onClose, onSelectTask, onAddCard }) {
 // ─── Add Card Modal ─────────────────────────────────────
 function AddCardModal({ onClose, onAdd, defaultColumn }) {
   const [title, setTitle] = useState("");
-  const [project, setProject] = useState("clawdeck");
+  const [project, setProject] = useState("apex-claw");
   const [column, setColumn] = useState(defaultColumn || "inbox");
   const [notes, setNotes] = useState("");
   const [assignAgent, setAssignAgent] = useState(false);
@@ -998,7 +998,7 @@ function DetailPanel({ task, onClose, onToggleSubtask, onUpdateNotes, onMoveColu
 }
 
 // ─── Main ────────────────────────────────────────────────
-export default function ClawDeckBoard() {
+export default function ApexClawBoard() {
   const [tasks, setTasks] = useState(INIT_TASKS);
   const [selectedId, setSelectedId] = useState(null);
   const [dragId, setDragId] = useState(null);

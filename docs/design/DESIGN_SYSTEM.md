@@ -1,7 +1,7 @@
 # Apex Claw Design System
 ### For implementation in Rails + Tailwind CSS
 
-> Reference prototypes: `clawdeck-home-v4.jsx` and `clawdeck-board-v3.jsx`
+> Reference prototypes: `apex-claw-home-v4.jsx` and `apex-claw-board-v3.jsx`
 > These are React prototypes that define the target look and feel. Translate to ERB + Stimulus + Tailwind.
 
 ---
