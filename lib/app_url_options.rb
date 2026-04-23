@@ -59,6 +59,8 @@ module AppUrlOptions
   end
 
   def ipv6_literal?(host)
+    return false unless host.include?(":")
+
     IPAddr.new(host).ipv6?
   rescue IPAddr::InvalidAddressError
     false
