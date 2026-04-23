@@ -265,7 +265,10 @@ Production host configuration is env-driven:
 
 Set `APP_HOST` explicitly in production. External URL helpers now avoid deriving
 canonical URLs from the inbound request host when `APP_HOST` is unset, so deploy
-configuration remains the source of truth for generated links.
+configuration remains the source of truth for generated links. If a production
+deployment should generate `http` URLs (for example, internal or Tailscale-only
+access), also set `APP_PROTOCOL=http`; otherwise the production fallback remains
+`https`.
 
 ### Database wiring
 

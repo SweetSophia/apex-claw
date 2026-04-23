@@ -217,6 +217,15 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "show returns task url with bracketed ipv6 app host override" do
+    with_env("APP_HOST" => "::1", "APP_PROTOCOL" => "https") do
+      get api_v1_task_url(@task), headers: @auth_header
+
+      assert_response :success
+      assert_equal board_task_url(@task.board, @task, host: "[::1]", protocol: "https"), response.parsed_body["url"]
+    end
+  end
+
   test "show returns not found for non-existent task" do
     get api_v1_task_url(id: 999999), headers: @auth_header
     assert_response :not_found
@@ -275,6 +284,17 @@ class Api::V1::TasksControllerTest < ActionDispatch::IntegrationTest
 
         assert_response :success
         assert_equal board_task_url(@task.board, @task, host: "public.apex.test", protocol: "https"), response.parsed_body["url"]
+      end
+    end
+  end
+
+  test "show brackets ipv6 allowed host in production" do
+    with_env("APP_HOST" => nil, "APP_PROTOCOL" => nil, "APP_ALLOWED_HOSTS" => "::1,127.0.0.1") do
+      with_rails_env("production") do
+        get api_v1_task_url(@task), headers: @auth_header, env: { "HTTPS" => "on", "HTTP_HOST" => "attacker.test" }
+
+        assert_response :success
+        assert_equal board_task_url(@task.board, @task, host: "[::1]", protocol: "https"), response.parsed_body["url"]
       end
     end
   end

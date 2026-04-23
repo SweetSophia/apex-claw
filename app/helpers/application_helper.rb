@@ -45,7 +45,7 @@ module ApplicationHelper
   end
 
   def marketing_host(request: nil)
-    resolved_app_host(request: request)
+    resolved_app_url_host(request: request)
   end
 
   def marketing_base_url(request: nil)

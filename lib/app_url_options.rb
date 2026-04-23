@@ -1,9 +1,12 @@
+require "ipaddr"
+
 module AppUrlOptions
   # Resolves externally visible app URLs with a consistent fallback chain.
   #
-  # In production we avoid deriving the external host from the inbound request
-  # when APP_HOST is unset, because generated URLs should come from deploy
-  # configuration rather than the client-supplied Host header.
+  # In production we avoid deriving the external host or protocol from the
+  # inbound request when APP_HOST or APP_PROTOCOL is unset, because generated
+  # URLs should come from deploy configuration rather than client-supplied
+  # request metadata.
   #
   # Callers may pass any request-like object that responds to `protocol` and
   # `host_with_port`, which keeps this safe to use from controllers and helpers.
@@ -15,8 +18,12 @@ module AppUrlOptions
     ENV["APP_HOST"].presence || fallback_app_host(request: request)
   end
 
+  def resolved_app_url_host(request: nil)
+    format_host_for_url(resolved_app_host(request: request))
+  end
+
   def resolved_app_base_url(request: nil)
-    "#{resolved_app_protocol(request: request)}://#{resolved_app_host(request: request)}"
+    "#{resolved_app_protocol(request: request)}://#{resolved_app_url_host(request: request)}"
   end
 
   private
@@ -42,5 +49,20 @@ module AppUrlOptions
       .map(&:strip)
       .reject(&:empty?)
       .find { |host| !host.start_with?(".", "*") }
+  end
+
+  def format_host_for_url(host)
+    return host if host.blank? || host.start_with?("[")
+    return "[#{host}]" if ipv6_literal?(host)
+
+    host
+  end
+
+  def ipv6_literal?(host)
+    return false unless host.include?(":")
+
+    IPAddr.new(host).ipv6?
+  rescue IPAddr::InvalidAddressError
+    false
   end
 end

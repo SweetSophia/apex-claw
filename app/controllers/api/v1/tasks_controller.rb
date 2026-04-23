@@ -278,7 +278,7 @@ module Api
           url: board_task_url(
             task.board,
             task,
-            host: resolved_app_host(request: request),
+            host: resolved_app_url_host(request: request),
             protocol: resolved_app_protocol(request: request)
           ),
           created_at: task.created_at.iso8601,
