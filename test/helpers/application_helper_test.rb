@@ -59,6 +59,20 @@ class ApplicationHelperTest < ActiveSupport::TestCase
     ENV["APP_PROTOCOL"] = previous_protocol
   end
 
+  test "marketing base url strips protocol suffix from env override" do
+    request = Struct.new(:protocol, :host_with_port).new("http://", "ignored.test:3000")
+
+    previous_host = ENV["APP_HOST"]
+    previous_protocol = ENV["APP_PROTOCOL"]
+    ENV["APP_HOST"] = "apex.example"
+    ENV["APP_PROTOCOL"] = "https://"
+
+    assert_equal "https://apex.example", helper_context.marketing_base_url(request: request)
+  ensure
+    ENV["APP_HOST"] = previous_host
+    ENV["APP_PROTOCOL"] = previous_protocol
+  end
+
   test "marketing base url falls back to default when request is nil" do
     previous_host = ENV["APP_HOST"]
     previous_protocol = ENV["APP_PROTOCOL"]

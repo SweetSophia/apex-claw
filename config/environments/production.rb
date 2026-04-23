@@ -5,7 +5,7 @@ Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
   app_host = ENV.fetch("APP_HOST", "apexclaw.local")
-  app_protocol = ENV.fetch("APP_PROTOCOL", "https")
+  app_protocol = ENV.fetch("APP_PROTOCOL", "https").delete_suffix("://")
   ssl_enabled = ActiveModel::Type::Boolean.new.cast(
     ENV.fetch("APP_FORCE_SSL", (app_protocol == "https").to_s)
   )

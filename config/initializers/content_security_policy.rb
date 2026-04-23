@@ -4,8 +4,9 @@
 # See the Securing Rails Applications Guide for more information:
 # https://guides.rubyonrails.org/security.html#content-security-policy-header
 
+configured_protocol = ENV.fetch("APP_PROTOCOL", "https").delete_suffix("://")
 ssl_enabled = ActiveModel::Type::Boolean.new.cast(
-  ENV.fetch("APP_FORCE_SSL", ENV.fetch("APP_PROTOCOL", "https") == "https" ? "true" : "false")
+  ENV.fetch("APP_FORCE_SSL", configured_protocol == "https" ? "true" : "false")
 )
 
 Rails.application.config.content_security_policy do |policy|
