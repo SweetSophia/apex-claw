@@ -8,7 +8,9 @@
   <div class="flex items-center gap-3">
     <%# Hamburger button (mobile only) %>
     <button type="button"
-            onclick="document.dispatchEvent(new CustomEvent('workspace-nav:toggle'))"
+            data-controller="ui-event"
+            data-ui-event-name-value="workspace-nav:toggle"
+            data-action="click->ui-event#dispatch"
             class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
             aria-label="Open navigation">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-content-secondary">
@@ -39,7 +41,9 @@
     <% if authenticated? %>
       <%# Command bar trigger %>
       <button type="button"
-              onclick="document.dispatchEvent(new CustomEvent('command-bar:toggle'))"
+              data-controller="ui-event"
+              data-ui-event-name-value="command-bar:toggle"
+              data-action="click->ui-event#dispatch"
               class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-content-secondary bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
               aria-label="Open command bar">
         <span class="text-[11px] opacity-50">⌘</span>K
@@ -76,7 +80,9 @@
       <%# Board settings button (only on board pages) %>
       <% if @board %>
         <button type="button"
-                onclick="document.getElementById('board-settings-modal').classList.remove('hidden')"
+                data-controller="modal"
+                data-action="click->modal#show"
+                data-modal-id-param="board-settings-modal"
                 class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-content-secondary bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg hover:bg-white/[0.06] transition-colors"
                 title="Board settings">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 opacity-50">

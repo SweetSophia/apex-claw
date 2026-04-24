@@ -1,11 +1,13 @@
 <%# New Board Modal — shared between board and home pages %>
 <div id="new-board-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-  <div class="absolute inset-0 bg-black/60" onclick="document.getElementById('new-board-modal').classList.add('hidden')"></div>
+  <div class="absolute inset-0 bg-black/60" data-controller="modal" data-action="click->modal#hide" data-modal-id-param="new-board-modal"></div>
   <div class="relative bg-bg-surface border border-white/[0.08] rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] w-full max-w-sm mx-4 overflow-hidden">
     <div class="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
       <span class="text-sm font-bold text-content">New Board</span>
       <button type="button"
-              onclick="document.getElementById('new-board-modal').classList.add('hidden')"
+              data-controller="modal"
+              data-action="click->modal#hide"
+              data-modal-id-param="new-board-modal"
               class="p-2 rounded-lg text-content-muted hover:text-content hover:bg-white/[0.04] transition-colors cursor-pointer">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -28,8 +30,11 @@
           <% available_icons = Board::DEFAULT_ICONS.dup %>
           <% available_icons.each do |icon| %>
             <button type="button"
-                    onclick="selectBoardIcon(this, '<%= icon %>')"
-                    data-icon="<%= icon %>"
+                    data-controller="board-icon-picker"
+                    data-action="click->board-icon-picker#select"
+                    data-board-icon-picker-icon-value="<%= icon %>"
+                    data-board-icon-picker-target-param="board-icon-field"
+                    data-board-icon-picker-group-param="icon-group"
                     class="w-10 h-10 flex items-center justify-center rounded-lg bg-bg-card hover:bg-white/[0.08] transition-colors text-xl cursor-pointer <%= icon == '📋' ? 'ring-2 ring-accent' : '' %>">
               <%= icon %>
             </button>
@@ -40,7 +45,9 @@
 
       <div class="flex items-center justify-end gap-3 pt-2">
         <button type="button"
-                onclick="document.getElementById('new-board-modal').classList.add('hidden')"
+                data-controller="modal"
+                data-action="click->modal#hide"
+                data-modal-id-param="new-board-modal"
                 class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-content-secondary transition-colors cursor-pointer">
           Cancel
         </button>
@@ -50,12 +57,4 @@
   </div>
 </div>
 
-<script>
-  function selectBoardIcon(btn, icon) {
-    document.getElementById('board-icon-field').value = icon;
-    document.querySelectorAll('#icon-group button').forEach(b => {
-      b.classList.remove('ring-2', 'ring-accent');
-    });
-    btn.classList.add('ring-2', 'ring-accent');
-  }
-</script>
+<%# Icon selection handled by board_icon_picker Stimulus controller %>

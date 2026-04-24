@@ -84,7 +84,9 @@
           <div class="h-px bg-white/[0.06] my-1"></div>
           <%# Create new board %>
           <button type="button"
-                  onclick="document.getElementById('new-board-modal').classList.remove('hidden')"
+                  data-controller="modal"
+                  data-action="click->modal#show"
+                  data-modal-id-param="new-board-modal"
                   class="flex items-center gap-2.5 w-full px-2.5 py-[9px] rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="ml-1">
               <path d="M8 3V13M3 8H13" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
@@ -124,7 +126,9 @@
     <% if authenticated? %>
       <%# Command bar trigger %>
       <button type="button"
-              onclick="document.dispatchEvent(new CustomEvent('command-bar:toggle'))"
+              data-controller="ui-event"
+              data-ui-event-name-value="command-bar:toggle"
+              data-action="click->ui-event#dispatch"
               class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-[#888] bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg">
         <span class="text-[11px] opacity-50">⌘</span>K
       </button>
@@ -144,7 +148,9 @@
       <%# Board settings button (only on board pages) %>
       <% if @board %>
         <button type="button"
-                onclick="document.getElementById('board-settings-modal').classList.remove('hidden')"
+                data-controller="modal"
+                data-action="click->modal#show"
+                data-modal-id-param="board-settings-modal"
                 class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-[#888] bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg"
                 title="Board settings">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 opacity-50">

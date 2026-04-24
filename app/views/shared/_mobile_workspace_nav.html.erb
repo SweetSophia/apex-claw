@@ -71,7 +71,9 @@
             <div class="h-px bg-white/[0.06] my-1"></div>
             <%# Create new board %>
             <button type="button"
-                    onclick="document.getElementById('new-board-modal').classList.remove('hidden')"
+                    data-controller="modal"
+                    data-action="click->modal#show"
+                    data-modal-id-param="new-board-modal"
                     class="flex items-center gap-2.5 w-full px-2.5 py-[9px] rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="ml-1">
                 <path d="M8 3V13M3 8H13" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
