@@ -215,7 +215,11 @@ export default class extends Controller {
 
     const icon = document.createElement("div")
     icon.className = "flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.05] bg-white/[0.04] text-[13px] flex-shrink-0"
-    icon.textContent = item.icon || "•"
+    if (item.icon && item.icon.includes('<')) {
+      icon.innerHTML = item.icon
+    } else {
+      icon.textContent = item.icon || "•"
+    }
     button.appendChild(icon)
 
     const content = document.createElement("div")
