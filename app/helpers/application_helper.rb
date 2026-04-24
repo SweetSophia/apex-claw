@@ -62,9 +62,7 @@ module ApplicationHelper
     path_data = NAV_ICONS[name.to_s]
     raise ArgumentError, "Unknown nav icon: #{name}" unless path_data
 
-    tag.svg(xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", stroke_width: "1.5", stroke: "currentColor", class: "w-5 h-5") do
-      tag.path(d: path_data, stroke_linecap: "round", stroke_linejoin: "round")
-    end
+    svg_icon(path_data)
   end
 
   def svg_icon(path_data)
@@ -73,9 +71,7 @@ module ApplicationHelper
       raise ArgumentError, "Invalid SVG path data"
     end
 
-    tag.svg(xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", stroke_width: "1.5", stroke: "currentColor", class: "w-5 h-5") do
-      tag.path(d: path_data, stroke_linecap: "round", stroke_linejoin: "round")
-    end
+    %(<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="#{path_data}" /></svg>).html_safe
   end
 
   def agent_online_count(user)
