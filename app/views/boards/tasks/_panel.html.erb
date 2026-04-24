@@ -31,45 +31,47 @@
   <!-- Backdrop -->
   <div data-task-modal-target="backdrop"
        data-action="click->task-modal#close"
-       style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200"
-       class="hidden opacity-0 transition-opacity duration-200 ease-out">
+       class="hidden opacity-0 transition-opacity duration-200 ease-out fixed inset-0 bg-black/40 z-[200]">
   </div>
   <!-- Slide-in Panel -->
   <div data-task-modal-target="modal"
-       class="hidden translate-x-full transition-transform duration-200 ease-out"
-       style="position:fixed;top:0;right:0;width:400px;height:100vh;background:#1a1a1e;border-left:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;z-index:201;overflow:hidden">
+       class="hidden translate-x-full transition-transform duration-200 ease-out fixed top-0 right-0 w-full sm:w-[400px] h-screen bg-bg-elevated border-l border-white/[0.06] flex flex-col z-[201] overflow-hidden slideIn">
 
     <!-- Header — status pill + close -->
-    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between">
-      <div data-task-modal-target="statusPill" style="font-size:11px;font-weight:700;color:#ccc;background:rgba(255,255,255,0.06);padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.08)">
+    <div class="p-4 px-5 border-b border-white/[0.05] flex items-center justify-between">
+      <div data-task-modal-target="statusPill" class="text-[11px] font-bold text-[#ccc] bg-white/[0.06] px-3 py-1 rounded-md border border-white/[0.08]">
         <%= status_labels[task.status] %>
       </div>
       <button type="button"
               data-action="click->task-modal#close"
-              style="background:none;border:none;cursor:pointer;color:#444;font-size:18px">✕</button>
+              class="bg-none border-none cursor-pointer text-[#444] text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+              aria-label="Close panel">✕</button>
     </div>
 
     <!-- Scrollable content -->
-    <div style="flex:1;overflow-y:auto;padding:20px 20px 32px;display:flex;flex-direction:column;gap:24px">
+    <div class="flex-1 overflow-y-auto p-5 pb-8 flex flex-col gap-6">
 
       <%# === Auto-save form: title, notes, priority only === %>
-      <%= form_with model: task, url: board_task_path(@board, task), method: :patch, style: "display:flex;flex-direction:column;gap:24px", data: { task_modal_target: "form" } do |form| %>
+      <%= form_with model: task, url: board_task_path(@board, task), method: :patch, class: "flex flex-col gap-6", data: { task_modal_target: "form" } do |form| %>
         <%= form.hidden_field :priority, value: task.priority, data: { task_modal_target: "priorityField" } %>
 
         <!-- Title -->
         <div>
           <%= form.text_field :name,
               placeholder: "Task title",
-              style: "width:100%;font-size:20px;font-weight:800;color:#f0f0f0;letter-spacing:-0.02em;line-height:1.3;background:transparent;border:none;outline:none;padding:0;font-family:inherit",
-              data: { task_modal_target: "nameField", action: "input->task-modal#scheduleAutoSave" } %>
+              class: "w-full text-xl font-extrabold text-content tracking-tight leading-tight bg-transparent border-none outline-none p-0 font-inherit",
+              data: { task_modal_target: "nameField", action: "input->task-modal#scheduleAutoSave" },
+              aria: { label: "Task title" },
+              id: "task-modal-title" %>
         </div>
 
         <!-- Notes -->
-        <div style="margin-top:20px">
+        <div class="mt-5">
           <%= form.text_area :description,
               placeholder: "Add notes...",
-              style: "width:100%;min-height:120px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);font-size:13px;color:#bbb;resize:vertical;outline:none;line-height:1.6;font-family:inherit",
-              data: { task_modal_target: "descriptionField", action: "input->task-modal#scheduleAutoSave" } %>
+              class: "w-full min-h-[120px] p-3 rounded-xl border border-white/[0.06] bg-white/[0.03] text-[13px] text-content-secondary resize-y outline-none leading-relaxed font-inherit",
+              data: { task_modal_target: "descriptionField", action: "input->task-modal#scheduleAutoSave" },
+              aria: { label: "Task notes" } %>
         </div>
 
         <!-- Hidden submit button (triggered programmatically) -->
@@ -78,32 +80,32 @@
 
       <%# === Details section: status, priority, agent — outside form === %>
       <div>
-        <div style="font-size:13px;font-weight:700;color:#e0e0e0;margin-bottom:14px">Details</div>
+        <div class="text-[13px] font-bold text-[#e0e0e0] mb-3.5">Details</div>
 
         <!-- Status row -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px" data-controller="dropdown">
-          <span style="font-size:12px;font-weight:500;color:#888">Status</span>
-          <div style="position:relative">
-            <button type="button" data-action="click->dropdown#toggle" data-dropdown-target="button" aria-expanded="false"
-                    style="display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);transition:all 0.12s">
-              <div data-task-modal-target="statusDot" style="width:6px;height:6px;border-radius:50%;background:<%= status_dot_colors[task.status] %>"></div>
-              <span data-task-modal-target="statusLabel" style="font-size:12px;font-weight:600;color:#ccc"><%= status_labels[task.status] %></span>
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style="opacity:0.3">
+        <div class="flex items-center justify-between mb-3" data-controller="dropdown">
+          <span class="text-[12px] font-medium text-content-muted">Status</span>
+          <div class="relative">
+            <button type="button" data-action="click->dropdown#toggle" data-dropdown-target="button" aria-expanded="false" aria-label="Status: <%= status_labels[task.status] %>"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer bg-white/[0.04] border border-white/[0.06] transition-all duration-150 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
+              <div data-task-modal-target="statusDot" class="w-1.5 h-1.5 rounded-full bg-[<%= status_dot_colors[task.status] %>]"></div>
+              <span data-task-modal-target="statusLabel" class="text-[12px] font-semibold text-[#ccc]"><%= status_labels[task.status] %></span>
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" class="opacity-30" aria-hidden="true">
                 <path d="M4 6L8 10L12 6" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
-            <div data-dropdown-target="menu" class="hidden" style="position:absolute;top:calc(100% + 4px);right:0;width:180px;padding:4px;border-radius:10px;background:#222226;border:1px solid rgba(255,255,255,0.08);box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:10;animation:dropIn 0.12s ease both">
+            <div data-dropdown-target="menu" class="hidden absolute top-full right-0 w-[180px] p-1 rounded-xl bg-bg-dropdown border border-white/[0.08] shadow-xl z-10 animate-dropIn">
               <% status_labels.each do |status_key, status_label| %>
                 <button type="button"
                         data-action="click->task-modal#changeStatus"
                         data-status="<%= status_key %>"
                         data-status-label="<%= status_label %>"
                         data-status-dot="<%= status_dot_colors[status_key] %>"
-                        style="display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:7px;background:<%= task.status == status_key ? 'rgba(255,255,255,0.06)' : 'transparent' %>;border:none;cursor:pointer;transition:background 0.1s;text-align:left"
-                        onmouseenter="if(!this.dataset.active)this.style.background='rgba(255,255,255,0.04)'"
-                        onmouseleave="if(!this.dataset.active)this.style.background='transparent'">
-                  <div style="width:7px;height:7px;border-radius:50%;background:<%= status_dot_colors[status_key] %>"></div>
-                  <span style="font-size:12px;font-weight:600;color:<%= task.status == status_key ? '#e0e0e0' : '#888' %>;flex:1"><%= status_label %></span>
+                        class="flex items-center gap-2 w-full px-2.5 py-2 rounded-lg cursor-pointer <%= task.status == status_key ? 'bg-white/[0.06]' : 'transparent' %> border-none transition-colors duration-150 text-left"
+                        onmouseenter="if(!this.dataset.active)this.classList.add('bg-white/[0.04]')"
+                        onmouseleave="if(!this.dataset.active)this.classList.remove('bg-white/[0.04]')">
+                  <div class="w-1.5 h-1.5 rounded-full bg-[<%= status_dot_colors[status_key] %>]"></div>
+                  <span class="text-[12px] font-semibold <%= task.status == status_key ? 'text-[#e0e0e0]' : 'text-content-muted' %> flex-1"><%= status_label %></span>
                   <% if task.status == status_key %>
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4" stroke="<%= status_dot_colors[status_key] %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <% end %>
@@ -124,18 +126,19 @@
           }
           current_p = priority_config[task.priority] || priority_config["none"]
         %>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:12px;font-weight:500;color:#888">Priority</span>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[12px] font-medium text-content-muted">Priority</span>
           <button type="button"
                   data-action="click->task-modal#cyclePriority"
                   data-task-modal-target="priorityButton"
                   data-priority-value="<%= task.priority %>"
-                  style="width:100px;height:30px;border-radius:7px;cursor:pointer;background:<%= current_p[:bg] %>;border:1px solid <%= current_p[:border] %>;display:flex;align-items:center;justify-content:center;gap:2px;transition:all 0.12s">
+                  aria-label="Priority: <%= task.priority %>. Click to change."
+                  class="w-[100px] h-[30px] rounded-lg cursor-pointer border flex items-center justify-center gap-0.5 transition-all duration-150 bg-[<%= current_p[:bg] %>] border-[<%= current_p[:border] %>] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20">
             <% if current_p[:dots] == 0 %>
-              <div style="width:5px;height:5px;border-radius:50%;background:#555;opacity:0.3"></div>
+              <div class="w-1 h-1 rounded-full bg-[#555] opacity-30"></div>
             <% else %>
               <% current_p[:dots].times do %>
-                <div style="width:5px;height:5px;border-radius:50%;background:<%= current_p[:color] %>"></div>
+                <div class="w-1 h-1 rounded-full bg-[<%= current_p[:color] %>]"></div>
               <% end %>
             <% end %>
           </button>
@@ -147,13 +150,13 @@
       <!-- Agent Status Banner -->
       <% if task.assigned_to_agent? && task.agent_claimed_at.present? %>
         <% agent_done = task.status == "done" || task.status == "in_review" %>
-        <div style="padding:12px 14px;border-radius:10px;background:<%= agent_done ? 'rgba(52,211,153,0.05)' : 'rgba(251,191,36,0.05)' %>;border:1px solid <%= agent_done ? 'rgba(52,211,153,0.10)' : 'rgba(251,191,36,0.10)' %>;display:flex;align-items:center;gap:9px">
-          <span style="font-size:16px">🤖</span>
+        <div class="p-3 rounded-xl border flex items-center gap-2 <%= agent_done ? 'bg-[#34d399]/5 border-[#34d399]/10' : 'bg-[#fbbf24]/5 border-[#fbbf24]/10' %>">
+          <svg class="w-5 h-5 text-[#fbbf24]" viewBox="0 0 24 24" fill="none"><path d="M12 2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="currentColor"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="5" y="8" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 14h6M12 14v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg>
           <div>
-            <div style="font-size:12px;font-weight:600;color:<%= agent_done ? '#34d399' : '#fbbf24' %>">
+            <div class="text-[12px] font-semibold <%= agent_done ? 'text-[#34d399]' : 'text-[#fbbf24]' %>">
               <%= agent_done ? 'Agent finished — needs review' : 'Agent is working on this' %>
             </div>
-            <div style="font-size:11px;font-weight:500;color:#444;margin-top:2px">
+            <div class="text-[11px] font-medium text-[#444] mt-0.5">
               <%= agent_done ? 'Review changes before moving to Done' : 'Check back soon for updates' %>
             </div>
           </div>
@@ -164,10 +167,10 @@
       <%# Agent Response / Output %>
       <% if task.output.present? %>
         <div>
-          <div style="font-size:13px;font-weight:700;color:#e0e0e0;margin-bottom:14px">Agent Response</div>
-          <div style="padding:12px 14px;border-radius:10px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.10);display:flex;align-items:flex-start;gap:9px">
-            <span style="font-size:16px">🤖</span>
-            <div style="font-size:12px;font-weight:500;color:#bbb;line-height:1.6;white-space:pre-wrap;flex:1"><%= task.output %></div>
+          <div class="text-[13px] font-bold text-[#e0e0e0] mb-3.5">Agent Response</div>
+          <div class="p-3 rounded-xl border bg-[#34d399]/5 border-[#34d399]/10 flex items-start gap-2">
+            <svg class="w-5 h-5 text-[#fbbf24]" viewBox="0 0 24 24" fill="none"><path d="M12 2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="currentColor"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="5" y="8" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 14h6M12 14v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg>
+            <div class="text-[12px] font-medium text-content-secondary leading-relaxed whitespace-pre-wrap flex-1"><%= task.output %></div>
           </div>
         </div>
       <% end %>
@@ -179,27 +182,27 @@
         <% total_count = subtasks.size %>
         <% progress = total_count > 0 ? (done_count.to_f / total_count * 100).round : 0 %>
         <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-size:10px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.06em">Subtasks</div>
-            <span style="font-size:10px;font-weight:600;color:#444"><%= done_count %>/<%= total_count %></span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-[10px] font-bold text-[#444] uppercase tracking-[0.06em]">Subtasks</div>
+            <span class="text-[10px] font-semibold text-[#444]"><%= done_count %>/<%= total_count %></span>
           </div>
-          <div style="height:3px;border-radius:2px;background:rgba(255,255,255,0.05);margin-bottom:10px;overflow:hidden">
-            <div style="height:100%;border-radius:2px;background:<%= board_color_hex %>;width:<%= progress %>%;opacity:0.8"></div>
+          <div class="h-0.5 rounded-sm bg-white/[0.05] mb-2.5 overflow-hidden">
+            <div class="h-full rounded-sm bg-[<%= board_color_hex %>] opacity-80" style="width:<%= progress %>%"></div>
           </div>
-          <div id="task_<%= task.id %>_subtasks" style="display:flex;flex-direction:column;gap:3px">
+          <div id="task_<%= task.id %>_subtasks" class="flex flex-col gap-0.5">
             <% subtasks.each do |subtask| %>
               <%= button_to board_task_subtask_path(@board, task, subtask),
                   method: :patch,
                   params: { subtask: { done: !subtask.done? } },
-                  style: "display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:pointer" do %>
+                  class: "flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-white/[0.03] border border-white/[0.04] cursor-pointer" do %>
                 <% if subtask.done? %>
-                  <div style="width:16px;height:16px;border-radius:4px;background:<%= board_color_hex %>;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <div class="w-4 h-4 rounded border-0 bg-[<%= board_color_hex %>] flex items-center justify-center flex-shrink-0">
                     <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </div>
                 <% else %>
-                  <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;flex-shrink:0"></div>
+                  <div class="w-4 h-4 rounded border border-white/20 bg-transparent flex-shrink-0"></div>
                 <% end %>
-                <span style="font-size:12.5px;font-weight:500;color:<%= subtask.done? ? '#444' : '#bbb' %>;<%= 'text-decoration:line-through' if subtask.done? %>"><%= subtask.title %></span>
+                <span class="text-[12.5px] font-medium <%= subtask.done? ? 'text-[#444] line-through' : 'text-content-secondary' %>"><%= subtask.title %></span>
               <% end %>
             <% end %>
           </div>
@@ -208,18 +211,18 @@
 
       <!-- Agent Suggestion Hint -->
       <% if task.agent_hint.present? %>
-        <div style="padding:12px 14px;border-radius:10px;background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.08);display:flex;align-items:flex-start;gap:9px">
-          <span style="font-size:14px;margin-top:1px">💡</span>
+        <div class="p-3 rounded-xl border bg-[#fbbf24]/4 border-[#fbbf24]/8 flex items-start gap-2">
+          <svg class="w-5 h-5 text-[#fbbf24] flex-shrink-0" viewBox="0 0 24 24" fill="none"><path d="M9 21h6M12 3a6 6 0 0 1 4.95 10.05A5 5 0 0 1 12 17a5 5 0 0 1-4.95-3.95A6 6 0 0 1 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <div>
-            <div style="font-size:12px;font-weight:600;color:#fbbf24;margin-bottom:2px">Suggestion</div>
-            <div style="font-size:12px;font-weight:500;color:#888;line-height:1.4"><%= task.agent_hint %></div>
+            <div class="text-[12px] font-semibold text-[#fbbf24] mb-0.5">Suggestion</div>
+            <div class="text-[12px] font-medium text-content-muted leading-relaxed"><%= task.agent_hint %></div>
           </div>
         </div>
       <% end %>
 
       <!-- Activity Feed -->
       <div>
-        <div style="font-size:13px;font-weight:700;color:#e0e0e0;margin-bottom:14px">Activity</div>
+        <div class="text-[13px] font-bold text-[#e0e0e0] mb-3.5">Activity</div>
         <%= render "shared/task_activities", task: task %>
       </div>
     </div>

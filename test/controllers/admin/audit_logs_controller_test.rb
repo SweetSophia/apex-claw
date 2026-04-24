@@ -48,9 +48,10 @@ class Admin::AuditLogsControllerTest < ActionDispatch::IntegrationTest
     get admin_audit_logs_path, params: { audit_action: "task.claimed", actor_type: "User", actor_id: @user.id }
 
     assert_response :success
-    assert_select "tbody tr", count: 1
-    assert_select "tbody tr span", text: "task.claimed", count: 1
-    assert_select "tbody tr span", text: "agent.heartbeat", count: 0
+    # New UI uses article elements with action badges (span.inline-flex) instead of tbody tr
+    assert_select "article", count: 1
+    assert_select "article span.inline-flex", text: "task.claimed", count: 1
+    assert_select "article span.inline-flex", text: "agent.heartbeat", count: 0
   end
 
   test "admin dashboard links to audit logs" do

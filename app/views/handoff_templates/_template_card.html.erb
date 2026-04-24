@@ -1,22 +1,22 @@
-<%= tag.div id: dom_id(template), class: "mb-3 p-4 rounded-lg bg-[#1e1e22] border border-white/[0.08] group" do %>
+<%= tag.div id: dom_id(template), class: "mb-3 p-4 rounded-lg bg-bg-card border border-white/[0.08] group cursor-pointer hover:border-white/[0.12] transition-colors" do %>
   <div class="flex items-start justify-between">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-[#e0e0e0] truncate"><%= template.name %></h3>
+        <h3 class="text-sm font-medium text-content truncate"><%= template.name %></h3>
         <% if template.auto_suggest? %>
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400">Auto-suggest</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#fbbf24]/10 text-[#fbbf24]">Auto-suggest</span>
         <% end %>
       </div>
-      <p class="text-xs text-[#666] mt-1 truncate"><%= truncate(template.context_template.to_s, length: 100) %></p>
-      <div class="text-xs text-[#555] mt-2">
+      <p class="text-xs text-content-secondary mt-1 truncate"><%= truncate(template.context_template.to_s, length: 100) %></p>
+      <div class="text-xs text-content-muted mt-2">
         Agent: <%= template.agent&.name || "No default agent" %>
       </div>
     </div>
     <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <%= link_to "Edit", handoff_template_path(template), class: "text-xs text-[#888] hover:text-amber-400 transition-colors" %>
+      <%= link_to "Edit", handoff_template_path(template), class: "text-xs text-content-secondary hover:text-[#fbbf24] transition-colors" %>
       <%= button_to "Delete", handoff_template_path(template), method: :delete,
             form: { data: { turbo_confirm: "Delete this handoff template?" } },
-            class: "text-xs text-red-400 hover:text-red-300 transition-colors" %>
+            class: "text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer" %>
     </div>
   </div>
 <% end %>

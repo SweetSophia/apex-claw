@@ -1,14 +1,14 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-xl font-semibold text-[#e0e0e0]">Skills Library</h1>
-      <p class="text-xs text-[#666] mt-1">Manage reusable knowledge blocks for your agents.</p>
+      <h1 class="text-[20px] font-bold text-content tracking-tight">Skills Library</h1>
+      <p class="text-[12px] text-content-muted mt-1">Manage reusable knowledge blocks for your agents.</p>
     </div>
   </div>
 
   <%# New skill form %>
-  <div id="skill_form" class="mb-8 p-5 rounded-lg bg-[#1e1e22] border border-white/[0.08]">
-    <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">New Skill</div>
+  <div id="skill_form" class="mb-8 p-5 rounded-xl bg-bg-card border border-white/[0.06]">
+    <div class="text-[12px] font-semibold text-content-muted uppercase tracking-wider mb-3">New Skill</div>
     <%= render "skills/form", skill: Skill.new %>
   </div>
 
@@ -17,8 +17,8 @@
     <% if @skills.any? %>
       <%= render partial: "skills/skill_card", collection: @skills, as: :skill %>
     <% else %>
-      <div class="text-center py-12 text-[#666]">
-        <p class="text-sm">No skills yet. Create your first skill above.</p>
+      <div class="text-center py-12 text-content-muted">
+        <p class="text-[14px]">No skills yet. Create your first skill above.</p>
       </div>
     <% end %>
   </div>

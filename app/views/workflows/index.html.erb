@@ -1,14 +1,14 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-xl font-semibold text-[#e0e0e0]">Workflows</h1>
-      <p class="text-xs text-[#666] mt-1">Schedulable automations that create tasks or trigger actions for your agents.</p>
+      <h1 class="text-[20px] font-bold text-content tracking-tight">Workflows</h1>
+      <p class="text-[12px] text-content-muted mt-1">Schedulable automations that create tasks or trigger actions for your agents.</p>
     </div>
   </div>
 
   <%# New workflow form %>
-  <div id="workflow_form" class="mb-8 p-5 rounded-lg bg-[#1e1e22] border border-white/[0.08]">
-    <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">New Workflow</div>
+  <div id="workflow_form" class="mb-8 p-5 rounded-xl bg-bg-card border border-white/[0.06]">
+    <div class="text-[12px] font-semibold text-content-muted uppercase tracking-wider mb-3">New Workflow</div>
     <%= render "workflows/form", workflow: Workflow.new, agents: current_user.agents.active %>
   </div>
 
@@ -17,8 +17,8 @@
     <% if @workflows.any? %>
       <%= render partial: "workflows/workflow_card", collection: @workflows, as: :workflow %>
     <% else %>
-      <div class="text-center py-12 text-[#666]">
-        <p class="text-sm">No workflows yet. Create your first workflow above.</p>
+      <div class="text-center py-12 text-content-muted">
+        <p class="text-[14px]">No workflows yet. Create your first workflow above.</p>
       </div>
     <% end %>
   </div>

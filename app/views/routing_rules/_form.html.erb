@@ -8,74 +8,74 @@
     ) do |f| %>
   <div class="space-y-4">
     <div>
-      <label class="block text-xs font-medium text-[#888] mb-1.5">Name</label>
+      <label class="block text-xs font-medium text-content-secondary mb-1.5">Name</label>
       <%= f.text_field :name,
             placeholder: "e.g. Urgent backend bugs",
-            class: "w-full max-w-md rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+            class: "w-full max-w-md rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-[#888] mb-1.5">Assigned Agent</label>
+      <label class="block text-xs font-medium text-content-secondary mb-1.5">Assigned Agent</label>
       <%= f.select :agent_id,
             agents.map { |agent| [agent.name, agent.id] },
             { prompt: "Select an agent" },
-            class: "w-full max-w-xs rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+            class: "w-full max-w-xs rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
     </div>
 
     <div>
-      <label class="block text-xs font-medium text-[#888] mb-1.5">Rule Priority</label>
+      <label class="block text-xs font-medium text-content-secondary mb-1.5">Rule Priority</label>
       <%= f.number_field :priority,
             min: 0,
             max: 100,
-            class: "w-full max-w-[8rem] rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+            class: "w-full max-w-[8rem] rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
     </div>
 
     <div>
-      <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">Conditions</div>
+      <div class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-3">Conditions</div>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="block text-xs font-medium text-[#888] mb-1.5">Priority Condition</label>
+          <label class="block text-xs font-medium text-content-secondary mb-1.5">Priority Condition</label>
           <%= text_field_tag "routing_rule[conditions][priority]",
                 conditions["priority"],
                 placeholder: "e.g. high",
-                class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+                class: "w-full rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-[#888] mb-1.5">Status</label>
+          <label class="block text-xs font-medium text-content-secondary mb-1.5">Status</label>
           <%= text_field_tag "routing_rule[conditions][status]",
                 conditions["status"],
                 placeholder: "e.g. in_review",
-                class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+                class: "w-full rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-[#888] mb-1.5">Tags</label>
+          <label class="block text-xs font-medium text-content-secondary mb-1.5">Tags</label>
           <%= text_field_tag "routing_rule[conditions][tags]",
                 Array(conditions["tags"]).join(", "),
                 placeholder: "bugfix, customer, urgent",
-                class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+                class: "w-full rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-[#888] mb-1.5">Skills</label>
+          <label class="block text-xs font-medium text-content-secondary mb-1.5">Skills</label>
           <%= text_field_tag "routing_rule[conditions][skills]",
                 Array(conditions["skills"]).join(", "),
                 placeholder: "rails, debugging, triage",
-                class: "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#555] focus:outline-none focus:ring-1 focus:ring-amber-400/50" %>
+                class: "w-full rounded-md border border-white/[0.08] bg-bg-elevated px-3 py-2 text-sm text-content placeholder:text-content-muted focus:outline-none focus:ring-2 focus:ring-[#fbbf24]/50" %>
         </div>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <%= f.check_box :active, class: "rounded border border-white/[0.08] bg-white/[0.03] text-amber-400 focus:ring-amber-400/50" %>
-      <label class="text-xs text-[#888]">Rule is active</label>
+      <%= f.check_box :active, class: "rounded border border-white/[0.08] bg-bg-elevated text-[#fbbf24] focus:ring-[#fbbf24]/50" %>
+      <label class="text-xs text-content-secondary">Rule is active</label>
     </div>
 
     <div class="flex items-center justify-between">
-      <span class="text-xs text-[#555]">Higher-priority rules run first.</span>
+      <span class="text-xs text-content-muted">Higher-priority rules run first.</span>
       <%= f.submit rule.new_record? ? "Create Rule" : "Save Changes",
-            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-amber-400 text-[#161619] hover:bg-amber-500 transition-colors cursor-pointer" %>
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-[#fbbf24] text-[#161619] hover:bg-[#fbbf24]/90 transition-colors cursor-pointer" %>
     </div>
   </div>
 <% end %>

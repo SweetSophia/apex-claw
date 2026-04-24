@@ -55,6 +55,36 @@
         <% end %>
       </div>
 
+      <!-- Theme Preference -->
+      <div class="pt-4 border-t border-border">
+        <label class="block text-xs font-medium text-content-secondary mb-1.5">Theme</label>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <%= form.radio_button :theme_preference, "dark", class: "sr-only peer" %>
+            <span class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors peer-checked:bg-accent peer-checked:text-content peer-checked:border-accent text-content-secondary border-border">
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-[#60a5fa]">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75 9.75 9.75 0 018.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25 9.75 9.75 0 0012.75 21a9.753 9.753 0 009.002-5.998Z" />
+                </svg>
+                Dark
+              </span>
+            </span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <%= form.radio_button :theme_preference, "light", class: "sr-only peer" %>
+            <span class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors peer-checked:bg-accent peer-checked:text-content peer-checked:border-accent text-content-secondary border-border">
+              <span class="flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-[#fbbf24]">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                </svg>
+                Light
+              </span>
+            </span>
+          </label>
+        </div>
+        <p class="text-xs text-content-muted mt-1.5">Quickly toggle between dark and light mode using the button in the top bar.</p>
+      </div>
+
       <div class="pt-2">
         <%= form.submit "Save profile", class: "cursor-pointer px-4 py-2 bg-accent text-content hover:bg-accent-hover text-xs font-semibold rounded-md transition-colors duration-200" %>
       </div>
@@ -65,7 +95,9 @@
   <div id="agents" class="bg-bg-surface border border-border rounded-lg p-5 space-y-5">
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div class="flex items-center gap-2">
-        <span class="text-lg">🤖</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-accent">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+        </svg>
         <div>
           <h3 class="text-sm font-semibold text-content font-display">Agent Registration</h3>
           <p class="text-xs text-content-secondary mt-1">Use join tokens for real agent registration. Header-only presence does not create an agent record.</p>
@@ -138,7 +170,9 @@
             <div class="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated px-3 py-2">
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm">🤖</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-content-muted">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                  </svg>
                   <span class="text-sm font-semibold text-content"><%= agent.name %></span>
                   <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded <%= agent.online? ? 'bg-emerald-500/20 text-emerald-400' : agent.draining? ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/[0.06] text-content-muted' %>"><%= agent.status.humanize %></span>
                 </div>

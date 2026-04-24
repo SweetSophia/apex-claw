@@ -18,7 +18,7 @@ module Api
       private
 
       def settings_params
-        params.permit(:agent_name, :agent_emoji, :agent_auto_mode)
+        params.permit(:agent_name, :agent_emoji, :agent_auto_mode, :theme_preference)
       end
 
       def settings_json
@@ -26,7 +26,8 @@ module Api
           agent_auto_mode: current_user.agent_auto_mode,
           agent_status: agent_status,
           registered_agents_count: current_user.agents.count,
-          email: current_user.email_address
+          email: current_user.email_address,
+          theme_preference: current_user.theme_preference
         }
       end
 

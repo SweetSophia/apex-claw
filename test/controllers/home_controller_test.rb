@@ -10,12 +10,11 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get home_url
 
     assert_response :success
-    assert_match "Apex workspace", response.body
-    assert_match "Skills", response.body
-    assert_match "Workflows", response.body
-    assert_match "Handoffs", response.body
-    assert_match "Routing", response.body
-    assert_match "Presets", response.body
+    # New UI uses dashboard cards with greeting, stats, and sections instead of old nav
+    assert_match(/Good (morning|afternoon|evening)/, response.body)
+    assert_match "Agents online", response.body
+    assert_match "In progress", response.body
+    assert_match "Projects", response.body
   end
 
   test "shows actual online agent count instead of total agents" do

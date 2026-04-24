@@ -1,14 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="<%= authenticated? ? current_user.theme_preference : "dark" %>"
+      data-user-theme-preference="<%= authenticated? ? current_user.theme_preference : "" %>">
   <head>
     <title><%= content_for(:title) || "Apex Claw" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Apex Claw">
     <meta name="application-name" content="Apex Claw">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#161619">
+    <meta name="theme-color" content="#161619" id="theme-color-meta">
+    <script>
+      (function() {
+        try {
+          // Server-provided theme for authenticated users takes priority (no-flash)
+          var serverTheme = document.documentElement.dataset.userThemePreference;
+          if (serverTheme && (serverTheme === "dark" || serverTheme === "light")) {
+            document.documentElement.dataset.theme = serverTheme;
+            var meta = document.getElementById("theme-color-meta");
+            if (meta) meta.setAttribute("content", serverTheme === "light" ? "#f8fafc" : "#161619");
+            return;
+          }
+          // Unauthenticated or no preference: fall back to localStorage then system
+          var storedTheme = window.localStorage.getItem("apex-claw-theme");
+          var prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+          var theme = storedTheme || (prefersLight ? "light" : "dark");
+          document.documentElement.dataset.theme = theme;
+          var meta = document.getElementById("theme-color-meta");
+          if (meta) meta.setAttribute("content", theme === "light" ? "#f8fafc" : "#161619");
+        } catch (_error) {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%# Font — Plus Jakarta Sans %>
@@ -29,27 +53,64 @@
     <%= javascript_importmap_tags %>
     <%= render "application/plausible_analytics" %>
   </head>
-  <body class="h-screen overflow-hidden bg-[#161619] text-[#bbb] font-sans" data-controller="turbo-progress">
-    <% if @board_page %>
-      <%# Board page - full screen, no wrapper %>
-      <div class="h-screen flex flex-col bg-bg-base">
-        <main class="h-full text-content-secondary font-medium text-sm">
-          <%= yield %>
-        </main>
+  <body class="h-screen overflow-hidden bg-bg-base text-content font-sans" data-controller="turbo-progress theme" data-theme-settings-path-value="<%= authenticated? ? settings_path : '' %>">
+    <%# Skip link for keyboard users %>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-bg-elevated focus:text-content focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[#fbbf24]/50">
+      Skip to main content
+    </a>
+    <% if authenticated? %>
+      <%# Authenticated shell layout with sidebar %>
+      <div class="flex h-screen">
+        <%# Workspace sidebar (desktop) %>
+        <%= render "shared/workspace_sidebar" %>
+
+        <%# Main content area %>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <%# Top utility bar %>
+          <%= render "shared/workspace_topbar" %>
+
+          <%# Page content %>
+          <div id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
+            <% if @board_page %>
+              <%# Board page - full screen %>
+              <main class="h-full text-content-secondary font-medium text-sm pb-24 lg:pb-8">
+                <%= yield %>
+              </main>
+            <% else %>
+              <%# Other pages - centered content %>
+              <main class="max-w-[680px] mx-auto px-4 pb-24 lg:pb-8 pt-4 text-content-secondary font-medium text-sm">
+                <%= yield %>
+              </main>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Mobile navigation drawer %>
+        <%= render "shared/mobile_workspace_nav" %>
       </div>
     <% else %>
-      <%# Other pages - centered content with navbar %>
+      <%# Unauthenticated - simple layout %>
       <div class="h-screen flex flex-col bg-bg-base">
-        <%= render "shared/navbar" %>
-        <div class="flex-1 overflow-y-auto px-4 pb-8 overscroll-contain [-webkit-overflow-scrolling:touch]">
-          <main class="max-w-[680px] mx-auto text-content-secondary font-medium text-sm">
+        <div id="main-content" tabindex="-1" class="flex-1 overflow-y-auto">
+          <main class="max-w-[680px] mx-auto px-4 pb-8 pt-4 text-content-secondary font-medium text-sm">
             <%= yield %>
           </main>
         </div>
       </div>
     <% end %>
+
+    <%# Mobile bottom tab bar for authenticated users %>
+    <% if authenticated? %>
+      <%= render "shared/mobile_tab_bar" %>
+    <% end %>
+
     <% if current_user %>
       <%= render "shared/command_bar" %>
+    <% end %>
+
+    <%# New Board modal — available on all authenticated pages %>
+    <% if authenticated? %>
+      <%= render "shared/new_board_modal" %>
     <% end %>
   </body>
 </html>

@@ -17,6 +17,9 @@ module Admin
       scope = scope.where(resource_type: @filters["resource_type"]) if @filters["resource_type"].present?
       scope = scope.where(resource_id: @filters["resource_id"]) if @filters["resource_id"].present?
 
+      # Date range filters
+      scope = apply_date_range(scope, @filters)
+
       @total_count = scope.count
       @audit_logs = scope.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
       @has_next_page = @total_count > (@page * PER_PAGE)
@@ -24,12 +27,37 @@ module Admin
       @available_actions = AuditLog.distinct.order(:action).pluck(:action)
       @available_actor_types = AuditLog.distinct.order(:actor_type).where.not(actor_type: [nil, ""]).pluck(:actor_type)
       @available_resource_types = AuditLog.distinct.order(:resource_type).pluck(:resource_type)
+
+      # Pre-load Task records referenced by audit logs to avoid N+1 queries
+      task_ids = @audit_logs.select { |l| l.resource_type == "Task" }.map(&:resource_id).compact
+      @audit_log_task_lookup = Task.where(id: task_ids).index_by(&:id)
     end
 
     private
 
     def filter_params
-      params.permit(:audit_action, :actor_type, :actor_id, :resource_type, :resource_id)
+      params.permit(:audit_action, :actor_type, :actor_id, :resource_type, :resource_id, :from, :to)
+    end
+
+    def apply_date_range(scope, filters)
+      from_date = parse_date(filters["from"])
+      to_date = parse_date(filters["to"])
+
+      if from_date
+        scope = scope.where("created_at >= ?", from_date.beginning_of_day)
+      end
+
+      if to_date
+        scope = scope.where("created_at <= ?", to_date.end_of_day)
+      end
+
+      scope
+    end
+
+    def parse_date(date_string)
+      Date.parse(date_string)
+    rescue ArgumentError, TypeError
+      nil
     end
   end
 end

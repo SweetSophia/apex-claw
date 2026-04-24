@@ -36,7 +36,7 @@
               class="px-3 py-1.5 text-xs font-medium rounded-md border border-white/[0.12] text-[#e0e0e0] hover:bg-white/[0.05] transition-colors">
         + Assign Skill
       </button>
-      <div data-dropdown-target="menu" class="hidden fixed z-[100] min-w-[200px] max-h-[300px] overflow-y-auto bg-[#1e1e22] border border-white/[0.08] rounded-lg shadow-lg py-1">
+      <div data-dropdown-target="menu" class="hidden fixed z-[100] min-w-[200px] max-h-[300px] overflow-y-auto bg-bg-card border border-white/[0.08] rounded-lg shadow-lg py-1">
         <% available_skills.each do |skill| %>
           <%= button_to skill.name,
                 assign_skill_agent_path(agent, skill_id: skill.id),

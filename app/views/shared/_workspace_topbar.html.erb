@@ -1,0 +1,154 @@
+<%# Top utility bar - 52px, contextual actions %>
+<%# Determine which board to show in switcher %>
+<% topbar_boards = authenticated? ? (defined?(@boards) && @boards ? @boards : current_user.boards) : [] %>
+<% topbar_current_board = @board || topbar_boards.first %>
+
+<header class="h-[52px] sticky top-0 z-[90] border-b border-white/[0.05] bg-bg-base/95 backdrop-blur flex items-center justify-between px-4">
+  <%# Left section: hamburger (mobile only) + breadcrumbs %>
+  <div class="flex items-center gap-3">
+    <%# Hamburger button (mobile only) %>
+    <button type="button"
+            onclick="document.dispatchEvent(new CustomEvent('workspace-nav:toggle'))"
+            class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
+            aria-label="Open navigation">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-content-secondary">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+    </button>
+
+    <%# Breadcrumb / page title (could be extended later) %>
+    <div class="text-sm font-medium text-content-secondary">
+      <%= content_for(:title) || "Apex Claw" %>
+    </div>
+  </div>
+
+  <%# Center/Right: Command bar trigger + flash messages %>
+  <div class="flex items-center gap-3">
+    <%# Flash messages %>
+    <% if notice.present? %>
+      <div data-controller="flash" class="py-1 px-2.5 bg-status-success/20 text-status-success text-xs font-medium rounded-lg" aria-live="polite" role="status">
+        <%= notice %>
+      </div>
+    <% end %>
+    <% if alert.present? %>
+      <div data-controller="flash" class="py-1 px-2.5 bg-status-error/20 text-status-error text-xs font-medium rounded-lg" aria-live="polite" role="status">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <% if authenticated? %>
+      <%# Command bar trigger %>
+      <button type="button"
+              onclick="document.dispatchEvent(new CustomEvent('command-bar:toggle'))"
+              class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-content-secondary bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
+              aria-label="Open command bar">
+        <span class="text-[11px] opacity-50">⌘</span>K
+      </button>
+
+      <%# Theme toggle %>
+      <button type="button"
+              data-action="theme#toggle"
+              class="cursor-pointer flex items-center gap-1.5 text-xs font-semibold text-content-secondary bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
+              aria-label="Toggle light and dark mode">
+        <svg data-theme-target="lightIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 text-[#fbbf24]" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+        </svg>
+        <svg data-theme-target="darkIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="hidden w-3.5 h-3.5 text-[#60a5fa]" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75 9.75 9.75 0 0 1 8.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25 9.75 9.75 0 0 0 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+        </svg>
+        <span data-theme-target="label" class="hidden sm:inline">Light</span>
+      </button>
+
+      <%# Agent indicator %>
+      <% primary_agent = primary_registered_agent_for(current_user) %>
+      <% if primary_agent.present? %>
+        <div class="relative cursor-default"
+             title="<%= primary_agent.name %> &middot; Last heartbeat: <%= primary_agent.last_heartbeat_at.present? ? time_ago_in_words(primary_agent.last_heartbeat_at) + ' ago' : 'never' %>">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-agent">
+            <path d="M8.25 3v1.5M4.5 3a2.25 2.25 0 00-2.25 2.25v14.25a2.25 2.25 0 002.25 2.25h6.75a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0013.5 3h-7.5zM19.5 12h.008v.008H19.5V12zm-.375 0h.008v.008H19.125V12z"/>
+          </svg>
+          <% if primary_agent.online? && primary_agent.last_heartbeat_at.present? && primary_agent.last_heartbeat_at > 5.minutes.ago %>
+            <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-status-success rounded-full border border-bg-base"></span>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Board settings button (only on board pages) %>
+      <% if @board %>
+        <button type="button"
+                onclick="document.getElementById('board-settings-modal').classList.remove('hidden')"
+                class="cursor-pointer flex items-center gap-[5px] text-xs font-semibold text-content-secondary bg-white/[0.04] border border-white/[0.06] px-3 py-[5px] rounded-lg hover:bg-white/[0.06] transition-colors"
+                title="Board settings">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 opacity-50">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Board settings
+        </button>
+        <%= render "boards/view_toggle" %>
+      <% end %>
+
+      <%# User avatar dropdown %>
+      <div class="relative" data-controller="dropdown">
+        <button type="button"
+                data-dropdown-target="button"
+                data-action="click->dropdown#toggle"
+                class="flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50 rounded-lg"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-label="User menu">
+          <div class="w-[30px] h-[30px] rounded-lg overflow-hidden bg-white/[0.06] border border-transparent hover:bg-white/10 flex items-center justify-center transition-all">
+            <% if current_user.has_avatar? %>
+              <%= image_tag current_user.avatar_source, class: "w-full h-full object-cover", alt: "Your avatar" %>
+            <% else %>
+              <span class="text-[13px] font-bold text-content"><%= current_user.email_address.first.upcase %></span>
+            <% end %>
+          </div>
+        </button>
+
+        <%# User dropdown menu %>
+        <div data-dropdown-target="menu"
+             class="hidden absolute right-0 top-full mt-1.5 w-[220px] p-1.5 rounded-xl border border-white/[0.08] z-50 animate-drop-in shadow-[0_20px_50px_rgba(0,0,0,0.6)] bg-bg-dropdown">
+          <%# User info header %>
+          <div class="px-2.5 py-2.5 border-b border-white/[0.06] mb-1">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-sm font-bold text-content overflow-hidden">
+                <% if current_user.has_avatar? %>
+                  <%= image_tag current_user.avatar_source, class: "w-full h-full object-cover", alt: "" %>
+                <% else %>
+                  <%= current_user.email_address.first.upcase %>
+                <% end %>
+              </div>
+              <div class="min-w-0">
+                <div class="text-[13px] font-bold text-content truncate"><%= current_user.email_address.split('@').first %></div>
+                <div class="text-[11px] font-medium text-content-muted truncate"><%= current_user.email_address %></div>
+              </div>
+            </div>
+          </div>
+
+          <%# Menu items %>
+          <% workspace_nav_items(current_user).each do |item| %>
+            <%= link_to item[:href],
+                class: "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-content-secondary hover:bg-white/[0.04] hover:text-content transition-colors" do %>
+              <span class="w-4 text-center opacity-70"><%= item[:icon] %></span>
+              <%= item[:title] %>
+            <% end %>
+          <% end %>
+
+          <%# Divider + Log out %>
+          <div class="h-px bg-white/[0.06] my-1"></div>
+          <%= link_to session_path,
+              data: { turbo_method: :delete },
+              class: "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-status-error hover:bg-status-error/10 transition-colors" do %>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" class="opacity-40">
+              <path d="M6 2H4C2.9 2 2 2.9 2 4V12C2 13.1 2.9 14 4 14H6M11 11L14 8L11 5M6 8H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Log out
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <%= link_to "Sign in", new_session_path, class: "px-3 py-1.5 text-xs font-medium text-content-secondary hover:text-content transition-colors" %>
+    <% end %>
+  </div>
+</header>

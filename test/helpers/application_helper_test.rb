@@ -138,7 +138,7 @@ class ApplicationHelperTest < ActiveSupport::TestCase
   test "workspace nav includes apex control plane destinations" do
     items = helper_context.workspace_nav_items(@user)
 
-    assert_equal ["Home", "Agents", "Skills", "Workflows", "Handoffs", "Routing", "Presets", "Settings"], items.map { |item| item[:title] }
+    assert_equal ["Home", "Boards", "Agents", "Skills", "Workflows", "Handoffs", "Routing", "Presets", "Settings"], items.map { |item| item[:title] }
   end
 
   test "command bar exposes workspace nav pages" do

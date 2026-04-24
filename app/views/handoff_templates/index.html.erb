@@ -1,14 +1,14 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
   <div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="text-xl font-semibold text-[#e0e0e0]">Handoff Templates</h1>
-      <p class="text-xs text-[#666] mt-1">Reusable context templates for agent handoffs.</p>
+      <h1 class="text-xl font-semibold text-content">Handoff Templates</h1>
+      <p class="text-xs text-content-secondary mt-1">Reusable context templates for agent handoffs.</p>
     </div>
   </div>
 
   <%# New template form %>
-  <div id="template_form" class="mb-8 p-5 rounded-lg bg-[#1e1e22] border border-white/[0.08]">
-    <div class="text-xs font-semibold text-[#555] uppercase tracking-wider mb-3">New Template</div>
+  <div id="template_form" class="mb-8 p-5 rounded-lg bg-bg-card border border-white/[0.08]">
+    <div class="text-xs font-semibold text-content-muted uppercase tracking-wider mb-3">New Template</div>
     <%= render "handoff_templates/form", template: HandoffTemplate.new %>
   </div>
 
@@ -17,7 +17,7 @@
     <% if @templates.any? %>
       <%= render partial: "handoff_templates/template_card", collection: @templates, as: :template %>
     <% else %>
-      <div class="text-center py-12 text-[#666]">
+      <div class="text-center py-12 text-content-secondary">
         <p class="text-sm">No templates yet. Create your first handoff template above.</p>
       </div>
     <% end %>

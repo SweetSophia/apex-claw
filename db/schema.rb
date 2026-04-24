@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_205000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_23_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -573,6 +573,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_205000) do
     t.string "polar_subscription_id"
     t.string "provider"
     t.string "subscription_status"
+    t.string "theme_preference", default: "dark", null: false
     t.datetime "trial_ends_at"
     t.string "uid"
     t.datetime "updated_at", null: false

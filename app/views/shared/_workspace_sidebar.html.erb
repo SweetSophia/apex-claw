@@ -1,0 +1,131 @@
+<%# Workspace sidebar - persistent left nav for desktop (lg+), 272px wide %>
+<% active_path = request.path %>
+<% sidebar_boards = authenticated? ? (defined?(@boards) && @boards ? @boards : current_user.boards) : [] %>
+<% sidebar_current_board = @board || sidebar_boards.first %>
+
+<aside class="hidden lg:flex lg:flex-col lg:h-screen lg:w-[272px] lg:border-r lg:border-white/[0.05] bg-bg-surface fixed inset-y-0 left-0 z-[110]">
+  <%# Header: workspace name + board switcher %>
+  <div class="flex-shrink-0 px-3 pt-3 pb-2">
+    <%# Workspace wordmark %>
+    <div class="px-2 py-2 mb-2">
+      <span class="text-sm font-bold text-content tracking-[-0.02em]">Apex Claw</span>
+    </div>
+
+    <%# Board switcher trigger %>
+    <% if authenticated? && sidebar_current_board %>
+      <div class="relative" data-controller="dropdown">
+        <button type="button"
+                data-dropdown-target="button"
+                data-action="click->dropdown#toggle"
+                class="flex items-center gap-2 w-full cursor-pointer hover:bg-white/[0.04] px-2 py-2 rounded-lg transition-colors border border-transparent hover:border-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
+                aria-label="Board switcher">
+          <span class="text-base"><%= sidebar_current_board.icon %></span>
+          <span class="flex-1 min-w-0 text-left">
+            <span class="block text-sm font-semibold text-content truncate"><%= sidebar_current_board.name %></span>
+          </span>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" class="opacity-40 transition-transform" data-dropdown-target="chevron">
+            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <%# Board switcher dropdown menu %>
+        <div data-dropdown-target="menu"
+             class="hidden absolute left-0 top-full mt-1.5 w-[220px] p-1.5 rounded-xl border border-white/[0.08] z-50 animate-drop-in shadow-[0_20px_50px_rgba(0,0,0,0.6)] bg-bg-dropdown">
+          <%# Board list %>
+          <div class="max-h-[50vh] overflow-y-auto">
+            <% sidebar_boards.each do |board| %>
+              <% board_color = board_hex_color(board) %>
+              <% is_active = @board && @board.id == board.id %>
+              <%= link_to board_path(board),
+                  class: "flex items-center gap-2.5 w-full px-2.5 py-[9px] rounded-lg transition-colors #{is_active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'}",
+                  data: { turbo_frame: "_top" } do %>
+                <span class="text-sm w-6 text-center"><%= board.icon %></span>
+                <span class="text-[13px] font-semibold flex-1 truncate #{is_active ? 'text-content' : 'text-content-secondary'}"><%= board.name %></span>
+                <% if is_active %>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8.5L6.5 12L13 4" stroke="<%= board_color %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+          <%# Divider %>
+          <div class="h-px bg-white/[0.06] my-1"></div>
+          <%# Create new board %>
+          <button type="button"
+                  onclick="document.getElementById('new-board-modal').classList.remove('hidden')"
+                  class="flex items-center gap-2.5 w-full px-2.5 py-[9px] rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="ml-1">
+              <path d="M8 3V13M3 8H13" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="text-[13px] font-medium text-content-muted">Create new board</span>
+          </button>
+        </div>
+      </div>
+    <% elsif authenticated? %>
+      <%= link_to boards_path, class: "flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors" do %>
+        <span class="text-sm font-semibold text-content">All Boards</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Scrollable nav sections %>
+  <nav class="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+    <%# Workspace section %>
+    <div>
+      <div class="px-2 py-1.5">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-content-ghost">Workspace</span>
+      </div>
+      <div class="space-y-0.5">
+        <%= render "shared/nav_item", title: "Home", href: home_path, is_active: nav_item_active?({href: home_path}, active_path), icon: nav_icon(:home) %>
+        <%= render "shared/nav_item", title: "Boards", href: boards_path, is_active: nav_item_active?({href: boards_path}, active_path), icon: nav_icon(:boards) %>
+      </div>
+    </div>
+
+    <%# Operations section %>
+    <div>
+      <div class="px-2 py-1.5">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-content-ghost">Operations</span>
+      </div>
+      <div class="space-y-0.5">
+        <%= render "shared/nav_item", title: "Agents", href: agents_path, is_active: nav_item_active?({href: agents_path}, active_path), icon: nav_icon(:agents) %>
+        <%= render "shared/nav_item", title: "Skills", href: skills_path, is_active: nav_item_active?({href: skills_path}, active_path), icon: nav_icon(:skills) %>
+        <%= render "shared/nav_item", title: "Workflows", href: workflows_path, is_active: nav_item_active?({href: workflows_path}, active_path), icon: nav_icon(:workflows) %>
+        <%= render "shared/nav_item", title: "Handoffs", href: handoff_templates_path, is_active: nav_item_active?({href: handoff_templates_path}, active_path), icon: nav_icon(:handoffs) %>
+        <%= render "shared/nav_item", title: "Routing", href: routing_rules_path, is_active: nav_item_active?({href: routing_rules_path}, active_path), icon: nav_icon(:routing) %>
+        <%= render "shared/nav_item", title: "Presets", href: command_presets_path, is_active: nav_item_active?({href: command_presets_path}, active_path), icon: nav_icon(:presets) %>
+      </div>
+    </div>
+
+    <%# System section %>
+    <div>
+      <div class="px-2 py-1.5">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-content-ghost">System</span>
+      </div>
+      <div class="space-y-0.5">
+        <%= render "shared/nav_item", title: "Settings", href: settings_path, is_active: nav_item_active?({href: settings_path}, active_path), icon: nav_icon(:settings) %>
+        <% if authenticated? && current_user.admin? %>
+          <%= render "shared/nav_item", title: "Audit Logs", href: admin_audit_logs_path, is_active: nav_item_active?({href: admin_audit_logs_path}, active_path), icon: nav_icon(:audit) %>
+        <% end %>
+      </div>
+    </div>
+  </nav>
+
+  <%# User section at bottom %>
+  <% if authenticated? %>
+    <div class="flex-shrink-0 px-3 py-3 border-t border-white/[0.05]">
+      <%= link_to settings_path, class: "flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer" do %>
+        <div class="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-sm font-bold text-content overflow-hidden">
+          <% if current_user.has_avatar? %>
+            <%= image_tag current_user.avatar_source, class: "w-full h-full object-cover", alt: "" %>
+          <% else %>
+            <%= current_user.email_address.first.upcase %>
+          <% end %>
+        </div>
+        <span class="flex-1 min-w-0">
+          <span class="block text-sm font-medium text-content truncate"><%= current_user.email_address.split('@').first %></span>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+</aside>
