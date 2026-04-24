@@ -181,6 +181,8 @@ class ApplicationHelperTest < ActiveSupport::TestCase
 
   def helper_context
     @helper_context ||= Class.new do
+      include ActionView::Helpers::TagHelper
+      include ActionView::Context
       include ApplicationHelper
       include Rails.application.routes.url_helpers
 
