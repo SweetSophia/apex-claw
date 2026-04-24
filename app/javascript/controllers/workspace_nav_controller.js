@@ -6,9 +6,11 @@ export default class extends Controller {
   connect() {
     this.openHandler = () => this.open()
     this.closeHandler = () => this.close()
+    this.toggleHandler = () => this.toggle()
 
     document.addEventListener("workspace-nav:open", this.openHandler)
     document.addEventListener("workspace-nav:close", this.closeHandler)
+    document.addEventListener("workspace-nav:toggle", this.toggleHandler)
 
     // Close on escape key
     this.escapeHandler = (e) => {
@@ -22,6 +24,7 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("workspace-nav:open", this.openHandler)
     document.removeEventListener("workspace-nav:close", this.closeHandler)
+    document.removeEventListener("workspace-nav:toggle", this.toggleHandler)
     document.removeEventListener("keydown", this.escapeHandler)
   }
 

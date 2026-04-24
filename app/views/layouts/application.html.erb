@@ -53,7 +53,7 @@
     <%= javascript_importmap_tags %>
     <%= render "application/plausible_analytics" %>
   </head>
-  <body class="h-screen overflow-hidden bg-bg-base text-content font-sans" data-controller="turbo-progress theme">
+  <body class="h-screen overflow-hidden bg-bg-base text-content font-sans" data-controller="turbo-progress theme" data-theme-settings-path-value="<%= authenticated? ? settings_path : '' %>">
     <%# Skip link for keyboard users %>
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-bg-elevated focus:text-content focus:font-semibold focus:rounded-lg focus:ring-2 focus:ring-[#fbbf24]/50">
       Skip to main content

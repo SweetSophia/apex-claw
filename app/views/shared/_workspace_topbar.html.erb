@@ -8,7 +8,7 @@
   <div class="flex items-center gap-3">
     <%# Hamburger button (mobile only) %>
     <button type="button"
-            data-action="workspace-nav#toggle"
+            onclick="document.dispatchEvent(new CustomEvent('workspace-nav:toggle'))"
             class="lg:hidden p-2 -ml-2 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50"
             aria-label="Open navigation">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-content-secondary">

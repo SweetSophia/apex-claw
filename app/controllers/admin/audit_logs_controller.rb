@@ -27,6 +27,10 @@ module Admin
       @available_actions = AuditLog.distinct.order(:action).pluck(:action)
       @available_actor_types = AuditLog.distinct.order(:actor_type).where.not(actor_type: [nil, ""]).pluck(:actor_type)
       @available_resource_types = AuditLog.distinct.order(:resource_type).pluck(:resource_type)
+
+      # Pre-load Task records referenced by audit logs to avoid N+1 queries
+      task_ids = @audit_logs.select { |l| l.resource_type == "Task" }.map(&:resource_id).compact
+      @audit_log_task_lookup = Task.where(id: task_ids).index_by(&:id)
     end
 
     private
@@ -51,7 +55,9 @@ module Admin
     end
 
     def parse_date(date_string)
-      Date.parse(date_string) rescue nil
+      Date.parse(date_string)
+    rescue ArgumentError, TypeError
+      nil
     end
   end
 end

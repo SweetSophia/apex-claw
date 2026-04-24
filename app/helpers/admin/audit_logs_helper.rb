@@ -96,8 +96,10 @@ module Admin
         url = admin_audit_logs_path(remove_params)
 
         chips << content_tag(:span,
-          "#{label}: #{display} ".html_safe +
-          link_to("×", url, class: "ml-1 text-content-muted hover:text-content focus-visible:ring-1 rounded"),
+          safe_join([
+            "#{label}: #{display} ",
+            link_to("×", url, class: "ml-1 text-content-muted hover:text-content focus-visible:ring-1 rounded")
+          ]),
           class: "inline-flex items-center rounded bg-bg-elevated border border-white/[0.08] px-2 py-1 text-xs text-content"
         )
       end
@@ -123,19 +125,19 @@ module Admin
       else
         content_tag(:span, audit_log_actor_label(audit_log), class: "text-content")
       end
-    rescue StandardError
+    rescue ActionController::UrlGenerationError
       content_tag(:span, audit_log_actor_label(audit_log), class: "text-content-muted")
     end
 
     # Safe link for resource — only for known routable types, Task gets board_task_path
-    def audit_log_linked_resource(audit_log)
+    def audit_log_linked_resource(audit_log, task_lookup: nil)
       return content_tag(:span, "—", class: "text-content-muted") if audit_log.resource_type.blank? || audit_log.resource_id.blank?
 
       type = audit_log.resource_type
       id = audit_log.resource_id
 
       if type == "Task"
-        return link_task_resource(id)
+        return link_task_resource(id, task_lookup)
       end
 
       unless ROUTABLE_RESOURCE_TYPES.include?(type)
@@ -149,7 +151,7 @@ module Admin
       else
         content_tag(:span, audit_log_resource_label(audit_log), class: "text-content")
       end
-    rescue StandardError
+    rescue ActionController::UrlGenerationError
       content_tag(:span, audit_log_resource_label(audit_log), class: "text-content-muted")
     end
 
@@ -213,13 +215,18 @@ module Admin
       end
     end
 
-    def link_task_resource(id)
-      task = Task.find_by(id: id)
+    def link_task_resource(id, task_lookup = nil)
+      # Use pre-loaded lookup from controller to avoid N+1, fall back to find
+      task = if task_lookup
+        task_lookup[id.to_i]
+      else
+        Task.find_by(id: id)
+      end
       return content_tag(:span, "Task ##{id}", class: "text-content-muted") unless task
 
       link_to("Task ##{id}", board_task_path(task.board, task),
         class: "text-accent hover:text-accent-hover focus-visible:ring-1 rounded")
-    rescue StandardError
+    rescue ActionController::UrlGenerationError
       content_tag(:span, "Task ##{id}", class: "text-content-muted")
     end
   end

@@ -5,6 +5,9 @@ const THEMES = ["dark", "light"]
 
 export default class extends Controller {
   static targets = ["label", "darkIcon", "lightIcon"]
+  static values = {
+    settingsPath: String
+  }
 
   connect() {
     this.applyTheme(this.currentTheme())
@@ -55,16 +58,23 @@ export default class extends Controller {
   }
 
   syncTheme(theme) {
-    // Async server sync — localStorage is already updated, UI is already applied
-    fetch("/settings", {
+    // Settings path provided via data-theme-settings-path-value on <body>
+    const settingsPath = this.settingsPathValue
+    if (!settingsPath) return
+
+    // Sync only when Rails exposes a mounted settings path and CSRF token.
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    if (!csrfToken) return
+
+    fetch(settingsPath, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+        "X-CSRF-Token": csrfToken
       },
       body: new URLSearchParams({ "user[theme_preference]": theme })
     }).catch(() => {
-      // Silently fail — localStorage is source of truth for next page load
+      // Silently fail; the server preference remains canonical for authenticated page loads.
     })
   }
 }

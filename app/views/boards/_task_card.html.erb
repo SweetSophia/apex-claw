@@ -198,7 +198,9 @@
             </svg>
           <% end %>
           <span class="text-[10px] font-medium text-[#8d8d92]"><%= subtask_done %>/<%= subtask_total %></span>
-          <div class="h-[3px] w-8 rounded overflow-hidden bg-white/[0.06]" style="width: <%= subtask_total > 0 ? (subtask_done.to_f / subtask_total * 100).round : 0 %>%; background: <%= board_hex_color(task.board) %>; opacity: 0.7"></div>
+          <div class="h-[3px] w-8 rounded overflow-hidden bg-white/[0.06]">
+            <div class="h-full rounded" style="width: <%= subtask_total > 0 ? (subtask_done.to_f / subtask_total * 100).round : 0 %>%; background: <%= board_hex_color(task.board) %>; opacity: 0.7"></div>
+          </div>
         </div>
       <% end %>
     </div>

@@ -29,8 +29,9 @@
     <%# Quick chips row %>
     <div class="flex flex-wrap gap-2">
       <% audit_log_quick_views.each do |view| %>
-        <% is_active = view[:params].all? { |k, v| @filters[k] == v } %>
-        <%= link_to view[:label], admin_audit_logs_path(@filters.merge(view[:params])),
+        <% view_params = view[:params].transform_keys(&:to_s) %>
+        <% is_active = view_params.all? { |k, v| @filters[k] == v } %>
+        <%= link_to view[:label], admin_audit_logs_path(@filters.merge(view_params)),
           class: [
             "inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold transition-colors focus-visible:ring-1",
             is_active ? "bg-accent text-content" : "bg-bg-elevated border border-white/[0.08] text-content-secondary hover:text-content"
@@ -104,7 +105,7 @@
 
               <%# Resource %>
               <div class="md:col-span-2 flex items-center min-w-0">
-                <span class="text-xs text-content truncate"><%= audit_log_linked_resource(audit_log) %></span>
+                <span class="text-xs text-content truncate"><%= audit_log_linked_resource(audit_log, task_lookup: @audit_log_task_lookup) %></span>
               </div>
 
               <%# Change summary %>
