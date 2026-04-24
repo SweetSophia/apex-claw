@@ -71,7 +71,14 @@ module ApplicationHelper
       raise ArgumentError, "Invalid SVG path data"
     end
 
-    %(<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="#{path_data}" /></svg>).html_safe
+    content_tag(:svg,
+      content_tag(:path, nil, stroke_linecap: "round", stroke_linejoin: "round", d: path_data),
+      xmlns: "http://www.w3.org/2000/svg",
+      fill: "none",
+      viewBox: "0 0 24 24",
+      stroke_width: "1.5",
+      stroke: "currentColor",
+      class: "w-5 h-5")
   end
 
   def agent_online_count(user)
