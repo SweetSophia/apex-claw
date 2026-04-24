@@ -4,6 +4,11 @@ Mission control for AI agents — built with Rails and a Go agent runtime.
 
 Apex Claw is a multi-agent operations platform for registering, monitoring, commanding, and coordinating AI agents at scale. It provides multi-board task management, real-time dashboards, agent-to-agent handoffs, full audit trails, and a Go-based agent runtime.
 
+
+
+| <img width="541" height="274" alt="image" src="https://github.com/user-attachments/assets/200a5fc6-0c89-4190-a62f-bc008d282025" /> | <img width="541" height="274" alt="image" src="https://github.com/user-attachments/assets/7708647f-2619-4d84-95eb-39740d5e0c23" /> | <img width="541" height="274" alt="image" src="https://github.com/user-attachments/assets/9304a0d9-940d-464c-af11-50b5963bc50b" /> |
+| -- | -- | -- |
+
 ## Apex Claw Features
 
 ### Task Management
