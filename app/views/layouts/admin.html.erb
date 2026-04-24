@@ -32,11 +32,38 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body data-controller="turbo-progress">
-    <!-- Global Navbar -->
-    <%= render "shared/navbar" %>
-    <main class="container max-w-6xl mx-auto text-stone-600 dark:text-purple-100 font-normal text-sm pt-24 px-4">
-      <%= yield %>
-    </main>
+  <body data-controller="turbo-progress" class="h-screen overflow-hidden bg-bg-base text-content font-sans">
+    <% if authenticated? %>
+      <%# Authenticated shell layout with sidebar %>
+      <div class="flex h-screen">
+        <%# Workspace sidebar (desktop) %>
+        <%= render "shared/workspace_sidebar" %>
+
+        <%# Main content area %>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <%# Top utility bar %>
+          <%= render "shared/workspace_topbar" %>
+
+          <%# Page content %>
+          <div class="flex-1 overflow-y-auto">
+            <main class="container max-w-6xl mx-auto text-content-secondary font-normal text-sm px-4 pt-6">
+              <%= yield %>
+            </main>
+          </div>
+        </div>
+
+        <%# Mobile navigation drawer %>
+        <%= render "shared/mobile_workspace_nav" %>
+      </div>
+    <% else %>
+      <%# Unauthenticated - simple layout %>
+      <div class="h-screen flex flex-col bg-bg-base">
+        <div class="flex-1 overflow-y-auto">
+          <main class="container max-w-6xl mx-auto text-content-secondary font-normal text-sm px-4 pt-24">
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% end %>
   </body>
 </html>

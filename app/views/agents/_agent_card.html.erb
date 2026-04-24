@@ -6,7 +6,7 @@
 <% error_rate = health_stats.fetch(:error_rate, agent.recent_command_error_rate) %>
 <% alerts = agent.health_alerts(health_stats: health_stats) %>
 
-<div id="agent_<%= agent.id %>" class="block rounded-2xl border border-white/[0.08] bg-[#1e1e22] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.04]">
+<div id="agent_<%= agent.id %>" class="block rounded-2xl border border-white/[0.08] bg-bg-card p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.04] cursor-pointer">
   <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div class="min-w-0 flex items-start gap-3">
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-black/20 text-lg shadow-inner shadow-black/20">
@@ -20,18 +20,18 @@
           <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] <%= agent_health_badge_classes(agent) %>"><%= agent.health_badge_label %></span>
         </div>
 
-        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#666]">
+        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-content-secondary">
           <% if agent.hostname.present? %>
             <span><%= agent.hostname %></span>
-            <span class="text-[#444]">•</span>
+            <span class="text-content-muted">•</span>
           <% end %>
           <span><%= agent.runtime_provider %></span>
           <% if agent.version.present? %>
-            <span class="text-[#444]">•</span>
+            <span class="text-content-muted">•</span>
             <span>v<%= agent.version %></span>
           <% end %>
           <% if agent.platform.present? %>
-            <span class="text-[#444]">•</span>
+            <span class="text-content-muted">•</span>
             <span><%= agent.platform %></span>
           <% end %>
         </div>
@@ -40,8 +40,8 @@
 
     <div class="flex flex-col items-start gap-2 text-left lg:items-end lg:text-right">
       <div>
-        <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Last seen</div>
-        <div class="mt-1 text-sm font-semibold text-[#e0e0e0]"><%= agent.last_seen_label %></div>
+        <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-content-muted">Last seen</div>
+        <div class="mt-1 text-sm font-semibold text-content"><%= agent.last_seen_label %></div>
       </div>
 
       <div class="flex flex-wrap gap-1.5 lg:justify-end">
@@ -63,40 +63,40 @@
 
   <div class="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
     <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
-      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Uptime</div>
-      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= agent.uptime_label %></div>
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-content-muted">Uptime</div>
+      <div class="mt-1 text-sm font-semibold text-content"><%= agent.uptime_label %></div>
       <div class="mt-1 text-[11px] <%= agent.task_runner_active? ? 'text-emerald-300' : 'text-amber-300' %>"><%= agent.task_runner_active? ? "Runner active" : "Runner idle" %></div>
     </div>
 
     <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
-      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Open Tasks</div>
-      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= claimed_count %> claimed</div>
-      <div class="mt-1 text-[11px] text-[#666]"><%= assigned_count %> assigned</div>
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-content-muted">Open Tasks</div>
+      <div class="mt-1 text-sm font-semibold text-content"><%= claimed_count %> claimed</div>
+      <div class="mt-1 text-[11px] text-content-secondary"><%= assigned_count %> assigned</div>
     </div>
 
     <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
-      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Command Health</div>
-      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= error_rate %>% error rate</div>
-      <div class="mt-1 text-[11px] text-[#666]"><%= pending_count %> pending now</div>
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-content-muted">Command Health</div>
+      <div class="mt-1 text-sm font-semibold text-content"><%= error_rate %>% error rate</div>
+      <div class="mt-1 text-[11px] text-content-secondary"><%= pending_count %> pending now</div>
     </div>
 
     <div class="rounded-xl border border-white/[0.05] bg-black/20 px-3 py-2.5">
-      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">Throughput 24h</div>
-      <div class="mt-1 text-sm font-semibold text-[#d9d9de]"><%= completed_count %> tasks done</div>
-      <div class="mt-1 text-[11px] text-[#666]"><%= agent.runtime_provider %> runtime</div>
+      <div class="text-[10px] font-semibold uppercase tracking-[0.18em] text-content-muted">Throughput 24h</div>
+      <div class="mt-1 text-sm font-semibold text-content"><%= completed_count %> tasks done</div>
+      <div class="mt-1 text-[11px] text-content-secondary"><%= agent.runtime_provider %> runtime</div>
     </div>
   </div>
 
   <% if alerts.any? %>
-    <div class="mt-4 flex flex-wrap items-center gap-2 rounded-xl border <%= agent.last_seen_state == :stale ? 'border-amber-400/20 bg-amber-400/10' : 'border-white/[0.06] bg-white/[0.03]' %> px-3 py-2 text-xs text-[#c9c9ce]">
+    <div class="mt-4 flex flex-wrap items-center gap-2 rounded-xl border <%= agent.last_seen_state == :stale ? 'border-amber-400/20 bg-amber-400/10' : 'border-white/[0.06] bg-white/[0.03]' %> px-3 py-2 text-xs text-content-secondary">
       <span class="font-semibold <%= agent.last_seen_state == :stale ? 'text-amber-300' : 'text-[#fbbf24]' %>">Attention</span>
       <% alerts.first(2).each do |alert| %>
-        <span class="text-[#444]">•</span>
+        <span class="text-content-muted">•</span>
         <span><%= alert %></span>
       <% end %>
       <% if alerts.size > 2 %>
-        <span class="text-[#444]">•</span>
-        <span class="text-[#888]">+<%= alerts.size - 2 %> more</span>
+        <span class="text-content-muted">•</span>
+        <span class="text-content-muted">+<%= alerts.size - 2 %> more</span>
       <% end %>
     </div>
   <% end %>

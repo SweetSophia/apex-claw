@@ -2,346 +2,308 @@
 
 <div class="max-w-[920px] mx-auto px-5 pb-12">
 
-  <div class="grid gap-4 pt-8 mb-8 lg:grid-cols-[1.4fr,0.9fr]">
-    <section class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 animate-fade-up">
-      <div class="flex items-start justify-between gap-4 mb-4">
-        <div>
-          <div class="text-[11px] font-semibold text-[#555] tracking-[0.08em] uppercase mb-2">Apex workspace</div>
-          <h1 class="text-[30px] font-extrabold text-[#f0f0f0] tracking-[-0.03em] leading-[1.1]">Agent operations, not hidden feature pages.</h1>
-          <p class="mt-3 text-[13px] leading-[1.6] text-[#999] max-w-[56ch]">
-            Your merged systems are here now: agents, skills, workflows, handoffs, routing rules, and command presets.
-            This workspace surfaces them directly so the product reads like the control plane described in your Apex notes.
-          </p>
+  <%# ═══════════════════════════════════════════════════════════════
+      ZONE 1 — Workspace Health Strip
+  ═══════════════════════════════════════════════════════════════ %>
+  <div class="grid grid-cols-2 gap-3 pt-8 mb-6 lg:grid-cols-4 animate-fade-up">
+    <%# Agents online %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-[#34d399]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <span class="text-[10px] font-semibold text-[#555] uppercase tracking-[0.08em]">Agents online</span>
+      </div>
+      <div class="flex items-end gap-2">
+        <span class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.02em] leading-none"><%= @agent_online_count %>/<%= @registered_agents_count %></span>
+        <span class="<%= @agent_online_count > 0 ? 'text-[#34d399]' : 'text-[#555]' %> mb-0.5">
+          <% if @agent_online_count > 0 %>
+            <svg class="w-2 h-2" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+          <% else %>
+            <svg class="w-2 h-2" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+          <% end %>
+        </span>
+      </div>
+    </div>
+
+    <%# Tasks in progress %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-[#fbbf24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+        <span class="text-[10px] font-semibold text-[#555] uppercase tracking-[0.08em]">In progress</span>
+      </div>
+      <div class="flex items-end gap-2">
+        <span class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.02em] leading-none"><%= @in_progress_count %></span>
+        <span class="text-[#fbbf24] mb-0.5">
+          <svg class="w-2 h-2 animate-pulse" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <%# Tasks completed today %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-[#34d399]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span class="text-[10px] font-semibold text-[#555] uppercase tracking-[0.08em]">Done today</span>
+      </div>
+      <div class="flex items-end gap-2">
+        <span class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.02em] leading-none"><%= @completed_today_count %></span>
+        <span class="<%= @completed_today_count > 0 ? 'text-[#34d399]' : 'text-[#555]' %> mb-0.5">
+          <svg class="w-2 h-2" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <%# Active systems %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-[#60a5fa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <span class="text-[10px] font-semibold text-[#555] uppercase tracking-[0.08em]">Active systems</span>
+      </div>
+      <div class="flex items-end gap-2">
+        <span class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.02em] leading-none"><%=
+          [@registered_agents_count, @skills_count, @workflow_count, @handoff_templates_count, @routing_rules_count, @command_presets_count].count { |count| count.positive? }
+        %></span>
+        <span class="text-[#60a5fa] mb-0.5">
+          <svg class="w-2 h-2" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <%# ═══════════════════════════════════════════════════════════════
+      ZONE 2 — Focus Section (left ~60%) + Progress Ring (right ~40%)
+  ═══════════════════════════════════════════════════════════════ %>
+  <div class="grid gap-4 mb-6 lg:grid-cols-[3fr_2fr]">
+    <%# Focus — date, greeting, tasks %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl p-5 animate-fade-up" style="animation-delay: 0.04s">
+      <div class="mb-4">
+        <div class="text-[10px] font-semibold text-[#555] tracking-[0.08em] uppercase mb-1">
+          <%= Date.current.strftime("%A, %B %-d") %>
         </div>
-        <div class="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-right shrink-0">
-          <div class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/70">Active systems</div>
-          <div class="text-[22px] font-extrabold text-amber-300"><%= [@registered_agents_count, @skills_count, @workflow_count, @handoff_templates_count, @routing_rules_count, @command_presets_count].count { |count| count.positive? } %></div>
-        </div>
+        <h1 class="text-[24px] font-extrabold text-[#f0f0f0] tracking-[-0.03em] leading-[1.15]">
+          <span id="time-greeting"><%= time_greeting %></span>
+        </h1>
+        <script>
+          (function() {
+            var h = new Date().getHours();
+            var g = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+            document.getElementById("time-greeting").textContent = g;
+          })();
+        </script>
       </div>
 
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <% workspace_nav_items(current_user).each do |item| %>
-          <%= link_to item[:href], class: "group rounded-xl border border-white/[0.06] bg-[#1b1b1f] px-4 py-3 hover:border-white/[0.12] hover:bg-white/[0.05] transition-colors" do %>
-            <div class="flex items-start gap-3">
-              <div class="text-xl leading-none"><%= item[:icon] %></div>
-              <div class="min-w-0">
-                <div class="text-[13px] font-semibold text-[#e6e6e6] group-hover:text-white"><%= item[:title] %></div>
-                <div class="text-[11px] leading-[1.5] text-[#666] mt-1"><%= item[:subtitle] %></div>
+      <%# Task progress summary %>
+      <div class="text-[13px] text-[#777] mb-4">
+        <span class="text-[#f0f0f0] font-semibold"><%= @completed_today_count %></span> of
+        <span class="text-[#f0f0f0] font-semibold"><%= @all_today_tasks.size %></span> tasks done
+        <% if @agent_tasks_count > 0 %>
+          <span class="ml-2 text-[#fbbf24] text-[11px] font-medium">
+            <svg class="w-2 h-2 inline animate-pulse" viewBox="0 0 6 6" style="vertical-align: middle;" aria-hidden="true"><circle cx="3" cy="3" r="3" fill="#fbbf24"/></svg>
+            Agent working on <%= pluralize(@agent_tasks_count, "task") %>
+          </span>
+        <% end %>
+      </div>
+
+      <%# Compact task list — max 5 incomplete %>
+      <% incomplete_tasks = @all_today_tasks.reject(&:completed?).first(5) %>
+      <div class="flex flex-col gap-[5px]">
+        <% if incomplete_tasks.empty? %>
+          <div class="px-4 py-6 rounded-xl text-center border border-white/[0.04] bg-white/[0.02]">
+            <div class="text-[12px] font-medium text-[#555]">All tasks complete</div>
+          </div>
+        <% else %>
+          <% incomplete_tasks.each_with_index do |task, i| %>
+            <% color = board_hex_color(task.board) %>
+            <a href="<%= board_path(task.board) %>"
+               class="flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 cursor-pointer transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.04] animate-fade-up"
+               style="animation-delay: <%= (0.08 + i * 0.04).round(2) %>s">
+              <%# Board color indicator %>
+              <span class="w-1 h-8 rounded-full shrink-0 mt-0.5" style="background-color: <%= color %>;"></span>
+              <div class="flex-1 min-w-0">
+                <div class="text-[13px] font-semibold text-[#ddd] leading-[1.35] mb-1"><%= task.name %></div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[10px] font-semibold px-[7px] py-px rounded-[5px] border"
+                        style="color: <%= color %>; background: <%= hex_to_rgba(color, 0.07) %>; border-color: <%= hex_to_rgba(color, 0.09) %>;">
+                    <%= task.board.name %>
+                  </span>
+                  <% if task.due_date.present? %>
+                    <span class="text-[10px] font-medium text-[#555] bg-white/[0.04] px-[6px] py-px rounded-[4px]">
+                      <%= task.due_date == Date.current ? "Today" : task.due_date.strftime("%-m/%-d") %>
+                    </span>
+                  <% end %>
+                  <% if task.assigned_to_agent? %>
+                    <span class="flex items-center gap-1 text-[10px] font-semibold text-[#fbbf24]">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                      Working
+                    </span>
+                  <% end %>
+                </div>
               </div>
-            </div>
+            </a>
           <% end %>
         <% end %>
       </div>
-    </section>
-
-    <section class="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 animate-fade-up" style="animation-delay: 0.05s">
-      <div class="text-[11px] font-semibold text-[#555] tracking-[0.08em] uppercase mb-3">Workspace summary</div>
-      <div class="space-y-3">
-        <div class="flex items-center justify-between rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-4 py-3">
-          <div>
-            <div class="text-[12px] font-semibold text-[#ddd]">Agents online</div>
-            <div class="text-[11px] text-[#666]">Registered workers with live heartbeat status</div>
-          </div>
-          <div class="text-[20px] font-extrabold text-[#f0f0f0]"><%= @agent_online_count %>/<%= @registered_agents_count %></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3 text-center">
-          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
-            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @skills_count %></div>
-            <div class="text-[11px] text-[#666] mt-1">skills</div>
-          </div>
-          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
-            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @workflow_count %></div>
-            <div class="text-[11px] text-[#666] mt-1">workflows</div>
-          </div>
-          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
-            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @handoff_templates_count %></div>
-            <div class="text-[11px] text-[#666] mt-1">handoff templates</div>
-          </div>
-          <div class="rounded-xl bg-[#1b1b1f] border border-white/[0.05] px-3 py-3">
-            <div class="text-[18px] font-extrabold text-[#f0f0f0]"><%= @routing_rules_count %></div>
-            <div class="text-[11px] text-[#666] mt-1">routing rules</div>
-          </div>
-        </div>
-        <% if @onboarding_boards.any? %>
-          <div class="rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3">
-            <div class="text-[12px] font-semibold text-amber-200">Onboarding content still exists</div>
-            <div class="text-[11px] leading-[1.5] text-amber-100/65 mt-1">
-              The old Getting Started board is still in the workspace, which is part of why the product still feels like the earlier demo state.
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </section>
-  </div>
-
-  <%# ─── Greeting + Progress ─── %>
-  <div class="flex items-end justify-between pt-9 animate-fade-up">
-    <div>
-      <div class="text-[11px] font-semibold text-[#444] tracking-[0.06em] uppercase mb-2">
-        <%= Date.current.strftime("%A, %B %-d") %>
-      </div>
-      <h1 class="text-[28px] font-extrabold text-[#f0f0f0] tracking-[-0.03em] leading-[1.15]">
-        <span id="time-greeting"><%= time_greeting %></span>
-      </h1>
-      <script>
-        (function() {
-          var h = new Date().getHours();
-          var g = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-          document.getElementById("time-greeting").textContent = g;
-        })();
-      </script>
     </div>
-    <div class="flex items-center gap-3.5">
-      <div class="text-right">
-        <div class="text-[22px] font-extrabold text-[#f0f0f0] tracking-[-0.02em]">
-          <%= @completed_today_count %>/<%= @all_today_tasks.size %>
-        </div>
-        <div class="text-[11px] font-medium text-[#444]">done today</div>
-      </div>
+
+    <%# Progress Ring %>
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl p-5 flex flex-col items-center justify-center animate-fade-up" style="animation-delay: 0.08s">
+      <div class="text-[10px] font-semibold text-[#555] uppercase tracking-[0.08em] mb-4">Today's progress</div>
       <% progress = @all_today_tasks.size > 0 ? (@completed_today_count.to_f / @all_today_tasks.size) : 0 %>
-      <div class="relative w-11 h-11">
-        <svg width="44" height="44" viewBox="0 0 44 44" style="transform: rotate(-90deg)">
-          <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4" />
-          <circle cx="22" cy="22" r="18" fill="none" stroke="#ef4444" stroke-width="4"
-            stroke-dasharray="<%= (progress * 113).round(1) %> 113" stroke-linecap="round"
+      <div class="relative mb-4">
+        <svg width="96" height="96" viewBox="0 0 96 96" style="transform: rotate(-90deg)" role="img" aria-label="<%= (progress * 100).round %>% complete, <%= @completed_today_count %> of <%= @all_today_tasks.size %> tasks done">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" />
+          <circle cx="48" cy="48" r="40" fill="none" stroke="<%= @completed_today_count > 0 ? '#34d399' : '#ef4444' %>" stroke-width="6"
+            stroke-dasharray="<%= (progress * 251.3).round(1) %> 251.3" stroke-linecap="round"
             style="transition: stroke-dasharray 0.6s ease" />
         </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-[26px] font-extrabold text-[#f0f0f0] tracking-[-0.02em]"><%= (progress * 100).round %>%</span>
+        </div>
+      </div>
+      <div class="text-[11px] font-medium text-[#555]">
+        <span class="text-[#34d399]"><%= @completed_today_count %></span> of <%= @all_today_tasks.size %>
       </div>
     </div>
   </div>
 
-  <%# ─── Agent Status Bar ─── %>
-  <% if @agent_tasks_count > 0 %>
-    <div class="flex items-center gap-1.5 pt-4 pb-6 animate-fade-up" style="animation-delay: 0.04s">
-      <div class="w-[5px] h-[5px] rounded-full bg-[#fbbf24] animate-pulse-dot"></div>
-      <span class="text-[11px] font-semibold text-[#fbbf24]">
-        Agent working on <%= pluralize(@agent_tasks_count, "task") %>
-      </span>
-    </div>
-  <% else %>
-    <div class="pt-4 pb-6"></div>
-  <% end %>
-
-  <%# ─── Today's Tasks ─── %>
-  <div class="mb-8">
-    <div class="flex items-center justify-between mb-2.5 animate-fade-up" style="animation-delay: 0.06s">
-      <h2 class="text-sm font-bold text-[#999]">Today</h2>
-    </div>
-
-    <div class="flex flex-col gap-[5px]">
-      <% if @all_today_tasks.empty? %>
-        <div class="px-4 py-8 rounded-xl text-center animate-fade-up" style="animation-delay: 0.08s; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.04);">
-          <div class="text-[13px] font-medium text-[#555]">No tasks for today</div>
-          <div class="text-[11px] text-[#333] mt-1">Tasks in "Up Next" and "In Progress" will appear here</div>
-        </div>
-      <% else %>
-        <% @all_today_tasks.each_with_index do |task, i| %>
-          <% color = board_hex_color(task.board) %>
-          <% is_done = task.completed? %>
-          <a href="<%= board_path(task.board) %>"
-             class="flex items-start relative overflow-hidden animate-fade-up cursor-pointer"
-             style="padding: 14px 16px; border-radius: 12px;
-                    background: <%= is_done ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.035)' %>;
-                    border: 1px solid <%= is_done ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)' %>;
-                    opacity: <%= is_done ? '0.35' : '1' %>;
-                    transition: all 0.15s ease;
-                    animation-delay: <%= (0.08 + i * 0.04).round(2) %>s;"
-             onmouseenter="this.style.background='<%= is_done ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.055)' %>'; this.style.borderColor='rgba(255,255,255,0.1)'"
-             onmouseleave="this.style.background='<%= is_done ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.035)' %>'; this.style.borderColor='<%= is_done ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)' %>'">
-
-            <%# Task content %>
-            <div class="flex-1 min-w-0">
-              <div class="text-[13.5px] font-semibold leading-[1.35] mb-[5px]"
-                   style="color: <%= is_done ? '#444' : '#ddd' %>; text-decoration: <%= is_done ? 'line-through' : 'none' %>;">
-                <%= task.name %>
-              </div>
-              <div class="flex items-center gap-1.5 flex-wrap">
-                <%# Board/project pill %>
-                <span style="font-size: 10px; font-weight: 600; color: <%= color %>;
-                             background: <%= hex_to_rgba(color, 0.07) %>;
-                             padding: 1px 7px; border-radius: 5px;
-                             border: 1px solid <%= hex_to_rgba(color, 0.09) %>;">
-                  <%= task.board.icon %> <%= task.board.name %>
-                </span>
-                <%# Due date label %>
-                <% if task.due_date.present? %>
-                  <span style="font-size: 10px; font-weight: 500; color: #555;
-                               background: rgba(255,255,255,0.04); padding: 1px 6px; border-radius: 4px;">
-                    <%= task.due_date == Date.current ? "Today" : task.due_date.strftime("%-m/%-d") %>
-                  </span>
-                <% end %>
-              </div>
-            </div>
-
-            <%# Agent status indicator %>
-            <% if task.assigned_to_agent? %>
-              <div class="flex items-center gap-1 self-start"
-                   style="padding: 3px 8px; border-radius: 7px;
-                          background: <%= is_done ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.08)' %>;
-                          border: 1px solid <%= is_done ? 'rgba(52,211,153,0.12)' : 'rgba(251,191,36,0.12)' %>;">
-                <span style="font-size: 10px;">🤖</span>
-                <span style="font-size: 10px; font-weight: 600; color: <%= is_done ? '#34d399' : '#fbbf24' %>;">
-                  <%= is_done ? "Review" : "Working" %>
-                </span>
-                <% unless is_done %>
-                  <div style="width: 4px; height: 4px; border-radius: 50%; background: #fbbf24; animation: pulse 1.5s ease infinite;"></div>
-                <% end %>
-              </div>
-            <% end %>
-          </a>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
-
-  <%# ─── Agent Activity ─── %>
-  <div class="mb-8">
-    <div class="flex items-center gap-[7px] mb-2.5 animate-fade-up" style="animation-delay: 0.28s">
-      <span class="text-[13px]">🤖</span>
-      <h2 class="text-sm font-bold text-[#999]">Agent Activity</h2>
-    </div>
-    <div class="flex flex-col gap-[5px]">
-      <% if @agent_updates.empty? %>
-        <div class="animate-fade-up"
-             style="padding: 11px 13px; border-radius: 10px;
-                    background: rgba(251,191,36,0.03); border: 1px solid rgba(251,191,36,0.07);
-                    animation-delay: 0.32s;">
-          <div class="text-xs font-medium leading-[1.45]" style="color: #555;">No recent agent activity</div>
-          <div class="text-[10px] font-medium mt-1" style="color: #333;">Assign tasks to your agent to see updates here</div>
-        </div>
-      <% else %>
-        <% @agent_updates.each_with_index do |activity, i| %>
-          <div class="animate-fade-up"
-               style="padding: 11px 13px; border-radius: 10px;
-                      background: rgba(251,191,36,0.03); border: 1px solid rgba(251,191,36,0.07);
-                      animation-delay: <%= (0.32 + i * 0.04).round(2) %>s;">
-            <div class="text-xs font-medium leading-[1.45]" style="color: #999;">
-              <%= activity.task.name %> &mdash; <%= activity.description %>
-            </div>
-            <div class="text-[10px] font-medium mt-1" style="color: #333;">
-              <%= time_ago_in_words(activity.created_at) %> ago
-            </div>
+  <%# ═══════════════════════════════════════════════════════════════
+      ZONE 3 — Agent Activity (left ~50%) + This Week (right ~50%)
+  ═══════════════════════════════════════════════════════════════ %>
+  <div class="grid gap-4 mb-6 lg:grid-cols-2">
+    <%# Agent Activity — amber-tinted %>
+    <div class="bg-bg-card border border-amber-400/10 rounded-xl p-4 animate-fade-up" style="animation-delay: 0.12s">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="w-4 h-4 text-[#fbbf24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <h2 class="text-[11px] font-bold text-[#777] uppercase tracking-[0.08em]">Agent Activity</h2>
+      </div>
+      <div class="flex flex-col gap-[5px]">
+        <% if @agent_updates.empty? %>
+          <div class="px-3 py-3 rounded-[10px] bg-amber-400/[0.03] border border-amber-400/[0.07]">
+            <div class="text-[11px] font-medium text-[#555]" role="status">No recent agent activity</div>
           </div>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
-
-  <%# ─── This Week — Activity Chart ─── %>
-  <% max_val = [@week_stats.map { |d| d[:you] + d[:agent] }.max || 1, 1].max %>
-  <% today_idx = (Date.current.cwday - 1) % 7 %>
-  <% total_you = @week_stats.sum { |d| d[:you] } %>
-  <% total_agent = @week_stats.sum { |d| d[:agent] } %>
-
-  <div class="mb-8 animate-fade-up"
-       style="padding: 18px 20px; border-radius: 14px;
-              background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
-              animation-delay: 0.48s;">
-    <%# Chart header %>
-    <div class="flex items-center justify-between mb-5">
-      <div style="font-size: 11px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.06em;">This week</div>
-      <div class="flex gap-3.5">
-        <div class="flex items-center gap-[5px]">
-          <div style="width: 8px; height: 8px; border-radius: 2px; background: #ef4444;"></div>
-          <span style="font-size: 10px; font-weight: 500; color: #555;">You (<%= total_you %>)</span>
-        </div>
-        <div class="flex items-center gap-[5px]">
-          <div style="width: 8px; height: 8px; border-radius: 2px; background: #fbbf24;"></div>
-          <span style="font-size: 10px; font-weight: 500; color: #555;">Agent (<%= total_agent %>)</span>
-        </div>
-      </div>
-    </div>
-
-    <%# Stacked bar chart %>
-    <div class="flex items-end gap-1.5" style="height: 90px; margin-bottom: 8px;">
-      <% @week_stats.each_with_index do |d, i| %>
-        <% total = d[:you] + d[:agent] %>
-        <% you_h = max_val > 0 ? (d[:you].to_f / max_val * 72).round(1) : 0 %>
-        <% agent_h = max_val > 0 ? (d[:agent].to_f / max_val * 72).round(1) : 0 %>
-        <% is_today = i == today_idx %>
-
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-          <% if total > 0 %>
-            <div style="font-size: 9px; font-weight: 700; color: <%= is_today ? '#ddd' : '#333' %>; margin-bottom: 4px;"><%= total %></div>
+        <% else %>
+          <% @agent_updates.first(5).each_with_index do |activity, i| %>
+            <div class="px-3 py-[10px] rounded-[10px] bg-amber-400/[0.03] border border-amber-400/[0.07] animate-fade-up"
+                 style="animation-delay: <%= (0.16 + i * 0.04).round(2) %>s">
+              <div class="text-[11px] font-medium leading-[1.45] text-[#999]">
+                <%= activity.task.name %> &mdash; <%= activity.description %>
+              </div>
+              <div class="text-[10px] font-medium mt-1 text-[#444]">
+                <%= time_ago_in_words(activity.created_at) %> ago
+              </div>
+            </div>
           <% end %>
-          <div style="display: flex; flex-direction: column; gap: 1px; width: 100%; max-width: 42px;">
-            <% if agent_h > 0 %>
-              <div style="height: <%= agent_h %>px; border-radius: <%= you_h > 0 ? '5px 5px 0 0' : '5px' %>; background: <%= is_today ? '#fbbf24' : 'rgba(251,191,36,0.2)' %>;"></div>
-            <% end %>
-            <% if you_h > 0 %>
-              <div style="height: <%= you_h %>px; border-radius: <%= agent_h > 0 ? '0 0 5px 5px' : '5px' %>; background: <%= is_today ? '#ef4444' : 'rgba(239,68,68,0.2)' %>;"></div>
-            <% end %>
-            <% if total == 0 %>
-              <div style="height: 3px; border-radius: 4px; background: rgba(255,255,255,0.04); width: 100%;"></div>
-            <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# This Week — stacked bar chart %>
+    <% max_val = [@week_stats.map { |d| d[:you] + d[:agent] }.max || 1, 1].max %>
+    <% today_idx = (Date.current.cwday - 1) % 7 %>
+    <% total_you = @week_stats.sum { |d| d[:you] } %>
+    <% total_agent = @week_stats.sum { |d| d[:agent] } %>
+
+    <div class="bg-bg-card border border-white/[0.06] rounded-xl p-4 animate-fade-up" style="animation-delay: 0.16s">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[11px] font-bold text-[#777] uppercase tracking-[0.08em]">This week</h2>
+        <div class="flex gap-3">
+          <div class="flex items-center gap-[5px]">
+            <div class="w-2 h-2 rounded-[2px] bg-red-500"></div>
+            <span class="text-[10px] font-medium text-[#555]">You (<%= total_you %>)</span>
+          </div>
+          <div class="flex items-center gap-[5px]">
+            <div class="w-2 h-2 rounded-[2px] bg-amber-400"></div>
+            <span class="text-[10px] font-medium text-[#555]">Agent (<%= total_agent %>)</span>
           </div>
         </div>
-      <% end %>
-    </div>
-
-    <%# Day labels %>
-    <div class="flex gap-1.5">
-      <% @week_stats.each_with_index do |d, i| %>
-        <div style="flex: 1; text-align: center; font-size: 10px;
-                    font-weight: <%= i == today_idx ? '700' : '500' %>;
-                    color: <%= i == today_idx ? '#e0e0e0' : '#333' %>;">
-          <%= d[:day] %>
-        </div>
-      <% end %>
-    </div>
-
-    <%# Summary row %>
-    <div style="display: flex; justify-content: space-around; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.04);">
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 800; color: #ddd; letter-spacing: -0.02em;"><%= @completed_count %></div>
-        <div style="font-size: 10px; font-weight: 500; color: #444; margin-top: 2px;">completed</div>
       </div>
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 800; color: #fbbf24; letter-spacing: -0.02em;"><%= @in_progress_count %></div>
-        <div style="font-size: 10px; font-weight: 500; color: #444; margin-top: 2px;">in progress</div>
+
+      <%# Stacked bar chart %>
+      <div class="flex items-end gap-1.5 mb-2" style="height: 72px;">
+        <% @week_stats.each_with_index do |d, i| %>
+          <% total = d[:you] + d[:agent] %>
+          <% you_h = max_val > 0 ? (d[:you].to_f / max_val * 56).round(1) : 0 %>
+          <% agent_h = max_val > 0 ? (d[:agent].to_f / max_val * 56).round(1) : 0 %>
+          <% is_today = i == today_idx %>
+
+          <div class="flex-1 flex flex-col items-center h-full justify-end">
+            <% if total > 0 %>
+              <div class="text-[9px] font-bold mb-1 <%= is_today ? 'text-[#ddd]' : 'text-[#333]' %>"><%= total %></div>
+            <% end %>
+            <div class="flex flex-col gap-px w-full max-w-[36px]">
+              <% if agent_h > 0 %>
+                <div class="rounded-t-[4px]" style="height: <%= agent_h %>px; background: <%= is_today ? '#fbbf24' : 'rgba(251,191,36,0.2)' %>;"></div>
+              <% end %>
+              <% if you_h > 0 %>
+                <div class="rounded-b-[4px]" style="height: <%= you_h %>px; background: <%= is_today ? '#ef4444' : 'rgba(239,68,68,0.2)' %>;"></div>
+              <% end %>
+              <% if total == 0 %>
+                <div class="h-[3px] rounded-[4px] bg-white/[0.04] w-full"></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
-      <div style="text-align: center;">
-        <div style="font-size: 20px; font-weight: 800; color: #555; letter-spacing: -0.02em;"><%= @upcoming_count %></div>
-        <div style="font-size: 10px; font-weight: 500; color: #444; margin-top: 2px;">upcoming</div>
+
+      <%# Day labels %>
+      <div class="flex gap-1.5">
+        <% @week_stats.each_with_index do |d, i| %>
+          <div class="flex-1 text-center text-[10px] font-<%= i == today_idx ? 'bold' : 'medium' %> <%= i == today_idx ? 'text-[#e0e0e0]' : 'text-[#333]' %>">
+            <%= d[:day] %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
 
-  <%# ─── Boards (Projects) ─── %>
+  <%# ═══════════════════════════════════════════════════════════════
+      ZONE 4 — Boards / Projects
+  ═══════════════════════════════════════════════════════════════ %>
   <div class="mb-12">
-    <div class="flex items-center justify-between gap-3 mb-3 animate-fade-up" style="animation-delay: 0.52s;">
-      <div>
-        <h2 class="text-sm font-bold" style="color: #999;">Projects & boards</h2>
-        <div class="text-[11px] text-[#555] mt-1">Non-onboarding work is prioritized first so the workspace feels like your real control plane.</div>
-      </div>
+    <div class="flex items-center justify-between gap-3 mb-3 animate-fade-up" style="animation-delay: 0.2s">
+      <h2 class="text-[11px] font-bold text-[#777] uppercase tracking-[0.08em]">Projects</h2>
       <% if @onboarding_boards.any? %>
-        <div class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/75">Legacy onboarding still present</div>
+        <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-200/75">Legacy onboarding still present</span>
       <% end %>
     </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
       <% @active_projects.each_with_index do |board, i| %>
         <% task_count = @open_tasks_counts[board.id] || 0 %>
         <% is_onboarding = onboarding_board?(board) %>
+        <% color = board_hex_color(board) %>
         <%= link_to board_path(board),
-            class: "flex items-center gap-3 animate-fade-up",
-            style: "padding: 14px 16px; border-radius: 12px;
-                    background: #{is_onboarding ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.035)'};
-                    border: 1px solid #{is_onboarding ? 'rgba(251,191,36,0.10)' : 'rgba(255,255,255,0.06)'};
-                    transition: all 0.15s; animation-delay: #{(0.56 + i * 0.04).round(2)}s;",
-            onmouseenter: "this.style.background='#{is_onboarding ? 'rgba(251,191,36,0.06)' : 'rgba(255,255,255,0.055)'}'; this.style.borderColor='#{is_onboarding ? 'rgba(251,191,36,0.16)' : 'rgba(255,255,255,0.1)'}'",
-            onmouseleave: "this.style.background='#{is_onboarding ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.035)'}'; this.style.borderColor='#{is_onboarding ? 'rgba(251,191,36,0.10)' : 'rgba(255,255,255,0.06)'}'" do %>
-          <span class="text-xl"><%= board.icon %></span>
+            class: "flex items-center gap-3 animate-fade-up rounded-xl border transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.03] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 #{is_onboarding ? 'border-amber-400/10 bg-amber-400/[0.03]' : 'border-white/[0.06] bg-bg-card'}",
+            style: "padding: 14px 16px; animation-delay: #{(0.24 + i * 0.04).round(2)}s;" do %>
+          <%# Board color indicator %>
+          <span class="w-2 h-8 rounded-full shrink-0" style="background-color: <%= color %>;"></span>
+          <%# Board icon %>
+          <span class="text-xl leading-none"><%= board.icon %></span>
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <div style="font-size: 13px; font-weight: 600; color: #ccc;" class="truncate"><%= board.name %></div>
+              <div class="text-[13px] font-semibold text-[#ccc] truncate"><%= board.name %></div>
               <% if is_onboarding %>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.08em] bg-amber-400/10 text-amber-200">Onboarding</span>
               <% end %>
             </div>
-            <div style="font-size: 11px; font-weight: 500; color: #444; margin-top: 1px;"><%= pluralize(task_count, "open task") %></div>
+            <div class="text-[11px] font-medium text-[#444] mt-px"><%= pluralize(task_count, "open task") %></div>
           </div>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="opacity: 0.2;">
-            <path d="M6 4L10 8L6 12" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg class="text-[#555] shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
           </svg>
         <% end %>
       <% end %>

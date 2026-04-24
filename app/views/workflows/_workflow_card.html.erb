@@ -1,16 +1,16 @@
-<%= tag.div id: dom_id(workflow), class: "mb-3 p-4 rounded-lg bg-[#1e1e22] border border-white/[0.08] group" do %>
+<%= tag.div id: dom_id(workflow), class: "mb-3 p-4 rounded-xl bg-bg-card border border-white/[0.06] group hover:border-white/[0.12] transition-colors cursor-pointer" do %>
   <div class="flex items-start justify-between">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-[#e0e0e0] truncate"><%= workflow.name %></h3>
-        <span class="text-[10px] px-1.5 py-0.5 rounded <%= workflow.status == 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/[0.05] text-[#666]' %>">
+        <h3 class="text-[14px] font-medium text-content truncate"><%= workflow.name %></h3>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full <%= workflow.status == 'active' ? 'bg-[#34d399]/10 text-[#34d399]' : 'bg-white/[0.05] text-content-muted' %>">
           <%= workflow.status.humanize %>
         </span>
       </div>
       <% if workflow.description.present? %>
-        <p class="text-xs text-[#666] mt-1 truncate"><%= workflow.description %></p>
+        <p class="text-[12px] text-content-muted mt-1 truncate"><%= workflow.description %></p>
       <% end %>
-      <div class="text-xs text-[#555] mt-2">
+      <div class="text-[12px] text-content-muted mt-2">
         <%= workflow.trigger_type.humanize %> ·
         <%= workflow.execution_mode.humanize %> ·
         Agent: <%= workflow.agent&.name || "Unassigned" %>
@@ -24,11 +24,11 @@
             run_workflow_path(workflow),
             method: :post,
             form: { data: { turbo_confirm: "Run this workflow now?" } },
-            class: "text-xs text-amber-400 hover:text-amber-300 transition-colors" %>
-      <%= link_to "Edit", workflow_path(workflow), class: "text-xs text-[#888] hover:text-amber-400 transition-colors" %>
+            class: "text-[12px] text-[#fbbf24] hover:text-[#fbbf24]/80 transition-colors cursor-pointer" %>
+      <%= link_to "Edit", workflow_path(workflow), class: "text-[12px] text-content-muted hover:text-[#fbbf24] transition-colors cursor-pointer" %>
       <%= button_to "Delete", workflow_path(workflow), method: :delete,
             form: { data: { turbo_confirm: "Delete this workflow?" } },
-            class: "text-xs text-red-400 hover:text-red-300 transition-colors" %>
+            class: "text-[12px] text-red-400 hover:text-red-300 transition-colors cursor-pointer" %>
     </div>
   </div>
 <% end %>

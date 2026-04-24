@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   has_secure_password validations: false
 
+  enum :theme_preference, { dark: "dark", light: "light" }, default: :dark
+
   has_many :sessions, dependent: :destroy
   has_many :boards, dependent: :destroy
   has_many :tasks, dependent: :destroy

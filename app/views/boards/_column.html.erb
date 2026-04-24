@@ -22,9 +22,9 @@
      data-status="<%= status %>">
   <%# Column Header %>
   <div class="flex items-center gap-2 px-1 pb-2">
-    <div class="rounded-full" style="width:7px;height:7px;background:<%= column_dot_colors[status] %>"></div>
+    <div class="rounded-full w-[7px] h-[7px]" style="background:<%= column_dot_colors[status] %>"></div>
     <span class="text-[13px] font-semibold text-[#d7d7d9]"><%= column_labels[status] %></span>
-    <span id="column-<%= status %>-count" class="column__task-count" aria-live="polite" style="font-size:11px;font-weight:600;color:#8d8d92;background:rgba(255,255,255,0.04);padding:0 6px;border-radius:999px;line-height:18px;min-width:18px;text-align:center"><%= tasks.count %></span>
+    <span id="column-<%= status %>-count" class="column__task-count text-[11px] font-semibold text-[#8d8d92] bg-white/[0.04] px-1.5 rounded-full leading-[18px] min-w-[18px] text-center" aria-live="polite"><%= tasks.count %></span>
   </div>
 
   <%# Tasks List %>

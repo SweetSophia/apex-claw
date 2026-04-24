@@ -10,7 +10,7 @@
               <p class="mt-1 text-xs text-content-muted">Showing the next <%= @timeline_days.length %> days. Later due dates stay listed but are compressed to the edge of the visible window.</p>
             <% end %>
           </div>
-          <div class="grid" style="grid-template-columns: repeat(<%= @timeline_days.length %>, minmax(40px, 1fr)); gap: 4px;">
+          <div class="grid gap-1" style="grid-template-columns: repeat(<%= @timeline_days.length %>, minmax(40px, 1fr));">
             <% @timeline_days.each do |day| %>
               <div class="rounded-md bg-bg-card px-2 py-1 text-center text-[10px] font-semibold text-content-muted">
                 <div><%= day.strftime('%a') %></div>

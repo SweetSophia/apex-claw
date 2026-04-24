@@ -5,9 +5,6 @@
 <%= turbo_stream_from "board_#{@board.id}" %>
 
 <div class="h-full flex flex-col" data-controller="board task-board">
-  <%# Unified Navbar %>
-  <%= render "shared/navbar" %>
-
   <%# Board modals (new board, settings) %>
   <%= render "boards/header" %>
 
@@ -30,7 +27,7 @@
     <%= render "boards/timeline" %>
   <% else %>
     <%# Kanban Columns - compact board layout with fixed-width lanes %>
-    <div class="flex-1 overflow-auto bg-bg-base" id="board-view-panel">
+    <div class="flex-1 overflow-auto bg-bg-base" id="board-view-panel" aria-label="Kanban board columns" role="region">
       <div class="flex min-h-full items-start gap-3 px-4 py-3 overflow-x-auto">
         <% Task.statuses.keys.each do |status| %>
           <%= render "boards/column", status: status, tasks: @columns[status.to_sym] %>

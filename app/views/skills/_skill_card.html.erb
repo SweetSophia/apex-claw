@@ -1,25 +1,25 @@
-<%= tag.div id: dom_id(skill), class: "mb-3 p-4 rounded-lg bg-[#1e1e22] border border-white/[0.08] group" do %>
+<%= tag.div id: dom_id(skill), class: "mb-3 p-4 rounded-xl bg-bg-card border border-white/[0.06] group hover:border-white/[0.12] transition-colors cursor-pointer" do %>
   <div class="flex items-start justify-between">
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-[#e0e0e0] truncate"><%= skill.name %></h3>
+        <h3 class="text-[14px] font-medium text-content truncate"><%= skill.name %></h3>
         <% if skill.shared? %>
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400">Shared</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[#fbbf24]/10 text-[#fbbf24]">Shared</span>
         <% end %>
       </div>
       <% if skill.description.present? %>
-        <p class="text-xs text-[#666] mt-1 truncate"><%= skill.description %></p>
+        <p class="text-[12px] text-content-muted mt-1 truncate"><%= skill.description %></p>
       <% end %>
-      <div class="text-xs text-[#555] mt-2">
+      <div class="text-[12px] text-content-muted mt-2">
         <%= (skill.body || "").length %> characters ·
         <%= pluralize(skill.agents.size, 'agent') %>
       </div>
     </div>
     <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <%= link_to "Edit", skill_path(skill), class: "text-xs text-[#888] hover:text-amber-400 transition-colors" %>
+      <%= link_to "Edit", skill_path(skill), class: "text-[12px] text-content-muted hover:text-[#fbbf24] transition-colors cursor-pointer" %>
       <%= button_to "Delete", skill_path(skill), method: :delete,
             form: { data: { turbo_confirm: "Delete this skill? It will be removed from all agents." } },
-            class: "text-xs text-red-400 hover:text-red-300 transition-colors" %>
+            class: "text-[12px] text-red-400 hover:text-red-300 transition-colors cursor-pointer" %>
     </div>
   </div>
 <% end %>

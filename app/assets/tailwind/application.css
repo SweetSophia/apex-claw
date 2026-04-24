@@ -22,9 +22,13 @@
 
   /* Borders */
   --color-border: rgba(255, 255, 255, 0.05);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
   --color-border-card: rgba(255, 255, 255, 0.04);
   --color-border-hover: rgba(255, 255, 255, 0.08);
   --color-border-active: rgba(255, 255, 255, 0.12);
+
+  /* Overlays */
+  --color-overlay: rgba(0, 0, 0, 0.4);
 
   /* Project colors */
   --color-project-red: #ef4444;
@@ -64,6 +68,30 @@
 @layer base {
   :root {
     color-scheme: dark;
+    /* Note: light mode will override these via [data-theme="light"] */
+  }
+
+  [data-theme="light"] {
+    --color-bg-base: #f8fafc;
+    --color-bg-surface: #ffffff;
+    --color-bg-elevated: #f1f5f9;
+    --color-bg-card: #ffffff;
+    --color-bg-dropdown: #ffffff;
+    --color-content: #0f172a;
+    --color-content-secondary: #475569;
+    --color-content-muted: #64748b;
+    --color-content-dim: #94a3b8;
+    --color-content-ghost: #cbd5e1;
+    --color-content-dimmed: #e2e8f0;
+    --color-border: rgba(15, 23, 42, 0.08);
+    --color-border-subtle: rgba(15, 23, 42, 0.06);
+    --color-border-card: rgba(15, 23, 42, 0.08);
+    --color-border-hover: rgba(15, 23, 42, 0.14);
+    --color-border-active: rgba(15, 23, 42, 0.2);
+    --color-overlay: rgba(15, 23, 42, 0.35);
+    --color-bg-hover: #f1f5f9;
+    --color-content-inverse: #ffffff;
+    color-scheme: light;
   }
 
   html, body {
@@ -71,6 +99,55 @@
     margin: 0;
     padding: 0;
     background-color: var(--color-bg-base);
+  }
+
+  [data-theme="light"] ::selection {
+    background: #fbbf24;
+    color: #0f172a;
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.16);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.24);
+  }
+
+  /* Light-mode compatibility for existing dark-surface overlay utilities. */
+  [data-theme="light"] .border-white\/\[0\.04\] { border-color: rgba(15, 23, 42, 0.06); }
+  [data-theme="light"] .border-white\/\[0\.05\] { border-color: rgba(15, 23, 42, 0.07); }
+  [data-theme="light"] .border-white\/\[0\.06\] { border-color: rgba(15, 23, 42, 0.08); }
+  [data-theme="light"] .border-white\/\[0\.08\] { border-color: rgba(15, 23, 42, 0.1); }
+  [data-theme="light"] .border-white\/\[0\.12\] { border-color: rgba(15, 23, 42, 0.16); }
+
+  [data-theme="light"] .bg-white\/\[0\.02\],
+  [data-theme="light"] .bg-white\/\[0\.025\],
+  [data-theme="light"] .bg-white\/\[0\.03\],
+  [data-theme="light"] .bg-white\/\[0\.035\],
+  [data-theme="light"] .bg-white\/\[0\.04\],
+  [data-theme="light"] .bg-white\/\[0\.05\],
+  [data-theme="light"] .bg-white\/\[0\.06\] {
+    background-color: rgba(15, 23, 42, 0.04);
+  }
+
+  [data-theme="light"] .bg-white\/\[0\.08\],
+  [data-theme="light"] .bg-white\/10 {
+    background-color: rgba(15, 23, 42, 0.06);
+  }
+
+  [data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover,
+  [data-theme="light"] .hover\:bg-white\/\[0\.05\]:hover,
+  [data-theme="light"] .hover\:bg-white\/\[0\.06\]:hover,
+  [data-theme="light"] .hover\:bg-white\/\[0\.08\]:hover,
+  [data-theme="light"] .hover\:bg-white\/10:hover {
+    background-color: rgba(15, 23, 42, 0.08);
+  }
+
+  [data-theme="light"] .hover\:border-white\/\[0\.08\]:hover,
+  [data-theme="light"] .hover\:border-white\/\[0\.12\]:hover,
+  [data-theme="light"] .hover\:border-white\/20:hover {
+    border-color: rgba(15, 23, 42, 0.18);
   }
 
   /* Selection styling */
@@ -133,4 +210,43 @@
 
 /* Column drag highlight — disabled, ghost card is sufficient */
 .column-drag-over {
+}
+
+/* ========================================
+   PREFERS REDUCED MOTION
+   Disable animations/transitions for users
+   who prefer reduced motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable specific animation utilities */
+  .animate-fade-up,
+  .animate-slide-in,
+  .animate-drop-in,
+  .animate-cmd-in,
+  .animate-pulse-dot,
+  .cmd-dot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Disable drawer slide transition */
+  [data-workspace-nav-target="drawer"] {
+    transition: none !important;
+  }
+
+  /* Disable dropdown animations */
+  [data-dropdown-target="menu"] {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }

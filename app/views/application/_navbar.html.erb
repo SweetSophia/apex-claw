@@ -43,7 +43,9 @@
       <% primary_agent = primary_registered_agent_for(current_user) %>
       <% if primary_agent.present? %>
         <div class="relative cursor-default" title="<%= primary_agent.name %> • Last heartbeat: <%= primary_agent.last_heartbeat_at.present? ? time_ago_in_words(primary_agent.last_heartbeat_at) + ' ago' : 'never' %>">
-          <span class="text-lg">🤖</span>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-content-muted">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+          </svg>
           <% if primary_agent.online? && primary_agent.last_heartbeat_at.present? && primary_agent.last_heartbeat_at > 5.minutes.ago %>
             <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-bg-base"></span>
           <% end %>

@@ -18,12 +18,11 @@
        role="dialog"
        aria-modal="true"
        aria-label="Command bar">
-    <div class="w-[560px] max-w-[calc(100vw-2rem)] max-h-[72vh] flex flex-col pointer-events-auto overflow-hidden animate-drop-in"
-         style="background:#1e1e22;border-radius:16px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 32px 80px rgba(0,0,0,0.5)">
+    <div class="w-[560px] max-w-[calc(100vw-2rem)] max-h-[72vh] flex flex-col pointer-events-auto overflow-hidden animate-drop-in bg-bg-card rounded-2xl border border-white/[0.08] shadow-[0_32px_80px_rgba(0,0,0,0.5)]">
 
-      <div class="flex items-center gap-2.5" style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06)">
-        <div data-command-bar-target="modeIcon" class="flex-shrink-0 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="opacity:0.3">
+      <div class="flex items-center gap-2.5 px-[18px] py-3.5 border-b border-white/[0.06]">
+        <div data-command-bar-target="modeIcon" class="flex-shrink-0 flex items-center justify-center" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="opacity-30">
             <circle cx="7" cy="7" r="5" stroke="#888" stroke-width="1.5"/>
             <path d="M11 11L14 14" stroke="#888" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
@@ -34,29 +33,26 @@
                data-action="input->command-bar#onInput keydown->command-bar#onInputKeydown"
                placeholder="Jump to a task, board, or command..."
                class="flex-1 bg-transparent border-none text-sm font-medium text-[#e0e0e0] placeholder-[#555] focus:outline-none focus:ring-0"
-               style="font-family:inherit"
                aria-autocomplete="list"
                aria-label="Command bar" />
 
         <button type="button"
                 data-command-bar-target="backButton"
                 data-action="click->command-bar#switchToSearch"
-                class="hidden cursor-pointer"
-                style="font-size:10px;font-weight:600;color:#555;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:3px 8px;border-radius:5px">Back</button>
+                class="hidden cursor-pointer text-[10px] font-semibold text-[#555] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded">Back</button>
 
         <button type="button"
                 data-action="click->command-bar#close"
-                class="cursor-pointer"
-                style="font-size:10px;font-weight:600;color:#555;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:3px 8px;border-radius:5px"
+                class="cursor-pointer text-[10px] font-semibold text-[#555] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded"
                 aria-label="Close command bar">Esc</button>
       </div>
 
-      <div data-command-bar-target="body" class="flex-1 overflow-y-auto" style="padding:6px 0">
+      <div data-command-bar-target="body" class="flex-1 overflow-y-auto py-1.5">
         <div data-command-bar-target="searchResults" class="hidden"></div>
         <div data-command-bar-target="actionsPanel"></div>
 
         <div data-command-bar-target="agentPanel" class="hidden">
-          <div data-command-bar-target="agentMessages" class="flex flex-col gap-2" style="padding:8px 16px">
+          <div data-command-bar-target="agentMessages" class="flex flex-col gap-2 px-4 py-2">
           </div>
         </div>
       </div>

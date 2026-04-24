@@ -1,0 +1,14 @@
+<%# Reusable nav item partial for workspace sidebar %>
+<% is_active = local_assigns[:is_active] || false %>
+<% svg_path = local_assigns[:svg_path] %>
+
+<%= link_to href,
+    class: "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fbbf24]/50 #{is_active ? 'bg-white/[0.06] text-content border border-white/[0.08]' : 'text-content-secondary hover:bg-white/[0.04] hover:text-content'}",
+    aria_current: is_active ? "page" : nil do %>
+  <% if svg_path %>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 <%= is_active ? '' : 'opacity-60' %>">
+      <%= svg_path.html_safe %>
+    </svg>
+  <% end %>
+  <span class="text-sm font-medium"><%= title %></span>
+<% end %>
