@@ -66,15 +66,13 @@ export default class extends Controller {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     if (!csrfToken) return
 
-    fetch(settingsPath, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": csrfToken
-      },
-      body: new URLSearchParams({ "user[theme_preference]": theme })
-    }).catch(() => {
-      // Silently fail; the server preference remains canonical for authenticated page loads.
-    })
+    // Use XMLHttpRequest instead of fetch to avoid Turbo intercepting the response
+    // and triggering a full page navigation (which caused duplicate request floods).
+    const xhr = new XMLHttpRequest()
+    xhr.open("PATCH", settingsPath, true)
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+    xhr.setRequestHeader("X-CSRF-Token", csrfToken)
+    xhr.setRequestHeader("Accept", "application/json")
+    xhr.send(new URLSearchParams({ "user[theme_preference]": theme }).toString())
   }
 }

@@ -14,11 +14,19 @@ class ProfilesController < ApplicationController
     end
 
     if @user.update(profile_params)
-      redirect_to settings_path, notice: "Profile updated successfully."
+      respond_to do |format|
+        format.html { redirect_to settings_path, notice: "Profile updated successfully." }
+        format.json { render json: { theme_preference: @user.theme_preference } }
+      end
     else
-      @api_token = current_user.api_token
-      @registered_agents = current_user.agents.order(last_heartbeat_at: :desc, created_at: :desc)
-      render :show, status: :unprocessable_entity
+      respond_to do |format|
+        format.html do
+          @api_token = current_user.api_token
+          @registered_agents = current_user.agents.order(last_heartbeat_at: :desc, created_at: :desc)
+          render :show, status: :unprocessable_entity
+        end
+        format.json { render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 

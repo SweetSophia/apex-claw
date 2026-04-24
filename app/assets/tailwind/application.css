@@ -65,13 +65,8 @@
   --animate-pulse-dot: pulse 2s ease-in-out infinite;
 }
 
-@layer base {
-  :root {
-    color-scheme: dark;
-    /* Note: light mode will override these via [data-theme="light"] */
-  }
-
-  [data-theme="light"] {
+/* Light theme overrides — MUST be unlayered to override @theme :root tokens */
+[data-theme="light"] {
     --color-bg-base: #f8fafc;
     --color-bg-surface: #ffffff;
     --color-bg-elevated: #f1f5f9;
@@ -94,14 +89,20 @@
     color-scheme: light;
   }
 
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   html, body {
     font-family: var(--font-body);
     margin: 0;
     padding: 0;
     background-color: var(--color-bg-base);
   }
+}
 
-  [data-theme="light"] ::selection {
+[data-theme="light"] ::selection {
     background: #fbbf24;
     color: #0f172a;
   }
@@ -150,12 +151,13 @@
     border-color: rgba(15, 23, 42, 0.18);
   }
 
-  /* Selection styling */
-  ::selection {
-    background: #fbbf24;
-    color: #161619;
-  }
+/* Selection styling — unlayered for correct specificity */
+::selection {
+  background: #fbbf24;
+  color: #161619;
+}
 
+@layer base {
   /* Scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
