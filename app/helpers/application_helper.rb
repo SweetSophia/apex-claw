@@ -56,7 +56,7 @@ module ApplicationHelper
   }.freeze
 
   # Validates path_data against a strict allowlist pattern (single path d-attribute value)
-  SVG_PATH_PATTERN = /\AM[0-9.,\-+ ]+(Z|z)?([HhVvSsCcQqTtAaZz0-9.,\-+ ]+)*\z/
+  SVG_PATH_PATTERN = /\A[MmLlHhVvCcSsQqTtAaZz0-9.,\-+\s]+\z/
 
   def nav_icon(name)
     path_data = NAV_ICONS[name.to_s]
