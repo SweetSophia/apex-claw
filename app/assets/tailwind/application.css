@@ -151,6 +151,29 @@
     border-color: rgba(15, 23, 42, 0.18);
   }
 
+  /* Light-mode text color overrides for hardcoded dark-theme hex colors.
+     These #444/#555/#666/#777/#888/#999 values work on dark backgrounds
+     but become nearly invisible on white/light surfaces. */
+  [data-theme="light"] .text-\[\#344\] { color: #334155; }
+  [data-theme="light"] .text-\[\#444\] { color: #475569; }
+  [data-theme="light"] .text-\[\#555\] { color: #475569; }
+  [data-theme="light"] .text-\[\#666\] { color: #64748b; }
+  [data-theme="light"] .text-\[\#777\] { color: #64748b; }
+  [data-theme="light"] .text-\[\#888\] { color: #64748b; }
+  [data-theme="light"] .text-\[\#999\] { color: #94a3b8; }
+  [data-theme="light"] .text-\[\#aaa\] { color: #94a3b8; }
+  [data-theme="light"] .text-\[\#bbb\] { color: #94a3b8; }
+  [data-theme="light"] .text-\[\#f0f0f0\] { color: #0f172a; }
+
+  /* Light-mode bg overrides for hardcoded dark-theme surface colors */
+  [data-theme="light"] .bg-\[\#111\],
+  [data-theme="light"] .bg-\[\#161619\],
+  [data-theme="light"] .bg-\[\#1a1a1a\],
+  [data-theme="light"] .bg-\[\#222\],
+  [data-theme="light"] .bg-\[\#2a2a2a\] {
+    background-color: #f1f5f9;
+  }
+
 /* Selection styling — unlayered for correct specificity */
 ::selection {
   background: #fbbf24;
