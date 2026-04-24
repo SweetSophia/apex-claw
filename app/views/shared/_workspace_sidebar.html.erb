@@ -3,7 +3,7 @@
 <% sidebar_boards = authenticated? ? (defined?(@boards) && @boards ? @boards : current_user.boards) : [] %>
 <% sidebar_current_board = @board || sidebar_boards.first %>
 
-<aside class="hidden lg:flex lg:flex-col lg:h-screen lg:w-[272px] lg:border-r lg:border-white/[0.05] bg-bg-surface fixed inset-y-0 left-0 z-[110]">
+<aside class="hidden lg:flex lg:flex-col lg:h-screen lg:w-[272px] lg:flex-shrink-0 lg:border-r lg:border-white/[0.05] bg-bg-surface">
   <%# Header: workspace name + board switcher %>
   <div class="flex-shrink-0 px-3 pt-3 pb-2">
     <%# Workspace wordmark %>
